@@ -33,7 +33,7 @@ import java.util.List;
 /** Created y the eXo platform team User: Tuan Nguyen Date: 20 april 2007 */
 
 @Managed(description = "Application Registry Managed Resource")
-@ManagedPath("/registry/applications")
+@ManagedPath("/app-registry")
 public interface ApplicationRegistryService
 {
    String REMOTE_DISPLAY_NAME_SUFFIX = " (remote)";
