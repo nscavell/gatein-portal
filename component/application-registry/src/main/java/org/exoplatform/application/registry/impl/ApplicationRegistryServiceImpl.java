@@ -39,6 +39,11 @@ import org.exoplatform.portal.pom.spi.wsrp.WSRP;
 import org.gatein.common.i18n.LocalizedString;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
+import org.gatein.management.api.annotations.Managed;
+import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.ManagedPath;
+import org.gatein.management.api.annotations.PathTemplate;
+import org.gatein.management.api.operation.OperationNames;
 import org.gatein.mop.api.content.ContentType;
 import org.gatein.mop.api.content.Customization;
 import org.gatein.pc.api.PortletInvoker;
@@ -61,6 +66,7 @@ import java.util.Set;
  * @author <a href="mailto:julien.viet@exoplatform.com">Julien Viet</a>
  * @version $Revision$
  */
+
 public class ApplicationRegistryServiceImpl implements ApplicationRegistryService, Startable
 {
 
@@ -155,6 +161,7 @@ public class ApplicationRegistryServiceImpl implements ApplicationRegistryServic
       return getApplicationCategories(null, accessUser, appTypes);
    }
 
+   @Managed
    public List<ApplicationCategory> getApplicationCategories() throws Exception
    {
       return getApplicationCategories(null);
@@ -165,7 +172,9 @@ public class ApplicationRegistryServiceImpl implements ApplicationRegistryServic
       return getApplicationCategories(sortComparator, null);
    }
 
-   public ApplicationCategory getApplicationCategory(final String name) throws Exception
+   @Managed
+   @ManagedPath("{category}")
+   public ApplicationCategory getApplicationCategory(@PathTemplate("category") String name) throws Exception
    {
       ContentRegistry registry = getContentRegistry();
 
@@ -181,6 +190,8 @@ public class ApplicationRegistryServiceImpl implements ApplicationRegistryServic
       return null;
    }
 
+   @Managed
+   @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Update an application category")
    public void save(final ApplicationCategory category) throws Exception
    {
       ContentRegistry registry = getContentRegistry();
@@ -203,10 +214,19 @@ public class ApplicationRegistryServiceImpl implements ApplicationRegistryServic
       categoryDef.setAccessPermissions(category.getAccessPermissions());
    }
 
+   @Managed
+   @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Remove an application category")
    public void remove(final ApplicationCategory category) throws Exception
    {
       ContentRegistry registry = getContentRegistry();
       registry.getCategoryMap().remove(category.getName());
+   }
+
+   @Override
+   public void remove(String categoryName) throws Exception
+   {
+      ContentRegistry registry = getContentRegistry();
+      registry.getCategoryMap().remove(categoryName);
    }
 
    public List<Application> getApplications(ApplicationCategory category, ApplicationType<?>... appTypes) throws Exception

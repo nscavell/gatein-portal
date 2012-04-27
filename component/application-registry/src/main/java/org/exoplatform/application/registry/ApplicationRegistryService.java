@@ -21,11 +21,19 @@ package org.exoplatform.application.registry;
 
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.portal.config.model.ApplicationType;
+import org.gatein.management.api.annotations.Managed;
+import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.ManagedPath;
+import org.gatein.management.api.annotations.PathTemplate;
+import org.gatein.management.api.operation.OperationNames;
 
 import java.util.Comparator;
 import java.util.List;
 
 /** Created y the eXo platform team User: Tuan Nguyen Date: 20 april 2007 */
+
+@Managed(description = "Application Registry Managed Resource")
+@ManagedPath("/registry/applications")
 public interface ApplicationRegistryService
 {
    String REMOTE_DISPLAY_NAME_SUFFIX = " (remote)";
@@ -42,6 +50,8 @@ public interface ApplicationRegistryService
    /**
     * Return list of all current application categories (unsorted, all Application in all ApplicationType)
     */
+   @Managed
+   @ManagedPath("categories")
    public List<ApplicationCategory> getApplicationCategories() throws Exception;
 
    /**
@@ -56,13 +66,18 @@ public interface ApplicationRegistryService
     * if not found, return null
     * @param name - ApplicationCategory's name
     */
-   public ApplicationCategory getApplicationCategory(String name) throws Exception;
+   @Managed
+   @ManagedPath("categories/{category}")
+   public ApplicationCategory getApplicationCategory(@PathTemplate("category") String name) throws Exception;
 
    /**
     * Save an ApplicationCategory to database <br/>
     * If it doesn't exist, a new one will be created, if not, it will be updated
     * @param category - ApplicationCategory object that will be saved
     */
+   @Managed
+   @ManagedPath("categories/{category}")
+   @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Update an application category")
    public void save(ApplicationCategory category) throws Exception;
 
    /**
@@ -71,6 +86,11 @@ public interface ApplicationRegistryService
     * @param category - ApplicationCategory object that will be removed
     */
    public void remove(ApplicationCategory category) throws Exception;
+
+   @Managed
+   @ManagedPath("categories/{category}")
+   @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Remove an application category")
+   public void remove(@PathTemplate("category") String categoryName) throws Exception;
 
    /**
     * Return list of applications (unsorted) in specific category and have specific type
@@ -91,13 +111,16 @@ public interface ApplicationRegistryService
     * Return list of all Application in database (unsorted) <br/>
     * If there are not any Application in database, return an empty list
     */
+   @Managed
    public List<Application> getAllApplications() throws Exception;
 
    /**
     * Return Application with id provided
     * @param id - must be valid applicationId (catgoryname/applicationName), if not, this will throw exception
     */
-   public Application getApplication(String id) throws Exception;
+   @Managed
+   @ManagedPath("{app-id: .*}")
+   public Application getApplication(@PathTemplate("app-id") String id) throws Exception;
 
    /**
     * Return Application in specific category and have name provided in param <br/>
@@ -105,7 +128,9 @@ public interface ApplicationRegistryService
     * @param category - name of application category
     * @param name - name of application   
     */
-   public Application getApplication(String category, String name) throws Exception;
+   @Managed
+   @ManagedPath("categories/{category}/{app-name}")
+   public Application getApplication(@PathTemplate("category") String category, @PathTemplate("app-name") String name) throws Exception;
 
    /**
     * Save Application in an ApplicationCategory <br/>
