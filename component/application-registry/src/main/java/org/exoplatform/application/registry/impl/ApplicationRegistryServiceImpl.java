@@ -210,13 +210,6 @@ public class ApplicationRegistryServiceImpl implements ApplicationRegistryServic
       registry.getCategoryMap().remove(category.getName());
    }
 
-   @Override
-   public void remove(String categoryName) throws Exception
-   {
-      ContentRegistry registry = getContentRegistry();
-      registry.getCategoryMap().remove(categoryName);
-   }
-
    public List<Application> getApplications(ApplicationCategory category, ApplicationType<?>... appTypes) throws Exception
    {
       return getApplications(category, null, appTypes);

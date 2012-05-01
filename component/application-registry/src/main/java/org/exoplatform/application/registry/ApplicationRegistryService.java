@@ -19,12 +19,14 @@
 
 package org.exoplatform.application.registry;
 
+import org.exoplatform.application.management.ApplicationCategoryMapper;
 import org.exoplatform.container.component.ComponentPlugin;
 import org.exoplatform.portal.config.model.ApplicationType;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedOperation;
 import org.gatein.management.api.annotations.ManagedPath;
-import org.gatein.management.api.annotations.PathTemplate;
+import org.gatein.management.api.annotations.Mapped;
+import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.operation.OperationNames;
 
 import java.util.Comparator;
@@ -68,7 +70,7 @@ public interface ApplicationRegistryService
     */
    @Managed
    @ManagedPath("categories/{category}")
-   public ApplicationCategory getApplicationCategory(@PathTemplate("category") String name) throws Exception;
+   public ApplicationCategory getApplicationCategory(@MappedPath("category") String name) throws Exception;
 
    /**
     * Save an ApplicationCategory to database <br/>
@@ -85,12 +87,11 @@ public interface ApplicationRegistryService
     * If it doesn't exist, it will be ignored
     * @param category - ApplicationCategory object that will be removed
     */
-   public void remove(ApplicationCategory category) throws Exception;
-
    @Managed
    @ManagedPath("categories/{category}")
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Remove an application category")
-   public void remove(@PathTemplate("category") String categoryName) throws Exception;
+   //TODO: For now testing custom mapper, but this method should just accept a string as category name and not object.
+   public void remove(@Mapped(value = ApplicationCategoryMapper.class) ApplicationCategory category) throws Exception;
 
    /**
     * Return list of applications (unsorted) in specific category and have specific type
@@ -120,7 +121,7 @@ public interface ApplicationRegistryService
     */
    @Managed
    @ManagedPath("{app-id: .*}")
-   public Application getApplication(@PathTemplate("app-id") String id) throws Exception;
+   public Application getApplication(@MappedPath("app-id") String id) throws Exception;
 
    /**
     * Return Application in specific category and have name provided in param <br/>
@@ -130,7 +131,7 @@ public interface ApplicationRegistryService
     */
    @Managed
    @ManagedPath("categories/{category}/{app-name}")
-   public Application getApplication(@PathTemplate("category") String category, @PathTemplate("app-name") String name) throws Exception;
+   public Application getApplication(@MappedPath("category") String category, @MappedPath("app-name") String name) throws Exception;
 
    /**
     * Save Application in an ApplicationCategory <br/>
