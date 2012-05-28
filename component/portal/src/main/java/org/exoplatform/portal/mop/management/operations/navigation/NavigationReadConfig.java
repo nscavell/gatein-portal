@@ -36,7 +36,7 @@ import org.gatein.mop.api.workspace.Site;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @version $Revision$
  */
-public class NavigationReadConfigAsXml extends AbstractNavigationOperationHandler
+public class NavigationReadConfig extends AbstractNavigationOperationHandler
 {
    @Override
    protected void execute(OperationContext operationContext, ResultHandler resultHandler, Navigation defaultNavigation)

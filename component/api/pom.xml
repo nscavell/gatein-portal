@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <parent>
+      <groupId>org.gatein.portal</groupId>
+      <artifactId>exo.portal.component</artifactId>
+      <version>3.5.0.Beta01-SNAPSHOT</version>
+   </parent>
+
+   <modelVersion>4.0.0</modelVersion>
+   <artifactId>exo.portal.component.api</artifactId>
+   <packaging>jar</packaging>
+   <name>GateIn Portal Component API Implementation</name>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.gatein.api</groupId>
+         <artifactId>gatein-api</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.common</groupId>
+         <artifactId>common-common</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.portal</artifactId>
+      </dependency>
+      <!--<dependency>-->
+         <!--<groupId>org.exoplatform.portal</groupId>-->
+         <!--<artifactId>exo.portal.component.web.controller</artifactId>-->
+      <!--</dependency>-->
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.resources</artifactId>
+      </dependency>
+      <!-- For mgmt (rest) of api -->
+      <dependency>
+         <groupId>org.gatein.management</groupId>
+         <artifactId>gatein-management-spi</artifactId>
+      </dependency>
+
+      <!-- For testing -->
+      <dependency>
+         <groupId>org.chromattic</groupId>
+         <artifactId>chromattic.core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.common</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.test.core</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.test.jcr</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.portal</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.identity</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.gatein.portal</groupId>
+         <artifactId>exo.portal.component.resources</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      <!--<dependency>-->
+      <!--<groupId>org.exoplatform.portal</groupId>-->
+      <!--<artifactId>exo.portal.component.application-registry</artifactId>-->
+      <!--<type>test-jar</type>-->
+      <!--<version>${project.version}</version>-->
+      <!--<scope>test</scope>-->
+      <!--</dependency>-->
+      <dependency>
+         <groupId>org.gatein.pc</groupId>
+         <artifactId>pc-portlet</artifactId>
+         <version>2.3.0-Beta05</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <configuration>
+                  <forkMode>always</forkMode>
+               </configuration>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+   </build>
+</project>

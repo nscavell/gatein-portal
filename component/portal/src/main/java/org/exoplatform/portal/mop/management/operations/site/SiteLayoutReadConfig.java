@@ -39,7 +39,7 @@ import org.gatein.mop.api.workspace.Site;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @version $Revision$
  */
-public class SiteLayoutReadConfigAsXml extends AbstractSiteOperationHandler
+public class SiteLayoutReadConfig extends AbstractSiteOperationHandler
 {
    @Override
    protected void execute(OperationContext operationContext, ResultHandler resultHandler, Site site) throws ResourceNotFoundException, OperationException

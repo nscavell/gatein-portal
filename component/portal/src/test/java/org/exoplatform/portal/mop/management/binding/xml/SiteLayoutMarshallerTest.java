@@ -199,7 +199,7 @@ public class SiteLayoutMarshallerTest extends AbstractMarshallerTest
       PortalConfig expected = new PortalConfig(expectedData);
 
       SiteLayoutMarshaller marshaller = new SiteLayoutMarshaller();
-      marshaller.marshal(expected, baos);
+      marshaller.marshal(expected, baos, false);
 
 //      System.out.println(baos.toString());
 
