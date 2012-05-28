@@ -98,6 +98,16 @@
       <groupId>org.gatein.captcha</groupId>
       <artifactId>simplecaptcha</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.gatein.api</groupId>
+      <artifactId>gatein-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.gatein.portal</groupId>
+      <artifactId>exo.portal.component.api</artifactId>
+    </dependency>
     
     <dependency>
       <groupId>org.gatein.portal</groupId>

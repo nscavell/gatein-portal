@@ -29,6 +29,7 @@ import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.config.model.Properties;
 import org.gatein.common.xml.stax.navigator.StaxNavUtils;
 import org.gatein.common.xml.stax.writer.StaxWriter;
+import org.gatein.common.xml.stax.writer.builder.StaxWriterBuilder;
 import org.gatein.management.api.binding.BindingException;
 import org.staxnav.Axis;
 import org.staxnav.StaxNavException;
@@ -51,11 +52,17 @@ import static org.gatein.common.xml.stax.writer.StaxWriterUtils.*;
 public class SiteLayoutMarshaller extends AbstractMarshaller<PortalConfig>
 {
    @Override
-   public void marshal(PortalConfig object, OutputStream outputStream) throws BindingException
+   public void marshal(PortalConfig object, OutputStream outputStream, boolean pretty) throws BindingException
    {
       try
       {
-         StaxWriter<Element> writer = createWriter(Element.class, outputStream);
+         StaxWriterBuilder builder = buildDefaultWriter(outputStream);
+         if (!pretty)
+         {
+            builder.withFormatting(null);
+         }
+
+         StaxWriter<Element> writer = builder.build(Element.class);
 
          // root element
          writer.writeStartElement(Element.PORTAL_CONFIG);

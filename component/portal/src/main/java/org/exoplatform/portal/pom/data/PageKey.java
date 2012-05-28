@@ -70,6 +70,11 @@ public class PageKey extends OwnerKey
       return false;
    }
 
+   public String getCompositeId()
+   {
+      return Utils.join("::", getType(), getId(), getName());
+   }
+
    public static PageKey create(String compositeId)
    {
       if (compositeId == null)

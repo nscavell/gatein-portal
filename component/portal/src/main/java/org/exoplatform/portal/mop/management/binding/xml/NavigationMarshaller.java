@@ -30,6 +30,7 @@ import org.exoplatform.portal.config.model.PageNode;
 import org.exoplatform.portal.mop.Visibility;
 import org.gatein.common.xml.stax.writer.StaxWriter;
 import org.gatein.common.xml.stax.writer.WritableValueTypes;
+import org.gatein.common.xml.stax.writer.builder.StaxWriterBuilder;
 import org.gatein.management.api.binding.BindingException;
 import org.gatein.management.api.binding.Marshaller;
 import org.staxnav.StaxNavException;
@@ -57,11 +58,17 @@ public class NavigationMarshaller implements Marshaller<PageNavigation>
 {
 
    @Override
-   public void marshal(PageNavigation navigation, OutputStream outputStream) throws BindingException
+   public void marshal(PageNavigation navigation, OutputStream outputStream, boolean pretty) throws BindingException
    {
       try
       {
-         StaxWriter<Element> writer = createWriter(Element.class, outputStream);
+         StaxWriterBuilder builder = buildDefaultWriter(outputStream);
+         if (!pretty)
+         {
+            builder.withFormatting(null);
+         }
+
+         StaxWriter<Element> writer = builder.build(Element.class);
          marshalNavigation(writer, navigation);
       }
       catch (StaxNavException e)

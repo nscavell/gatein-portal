@@ -31,6 +31,10 @@ import javax.xml.stream.XMLStreamWriter;
  */
 public class NoOpFormatter implements XmlStreamingFormatter
 {
+   public static XmlStreamingFormatter INSTANCE = new NoOpFormatter();
+
+   private NoOpFormatter() {}
+
    @Override
    public void before(XMLStreamWriter writer, int event) throws XMLStreamException
    {

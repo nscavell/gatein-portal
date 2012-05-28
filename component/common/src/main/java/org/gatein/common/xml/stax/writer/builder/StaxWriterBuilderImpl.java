@@ -24,7 +24,9 @@ package org.gatein.common.xml.stax.writer.builder;
 
 import org.gatein.common.xml.stax.writer.StaxWriter;
 import org.gatein.common.xml.stax.writer.StaxWriterImpl;
+import org.gatein.common.xml.stax.writer.formatting.NoOpFormatter;
 import org.gatein.common.xml.stax.writer.formatting.XmlStreamingFormatter;
+import org.staxnav.EnumElement;
 import org.staxnav.Naming;
 import org.staxnav.StaxNavException;
 
@@ -132,10 +134,23 @@ public class StaxWriterBuilderImpl implements StaxWriterBuilder
 
    public StaxWriterBuilder withFormatting(XmlStreamingFormatter formatter)
    {
-      if (formatter == null) throw new IllegalArgumentException("formatter is null");
-
       this.formatter = formatter;
       return this;
+   }
+
+   public <E extends Enum<E> & EnumElement<E>> StaxWriter<E> build(Class<E> enumeratedClass)
+   {
+      Naming<E> naming;
+      if (EnumElement.class.isAssignableFrom(enumeratedClass))
+      {
+         naming = new Naming.Enumerated.Mapped<E>(enumeratedClass, null);
+      }
+      else
+      {
+         naming = new Naming.Enumerated.Simple<E>(enumeratedClass, null);
+      }
+
+      return build(naming);
    }
 
    public <N> StaxWriter<N> build(Naming<N> naming) throws StaxNavException, IllegalStateException

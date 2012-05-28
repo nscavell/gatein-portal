@@ -77,7 +77,7 @@ public class PageExportTask extends AbstractExportTask implements ExportTask
          }
       }
 
-      marshaller.marshal(pages, outputStream);
+      marshaller.marshal(pages, outputStream, true);
    }
 
    @Override

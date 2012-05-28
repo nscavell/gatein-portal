@@ -21,6 +21,7 @@ package org.exoplatform.portal.pc;
 
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.commons.utils.Safe;
+import org.gatein.api.Portal;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.pc.portlet.impl.deployment.DeploymentException;
@@ -47,6 +48,9 @@ public class ExoPortletApplicationDeployer extends PortletApplicationDeployer
 
    /** . */
    private final Logger log = LoggerFactory.getLogger(ExoPortletApplicationDeployer.class);
+
+   /** . */
+   private Portal portal;
 
    @Override
    protected PortletApplication10MetaData buildPortletApplicationMetaData(ServletContext webApp) throws DeploymentException
@@ -83,6 +87,9 @@ public class ExoPortletApplicationDeployer extends PortletApplicationDeployer
             log.warn("The global portlet metadata is not configured");
          }
 
+
+         webApp.setAttribute("org.gatein.api.portal", portal);
+
       }
       return md;
    }
@@ -107,5 +114,10 @@ public class ExoPortletApplicationDeployer extends PortletApplicationDeployer
       {
          Safe.close(in);
       }
+   }
+
+   public void setAPIInstance(Portal portal)
+   {
+      this.portal = portal;
    }
 }

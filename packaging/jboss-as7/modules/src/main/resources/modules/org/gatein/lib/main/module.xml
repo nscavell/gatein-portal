@@ -98,6 +98,7 @@
           </exports>
        </module>
 
+        <module name="org.jboss.dmr"/>
 	<module name="org.jboss.as.web"/>
     </dependencies>
 </module>

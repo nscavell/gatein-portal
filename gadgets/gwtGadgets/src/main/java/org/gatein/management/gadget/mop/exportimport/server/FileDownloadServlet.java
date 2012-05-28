@@ -90,7 +90,7 @@ public class FileDownloadServlet extends HttpServlet
                ManagedResponse response = controller.execute(request);
                if (response.getOutcome().isSuccess())
                {
-                  response.writeResult(os);
+                  response.writeResult(os, true);
                }
                else
                {

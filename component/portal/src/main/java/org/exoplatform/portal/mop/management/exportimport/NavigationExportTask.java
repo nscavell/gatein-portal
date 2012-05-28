@@ -79,6 +79,6 @@ public class NavigationExportTask extends AbstractExportTask
          navigation = NavigationUtils.loadPageNavigation(navigationKey, navigationService, descriptionService);
       }
 
-      marshaller.marshal(navigation, outputStream);
+      marshaller.marshal(navigation, outputStream, true);
    }
 }

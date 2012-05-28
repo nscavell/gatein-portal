@@ -26,6 +26,7 @@ import org.exoplatform.portal.config.model.ModelObject;
 import org.exoplatform.portal.config.model.Page;
 import org.gatein.common.xml.stax.writer.StaxWriter;
 import org.gatein.common.xml.stax.writer.WritableValueTypes;
+import org.gatein.common.xml.stax.writer.builder.StaxWriterBuilder;
 import org.gatein.management.api.binding.BindingException;
 import org.staxnav.StaxNavException;
 import org.staxnav.StaxNavigator;
@@ -49,11 +50,17 @@ import static org.gatein.common.xml.stax.writer.StaxWriterUtils.*;
 public class PageMarshaller extends AbstractMarshaller<Page.PageSet>
 {
    @Override
-   public void marshal(Page.PageSet pageSet, OutputStream outputStream) throws BindingException
+   public void marshal(Page.PageSet pageSet, OutputStream outputStream, boolean pretty) throws BindingException
    {
       try
       {
-         StaxWriter<Element> writer = createWriter(Element.class, outputStream);
+         StaxWriterBuilder builder = buildDefaultWriter(outputStream);
+         if (!pretty)
+         {
+            builder.withFormatting(null);
+         }
+
+         StaxWriter<Element> writer = builder.build(Element.class);
 
          writer.writeStartElement(Element.PAGE_SET);
          writeGateinObjectsNamespace(writer);

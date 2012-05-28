@@ -43,6 +43,7 @@
       <org.exoplatform.jcr.version>1.15.0-CR1</org.exoplatform.jcr.version>
       <org.shindig.version>2.0.2.Final-gatein-2</org.shindig.version>
       <nl.captcha.simplecaptcha.version>1.1.1.Final-gatein-2</nl.captcha.simplecaptcha.version>
+      <org.gatein.api.version>1.0.0.Alpha01-SNAPSHOT</org.gatein.api.version>
       <org.gatein.common.version>2.1.0.Beta01</org.gatein.common.version>
       <org.gatein.wci.version>2.3.0.Beta02</org.gatein.wci.version>
       <org.gatein.pc.version>2.4.0.Beta02</org.gatein.pc.version>
@@ -50,7 +51,7 @@
       <org.picketlink.idm>1.4.0.M02</org.picketlink.idm>
       <org.gatein.wsrp.version>2.2.0.Beta09</org.gatein.wsrp.version>
       <org.gatein.mop.version>1.2.0.Beta01</org.gatein.mop.version>
-      <org.gatein.mgmt.version>1.1.0.CR3</org.gatein.mgmt.version>
+      <org.gatein.mgmt.version>2.0.0-Alpha1-SNAPSHOT</org.gatein.mgmt.version>
       <org.slf4j.version>1.6.1</org.slf4j.version>
       <commons-pool.version>1.5.5</commons-pool.version>
       <rhino.version>1.6R5</rhino.version>
@@ -305,6 +306,11 @@
             <version>${org.gatein.common.version}</version>
          </dependency>
          <dependency>
+            <groupId>org.gatein.api</groupId>
+            <artifactId>gatein-api</artifactId>
+            <version>${org.gatein.api.version}</version>
+         </dependency>
+         <dependency>
             <groupId>org.gatein.common</groupId>
             <artifactId>common-common</artifactId>
             <version>${org.gatein.common.version}</version>
@@ -391,8 +397,14 @@
             <artifactId>gatein-management-rest</artifactId>
             <version>${org.gatein.mgmt.version}</version>
          </dependency>
-        <!-- WSRP -->
-        <dependency>
+         <!-- GateIn Mgmt uses jboss-dmr for model impl -->
+         <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-dmr</artifactId>
+            <version>1.1.1.Final</version>
+         </dependency>
+         <!-- WSRP -->
+         <dependency>
             <groupId>org.gatein.wsrp</groupId>
             <artifactId>wsrp-producer-lib</artifactId>
             <scope>provided</scope>
@@ -474,6 +486,11 @@
 
         <!-- GateIn -->
         <dependency>
+          <groupId>org.gatein.portal</groupId>
+          <artifactId>exo.portal.component.api</artifactId>
+          <version>3.5.0.Beta02-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.gatein.portal</groupId>
             <artifactId>exo.portal.component.common</artifactId>
             <version>3.5.0.Beta02-SNAPSHOT</version>
@@ -539,6 +556,12 @@
             <groupId>org.gatein.portal</groupId>
             <artifactId>exo.portal.component.resources</artifactId>
             <version>3.5.0.Beta02-SNAPSHOT</version>
+         </dependency>
+         <dependency>
+            <groupId>org.gatein.portal</groupId>
+            <artifactId>exo.portal.component.resources</artifactId>
+            <version>3.5.0.Beta02-SNAPSHOT</version>
+            <type>test-jar</type>
          </dependency>
          <dependency>
             <groupId>org.gatein.portal</groupId>

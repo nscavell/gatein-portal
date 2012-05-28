@@ -36,7 +36,7 @@ import org.gatein.management.api.operation.ResultHandler;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @version $Revision$
  */
-public class PageReadConfigAsXml extends AbstractPageOperationHandler
+public class PageReadConfig extends AbstractPageOperationHandler
 {
    @Override
    protected void execute(OperationContext operationContext, ResultHandler resultHandler, org.gatein.mop.api.workspace.Page rootPage)  throws ResourceNotFoundException, OperationException
