@@ -27,9 +27,15 @@ import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.portal.mop.SiteType;
+import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.portal.mop.navigation.NavigationState;
+import org.exoplatform.portal.pom.data.ModelChange;
 import org.gatein.api.commons.PropertyType;
+import org.gatein.api.commons.Range;
 import org.gatein.api.exception.ApiException;
+import org.gatein.api.exception.EntityAlreadyExistsException;
 import org.gatein.api.exception.EntityNotFoundException;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Navigation;
@@ -94,10 +100,13 @@ public class SiteImpl extends DataStorageContext implements Site
    @Override
    public Label getLabel()
    {
-      String label = getInternalSite(true).getLabel();
 
-      //TODO:
-      throw new NotYetImplemented();
+      return new LabelImpl(getId().getName());
+
+      //TODO: implement properly
+
+      //String label = getInternalSite(true).getLabel();
+      //return new LabelImpl(label);
    }
 
    @Override
@@ -145,10 +154,51 @@ public class SiteImpl extends DataStorageContext implements Site
       return pages;
    }
 
+   public List<Page> getPages(Range range)
+   {
+      //TODO: implement range cut
+      return getPages();
+   }
+
    @Override
    public Page getPage(String pageName)
    {
+      try
+      {
+         return new PageImpl(this, pageName).getPage();
+      }
+      catch (EntityNotFoundException ex)
+      {
+         return null;
+      }
+   }
+
+   @Override
+   public Page createPage(String pageName) throws EntityAlreadyExistsException
+   {
+      throwIllegalArgExceptionIfNull(pageName, "Page name");
+
+      Page page = getPage(pageName);
+      if (page != null)
+      {
+         throw new EntityAlreadyExistsException("Page already exists: " + pageName);
+      }
+
+      PortalConfig internalSite = getInternalSite(true);
+      final org.exoplatform.portal.config.model.Page internalPage =
+         new org.exoplatform.portal.config.model.Page(internalSite.getType(), internalSite.getName(), pageName);
+
+      execute(internalPage, new Modify<org.exoplatform.portal.config.model.Page>()
+      {
+         @Override
+         public void modify(org.exoplatform.portal.config.model.Page data, DataStorage dataStorage) throws Exception
+         {
+            dataStorage.create(internalPage);
+         }
+      });
+
       return new PageImpl(this, pageName).getPage();
+
    }
 
    @Override
@@ -203,7 +253,7 @@ public class SiteImpl extends DataStorageContext implements Site
    public Site addSite()
    {
       PortalConfig internalSite = getInternalSite(false);
-      if (internalSite == null) throw new ApiException("Cannot add site, site already exists for id " + id);
+      if (internalSite != null) throw new ApiException("Cannot add site, site already exists for id " + id);
 
       //TODO: Need to determine what good default values are when creating a site.
       SiteKey siteKey = getSiteKey();
@@ -220,14 +270,18 @@ public class SiteImpl extends DataStorageContext implements Site
          @Override
          public void modify(PortalConfig data, DataStorage dataStorage) throws Exception
          {
-            dataStorage.save(data);
+            dataStorage.create(data);
          }
       });
+
+      // Create navigation context for new site
+      NavigationContext navContext = new NavigationContext(this.getSiteKey(), new NavigationState(0));
+      gateIn.getNavigationService().saveNavigation(navContext);
 
       return this;
    }
 
-   private PortalConfig getInternalSite(boolean required)
+   public PortalConfig getInternalSite(boolean required)
    {
       final SiteKey siteKey = getSiteKey();
 
