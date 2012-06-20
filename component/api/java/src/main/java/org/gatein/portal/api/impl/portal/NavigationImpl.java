@@ -22,6 +22,7 @@
 
 package org.gatein.portal.api.impl.portal;
 
+import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeChangeListener;
@@ -50,7 +51,17 @@ public class NavigationImpl implements Navigation, NodeChangeListener<NodeContex
    public NavigationImpl(SiteImpl site, GateInImpl gateIn)
    {
       this.site = site;
-      this.context = gateIn.getNavigationService().loadNavigation(site.getSiteKey());
+      NavigationContext navContext = gateIn.getNavigationService().loadNavigation(site.getSiteKey());
+      if (navContext == null)
+      {
+         navContext = new NavigationContext(site.getSiteKey(), new NavigationState(0));
+         gateIn.getNavigationService().saveNavigation(navContext);
+         this.context = navContext;
+      }
+      else
+      {
+         context = navContext;
+      }
       this.nodeContext = gateIn.getNavigationService().loadNode(new NavigationNodeModel(site, gateIn), context, Scope.SINGLE, this);
    }
 

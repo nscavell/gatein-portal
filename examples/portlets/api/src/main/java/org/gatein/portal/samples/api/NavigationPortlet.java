@@ -27,6 +27,7 @@ import org.gatein.api.GateIn;
 import org.gatein.api.portal.Navigation;
 import org.gatein.api.portal.Node;
 import org.gatein.api.portal.Site;
+import org.gatein.api.portal.SiteQuery;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletConfig;
@@ -54,14 +55,15 @@ public class NavigationPortlet extends GenericPortlet
       PrintWriter writer = response.getWriter();
 
       writer.println("<h1>Sites</h1>");
-      List<Site> sites = getGateIn().getSites(Site.Type.SITE);
+      SiteQuery<Site> sq = getGateIn().createSiteQuery().setType(Site.Type.SITE).containNavigation(true);
+      List<Site> sites = sq.execute();
       for (Site site : sites)
       {
          outputSite(site, writer);
       }
 
       writer.println("<h1>Spaces</h1>");
-      List<Site> spaces = getGateIn().getSites(Site.Type.SPACE);
+      List<Site> spaces = sq.setType(Site.Type.SPACE).execute();
       for (Site space : spaces)
       {
          outputSite(space, writer);
@@ -79,7 +81,7 @@ public class NavigationPortlet extends GenericPortlet
 
       Navigation navigation = site.getNavigation();
 
-      if (navigation != null)
+      if (navigation != null && navigation.iterator().hasNext())
       {
          for (Node node : navigation)
          {
@@ -88,7 +90,7 @@ public class NavigationPortlet extends GenericPortlet
       }
       else
       {
-         writer.println("<h3>NULL Navigation</h3>");
+         writer.println("<h3>NULL or EMPTY Navigation</h3>");
       }
       writer.println("</ul><br/>");
    }

@@ -22,12 +22,15 @@
 
 package org.gatein.portal.api.impl;
 
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.services.organization.Group;
+import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.web.application.RequestContext;
 import org.gatein.api.GateIn;
 import org.gatein.api.commons.PropertyType;
@@ -36,15 +39,22 @@ import org.gatein.api.exception.EntityNotFoundException;
 import org.gatein.api.portal.Site;
 import org.gatein.api.portal.SiteQuery;
 import org.gatein.common.NotYetImplemented;
+import org.gatein.common.logging.Logger;
+import org.gatein.common.logging.LoggerFactory;
 import org.gatein.portal.api.impl.portal.DataStorageContext;
 import org.gatein.portal.api.impl.portal.SiteImpl;
+import org.gatein.portal.api.impl.portal.SiteQueryImpl;
 import org.picocontainer.Startable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import static org.gatein.common.util.ParameterValidation.*;
 
@@ -52,26 +62,36 @@ import static org.gatein.common.util.ParameterValidation.*;
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
  * @author <a href="mailto:chris.laprun@jboss.com">Chris Laprun</a>
  */
-public class GateInImpl extends DataStorageContext implements GateIn, Startable, GateIn.LifecycleManager
+public class GateInImpl extends DataStorageContext implements GateIn, Startable
 {
+   private static final Query<PortalConfig> ALL = new Query<PortalConfig>(null, null, PortalConfig.class);
    private static final Query<PortalConfig> SITES = new Query<PortalConfig>(SiteType.PORTAL.getName(), null, PortalConfig.class);
    private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(SiteType.GROUP.getName(), null, PortalConfig.class);
    private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(SiteType.USER.getName(), null, PortalConfig.class);
 
+   //TODO: Do we want a better name for loggeer ? Probably need to standardize our logging for api
+   static final Logger log = LoggerFactory.getLogger(GateInImpl.class);
+
+   //TODO: should be configurable
+   public Site.Id DEFAULT_SITE_KEY = Site.Id.create(Site.Type.SITE, "classic");
+
    private Map<PropertyType, Object> properties = new HashMap<PropertyType, Object>(7);
-   private LifecycleManager lcManager = GateIn.NO_OP_MANAGER;
 
    private final NavigationService navigationService;
-   public GateInImpl(DataStorage dataStorage, NavigationService navigationService)
+   private final OrganizationService organizationService;
+
+   public GateInImpl(DataStorage dataStorage, NavigationService navigationService, OrganizationService organizationService)
    {
       super(dataStorage);
       this.navigationService = navigationService;
+      this.organizationService = organizationService;
    }
 
    @Override
    public List<Site> getSites()
    {
-      List<PortalConfig> list = query(SITES);
+      List<PortalConfig> list = new LinkedList<PortalConfig>();
+      list.addAll(query(SITES));
       list.addAll(query(SPACES));
       list.addAll(query(DASHBOARDS));
 
@@ -101,8 +121,9 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
    {
       throwIllegalArgExceptionIfNull(range, "Range");
 
-      //TODO:
-      throw new NotYetImplemented();
+      //TODO: true pagination
+      return cutPageFromResults(getSites(), range);
+
    }
 
    @Override
@@ -110,7 +131,14 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
    {
       throwIllegalArgExceptionIfNull(siteId, "Site.Id");
 
-      return siteImpl(siteId).getSite();
+      try
+      {
+         return siteImpl(siteId).getSite();
+      }
+      catch (EntityNotFoundException ex)
+      {
+         return null;
+      }
    }
 
    @Override
@@ -128,22 +156,21 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
       throwIllegalArgExceptionIfNull(siteType, "Site.Type");
       throwIllegalArgExceptionIfNull(range, "range");
 
-      //TODO:
-      throw new NotYetImplemented();
+      //TODO: true pagination
+      return cutPageFromResults(getSites(siteType), range);
    }
 
    @Override
    public Site getDefaultSite()
    {
-      //TODO:
-      throw new NotYetImplemented();
+      //TODO: make this configurable on the service level with fallback to classic
+      return getSite(DEFAULT_SITE_KEY);
    }
 
    @Override
    public SiteQuery<Site> createSiteQuery()
    {
-      //TODO:
-      throw new NotYetImplemented();
+      return new SiteQueryImpl(this);
    }
 
    @Override
@@ -152,7 +179,16 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
       throwIllegalArgExceptionIfNull(siteType, "Site.Type");
       throwIllegalArgExceptionIfNull(name, "name");
 
+      //TODO: check if user or group exist for DASHBOARD / SPACE
+
       return siteImpl(Site.Id.create(siteType, name)).addSite();
+   }
+
+   public Site addSite(Site.Id id)
+   {
+      throwIllegalArgExceptionIfNull(id, "Site ID");
+
+      return addSite(id.getType(), id.getName());
    }
 
    @Override
@@ -188,23 +224,8 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
    {
       if (property != null)
       {
-         if (GateIn.LIFECYCLE_MANAGER.equals(property))
-         {
-            lcManager = GateIn.LIFECYCLE_MANAGER.getValueType().cast(value);
-         }
          properties.put(property, value);
       }
-   }
-
-
-   public void start()
-   {
-      // nothing to do
-   }
-
-   public void stop()
-   {
-      // nothing to do
    }
 
    public NavigationService getNavigationService()
@@ -217,10 +238,15 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
       List<Site> sites = new ArrayList<Site>(internalSites.size());
       for (PortalConfig internalSite : internalSites)
       {
-         Site.Id siteId = SiteImpl.fromSiteKey(new SiteKey(internalSite.getType(), internalSite.getName()));
-         sites.add(siteImpl(siteId));
+         sites.add(fromPortalConfig(internalSite));
       }
       return sites;
+   }
+
+   private Site fromPortalConfig(PortalConfig internalSite)
+   {
+      Site.Id siteId = SiteImpl.fromSiteKey(new SiteKey(internalSite.getType(), internalSite.getName()));
+      return siteImpl(siteId);
    }
 
    private SiteImpl siteImpl(Site.Id siteId)
@@ -276,14 +302,35 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
 //      }
 //   }
 
-   public void begin()
-   {
-      lcManager.begin();
-   }
 
-   public void end()
+
+   //TODO: helper until pagination is not built into layer below
+   private List<Site> cutPageFromResults(List<Site> sites, Range range)
    {
-      lcManager.end();
+
+      List<Site> results = new LinkedList<Site>();
+
+      if (range.getLimit() == 0)
+      {
+         for (int i = range.getOffset(); i < sites.size(); i++)
+         {
+            if (i < sites.size())
+            {
+               results.add(sites.get(i));
+            }
+         }
+      }
+      else
+      {
+         for (int i = range.getOffset(); i < range.getOffset() + range.getLimit(); i++)
+         {
+            if (i < sites.size())
+            {
+               results.add(sites.get(i));
+            }
+         }
+      }
+      return results;
    }
 
    public Locale getUserLocale()
@@ -294,4 +341,136 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable,
 
       return rc.getLocale();
    }
+
+   @Override
+   public void start()
+   {
+      //nothing
+   }
+
+   @Override
+   public void stop()
+   {
+      //nothing
+   }
+
+   public int getQueryResultCount(SiteQueryImpl query)
+   {
+      //TODO: performance
+      return executeSiteQueryWithoutRange(query).size();
+   }
+
+   public List<Site> executeSiteQuery(SiteQueryImpl query)
+   {
+      List<Site> results = executeSiteQueryWithoutRange(query);
+
+      if (query.getRange() != null)
+      {
+         //TODO: true pagination
+         return cutPageFromResults(results, query.getRange());
+      }
+
+      return results;
+   }
+
+   List<Site> executeSiteQueryWithoutRange(SiteQueryImpl query)
+   {
+      List<PortalConfig> queryResults = new LinkedList<PortalConfig>();
+
+      if(query.getId() != null)
+      {
+         queryResults.add(siteImpl(query.getId()).getInternalSite(false));
+      }
+      else if (query.getType() == null)
+      {
+         queryResults.addAll(query(SITES));
+         queryResults.addAll(query(SPACES));
+         queryResults.addAll(query(DASHBOARDS));
+      }
+      else
+      {
+         Query<PortalConfig> dataQuery = new Query<PortalConfig>(null, null, PortalConfig.class);
+
+         dataQuery.setOwnerType(SiteImpl.OWNER_MAP.get(query.getType()));
+
+         // In case of SITE type ownerships like query.getUserId() or query.getGroupId() are ignored.
+
+         // In case of SPACE group owner can be specified
+         if (query.getType() == Site.Type.SPACE && query.getGroupId() != null)
+         {
+            dataQuery.setOwnerId(query.getGroupId());
+         }
+
+         // In case of DASHBOARD just set user id.
+         if (query.getType() == Site.Type.DASHBOARD)
+         {
+            dataQuery.setOwnerId(query.getUserId());
+
+            //if query.getGroupId() is provided just ignore.
+         }
+
+         queryResults = query(dataQuery);
+
+
+         // In case of SPACE it may need to be filtered by user memberships in groups
+         if (query.getType() == Site.Type.SPACE &&
+            query.getUserId() != null &&
+            query.getGroupId() == null)
+         {
+            List<PortalConfig> newResults = new LinkedList<PortalConfig>();
+
+            Set<String> groupIds = new HashSet<String>();
+
+            // Obtain all group ids related to given user
+            try
+            {
+               Collection<Group> groups = organizationService
+                  .getGroupHandler().findGroupsOfUser(query.getUserId());
+
+               for (Group group : groups)
+               {
+                  groupIds.add(group.getId());
+               }
+            }
+            catch (Exception ex)
+            {
+               log.error("Failed to obtain groups of given user: " + query.getUserId(), ex);
+            }
+
+            // Filter out only related spaces
+            for (PortalConfig pc : queryResults)
+            {
+               if (groupIds.contains(pc.getName()))
+               {
+                  newResults.add(pc);
+               }
+            }
+            queryResults = newResults;
+         }
+      }
+
+
+
+      // Convert to site list
+      List<Site> results = fromList(queryResults);
+
+      //Check contains navigations
+      if (query.isContainNavigation())
+      {
+         List<Site> newResults = new LinkedList<Site>();
+         for (Site site : results)
+         {
+            if (site.getNavigation() != null && site.getNavigation().iterator().hasNext())
+            {
+               newResults.add(site);
+            }
+         }
+         results = newResults;
+      }
+
+
+      return results;
+   }
+
+
 }

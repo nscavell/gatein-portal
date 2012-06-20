@@ -54,7 +54,7 @@ public class DataStorageContext
       catch (Exception e)
       {
          log.error(e);
-         throw new ApiException("Exception reading internal data storage. See logs for details.");
+         throw new ApiException("Exception reading internal data storage. See logs for details.", e);
       }
    }
 
@@ -68,7 +68,7 @@ public class DataStorageContext
       catch (Exception e)
       {
          log.error(e);
-         throw new ApiException("Exception saving to internal data storage. See logs for details.");
+         throw new ApiException("Exception saving to internal data storage. See logs for details.", e);
       }
    }
 
@@ -81,7 +81,7 @@ public class DataStorageContext
       catch (Exception e)
       {
          log.error(e);
-         throw new ApiException("Exception querying internal data storage. See logs for details.");
+         throw new ApiException("Exception querying internal data storage. See logs for details.", e);
       }
    }
 
