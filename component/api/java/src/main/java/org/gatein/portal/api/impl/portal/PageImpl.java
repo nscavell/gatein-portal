@@ -28,7 +28,7 @@ import org.exoplatform.portal.pom.data.PageKey;
 import org.gatein.api.exception.EntityNotFoundException;
 import org.gatein.api.portal.Page;
 import org.gatein.api.portal.Site;
-import org.gatein.api.security.AccessRestriction;
+import org.gatein.api.security.SecurityRestriction;
 import org.gatein.common.NotYetImplemented;
 
 /**
@@ -91,28 +91,14 @@ public class PageImpl extends DataStorageContext implements Page
    }
 
    @Override
-   public AccessRestriction getAccessRestriction(AccessRestriction.Type type)
+   public SecurityRestriction getSecurityRestriction(SecurityRestriction.Type type)
    {
       //TODO: Implement
       throw new NotYetImplemented();
    }
 
    @Override
-   public void updateAccessRestriction(AccessRestriction accessRestriction)
-   {
-      //TODO: Implement
-      throw new NotYetImplemented();
-   }
-
-   @Override
-   public boolean isPublic()
-   {
-      //TODO: Implement
-      throw new NotYetImplemented();
-   }
-
-   @Override
-   public void setPublic(boolean access)
+   public void updateSecurityRestriction(SecurityRestriction securityRestriction)
    {
       //TODO: Implement
       throw new NotYetImplemented();
