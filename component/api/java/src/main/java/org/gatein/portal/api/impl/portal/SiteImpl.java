@@ -97,6 +97,18 @@ public class SiteImpl extends DataStorageContext implements Site
    }
 
    @Override
+   public String getName()
+   {
+      return getId().getName();
+   }
+
+   @Override
+   public Type getType()
+   {
+      return getId().getType();
+   }
+
+   @Override
    public String toString()
    {
       return id.toString();
