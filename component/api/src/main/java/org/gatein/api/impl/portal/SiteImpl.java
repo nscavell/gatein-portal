@@ -44,6 +44,7 @@ import org.gatein.api.portal.Page;
 import org.gatein.api.portal.Site;
 import org.gatein.api.security.SecurityRestriction;
 import org.gatein.common.NotYetImplemented;
+import org.gatein.common.util.ParameterValidation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -158,6 +159,29 @@ public class SiteImpl extends DataStorageContext implements Site
          public void modify(PortalConfig data, DataStorage dataStorage) throws Exception
          {
             data.setLocale(locale.getLanguage());
+            dataStorage.save(data);
+         }
+      });
+   }
+
+   @Override
+   public String getSkin()
+   {
+      return getInternalSite(true).getSkin();
+   }
+
+   @Override
+   public void setSkin(String skin)
+   {
+      ParameterValidation.throwIllegalArgExceptionIfNullOrEmpty(skin, "Skin", null);
+
+      final PortalConfig portalConfig = getInternalSite(true);
+      portalConfig.setSkin(skin);
+      execute(portalConfig, new Modify<PortalConfig>()
+      {
+         @Override
+         public void modify(PortalConfig data, DataStorage dataStorage) throws Exception
+         {
             dataStorage.save(data);
          }
       });
