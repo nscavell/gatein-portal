@@ -34,6 +34,7 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.exoplatform.web.application.RequestContext;
 import org.gatein.api.GateIn;
+import org.gatein.api.Properties;
 import org.gatein.api.commons.Filter;
 import org.gatein.api.commons.PropertyType;
 import org.gatein.api.commons.Range;
@@ -61,7 +62,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import static org.gatein.common.util.ParameterValidation.*;
+import static org.gatein.common.util.ParameterValidation.throwIllegalArgExceptionIfNull;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
@@ -182,10 +183,13 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable
    public List<Site> getSites(Filter<Site> filter)
    {
       List<Site> sites = getSites();
-      for (Iterator<Site> iter = sites.iterator(); iter.hasNext();)
+      for (Iterator<Site> iter = sites.iterator(); iter.hasNext(); )
       {
          boolean keep = filter.accept(iter.next());
-         if (!keep) iter.remove();
+         if (!keep)
+         {
+            iter.remove();
+         }
       }
 
       return sites;
@@ -244,6 +248,12 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable
       ParameterValidation.throwIllegalArgExceptionIfNull(siteName, "Site name");
 
       removeSite(Site.Id.create(siteType, siteName));
+   }
+
+   @Override
+   public Properties getKnownProperties()
+   {
+      return PropertiesImpl.getInstance();
    }
 
    public <T> T getProperty(PropertyType<T> property)
@@ -336,7 +346,6 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable
 //   }
 
 
-
    //TODO: helper until pagination is not built into layer below
    private List<Site> cutPageFromResults(List<Site> sites, Range range)
    {
@@ -370,7 +379,10 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable
    {
       //TODO: Workaround until RequestContext is sorted out in rest context
       RequestContext rc = RequestContext.getCurrentInstance();
-      if (rc == null) return Locale.getDefault();
+      if (rc == null)
+      {
+         return Locale.getDefault();
+      }
 
       return rc.getLocale();
    }
@@ -426,7 +438,7 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable
    {
       List<PortalConfig> queryResults = new LinkedList<PortalConfig>();
 
-      if(query.getId() != null)
+      if (query.getId() != null)
       {
          queryResults.add(siteImpl(query.getId()).getInternalSite(false));
       }
@@ -504,7 +516,6 @@ public class GateInImpl extends DataStorageContext implements GateIn, Startable
             queryResults = newResults;
          }
       }
-
 
 
       // Convert to site list

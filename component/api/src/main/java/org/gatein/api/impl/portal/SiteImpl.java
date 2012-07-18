@@ -30,6 +30,7 @@ import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationState;
+import org.gatein.api.Properties;
 import org.gatein.api.commons.Filter;
 import org.gatein.api.commons.PropertyType;
 import org.gatein.api.commons.Range;
@@ -43,6 +44,7 @@ import org.gatein.api.portal.Page;
 import org.gatein.api.portal.Site;
 import org.gatein.api.security.SecurityRestriction;
 import org.gatein.common.NotYetImplemented;
+import org.gatein.common.util.ParameterValidation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,7 +55,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import static org.gatein.common.util.ParameterValidation.*;
+import static org.gatein.common.util.ParameterValidation.throwIllegalArgExceptionIfNull;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
@@ -163,6 +165,29 @@ public class SiteImpl extends DataStorageContext implements Site
    }
 
    @Override
+   public String getSkin()
+   {
+      return getInternalSite(true).getSkin();
+   }
+
+   @Override
+   public void setSkin(String skin)
+   {
+      ParameterValidation.throwIllegalArgExceptionIfNullOrEmpty(skin, "Skin", null);
+
+      final PortalConfig portalConfig = getInternalSite(true);
+      portalConfig.setSkin(skin);
+      execute(portalConfig, new Modify<PortalConfig>()
+      {
+         @Override
+         public void modify(PortalConfig data, DataStorage dataStorage) throws Exception
+         {
+            dataStorage.save(data);
+         }
+      });
+   }
+
+   @Override
    public Navigation getNavigation(boolean create)
    {
       if (navigation == null)
@@ -254,10 +279,13 @@ public class SiteImpl extends DataStorageContext implements Site
    public List<Page> getPages(Filter<Page> filter)
    {
       List<Page> pages = getPages();
-      for (Iterator<Page> iter = pages.iterator(); iter.hasNext();)
+      for (Iterator<Page> iter = pages.iterator(); iter.hasNext(); )
       {
          boolean keep = filter.accept(iter.next());
-         if (!keep) iter.remove();
+         if (!keep)
+         {
+            iter.remove();
+         }
       }
 
       return pages;
@@ -294,24 +322,53 @@ public class SiteImpl extends DataStorageContext implements Site
    @Override
    public <T> T getProperty(PropertyType<T> property)
    {
-
-      if (property == null)
+      final PortalConfig portalConfig = getInternalSite(true);
+      Object propertyValue;
+      if (Properties.SESSION_BEHAVIOR.equals(property))
+      {
+         propertyValue = portalConfig.getSessionAlive();
+      }
+      else if (Properties.SHOW_PORTLET_INFO_BAR.equals(property))
+      {
+         propertyValue = portalConfig.isShowInfobar();
+      }
+      else
       {
          return null;
       }
 
-      //TODO
-      throw new NotYetImplemented();
+      return property.getValueType().cast(propertyValue);
    }
 
    @Override
    public <T> void setProperty(PropertyType<T> property, T value)
    {
       throwIllegalArgExceptionIfNull(property, "property");
+      throwIllegalArgExceptionIfNull(value, "value");
 
+      final PortalConfig portalConfig = getInternalSite(true);
 
-      //TODO
-      throw new NotYetImplemented();
+      if (Properties.SESSION_BEHAVIOR.equals(property))
+      {
+         portalConfig.setSessionAlive((String)value);
+      }
+      else if (Properties.SHOW_PORTLET_INFO_BAR.equals(property))
+      {
+         portalConfig.setShowInfobar((Boolean)value);
+      }
+      else
+      {
+         throw new IllegalArgumentException("Unkown property:" + property.getName());
+      }
+
+      execute(portalConfig, new Modify<PortalConfig>()
+      {
+         @Override
+         public void modify(PortalConfig data, DataStorage dataStorage) throws Exception
+         {
+            dataStorage.save(data);
+         }
+      });
    }
 
    // Ensures the site exists. Useful to create a simple impl and call this method which handles errors and if site is not found.
@@ -337,7 +394,10 @@ public class SiteImpl extends DataStorageContext implements Site
    public Site addSite()
    {
       PortalConfig internalSite = getInternalSite(false);
-      if (internalSite != null) throw new ApiException("Cannot add site, site already exists for id " + id);
+      if (internalSite != null)
+      {
+         throw new ApiException("Cannot add site, site already exists for id " + id);
+      }
 
       //TODO: Need to determine what good default values are when creating a site.
       SiteKey siteKey = getSiteKey();
@@ -346,7 +406,7 @@ public class SiteImpl extends DataStorageContext implements Site
 
       if (id.getType() == Type.SITE)
       {
-         newSite.setAccessPermissions(new String[] {UserACL.EVERYONE});
+         newSite.setAccessPermissions(new String[]{UserACL.EVERYONE});
       }
 
       execute(newSite, new Modify<PortalConfig>()
@@ -377,7 +437,10 @@ public class SiteImpl extends DataStorageContext implements Site
             return dataStorage.getPortalConfig(siteKey.getTypeName(), siteKey.getName());
          }
       });
-      if (pc == null && required) throw new EntityNotFoundException("Site not found for id " + id);
+      if (pc == null && required)
+      {
+         throw new EntityNotFoundException("Site not found for id " + id);
+      }
 
       return pc;
    }
