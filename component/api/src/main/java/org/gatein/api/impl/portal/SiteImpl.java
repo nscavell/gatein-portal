@@ -336,6 +336,15 @@ public class SiteImpl extends DataStorageContext implements Site
       {
          throw new IllegalArgumentException("Unkown property:" + property.getName());
       }
+
+      execute(portalConfig, new Modify<PortalConfig>()
+      {
+         @Override
+         public void modify(PortalConfig data, DataStorage dataStorage) throws Exception
+         {
+            dataStorage.save(data);
+         }
+      });
    }
 
    // Ensures the site exists. Useful to create a simple impl and call this method which handles errors and if site is not found.
