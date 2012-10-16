@@ -127,6 +127,23 @@
 
   </dependencies>
   
+  <profiles>
+    <profile>
+      <id>jcr1.14</id>
+      <properties>
+        <org.exoplatform.jcr.version>1.14.6-GA</org.exoplatform.jcr.version>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.lucene</groupId>
+          <artifactId>lucene-core</artifactId>
+          <scope>test</scope>
+          <version>2.9.4</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles> 
+ 
   <build>
 
     <pluginManagement>

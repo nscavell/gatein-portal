@@ -88,6 +88,12 @@ public class PageUtils
          page.getAccessPermissions() != null ? Arrays.asList(page.getAccessPermissions()) : null, page.getEditPermission());
    }
 
+   public static PageState toPageState(Page page)
+   {
+      return new PageState(page.getTitle(), page.getDescription(), page.isShowMaxWindow(),page.getFactoryId(),
+         page.getAccessPermissions() != null ? Arrays.asList(page.getAccessPermissions()) : null, page.getEditPermission());
+   }
+   
    public static <S> Application<S> copy(Application<S> existing)
    {
       Application<S> application = new Application<S>(existing.getType());
