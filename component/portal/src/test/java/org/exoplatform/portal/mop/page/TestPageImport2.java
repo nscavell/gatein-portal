@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class TestPageImport2 extends AbstractTestPageService
 {
-   public void disable_testPageSave() throws Exception
+   public void testPageSave() throws Exception
    {
       final DataStorage ds = getComponent(DataStorage.class);
       final SiteKey siteKey = SiteKey.portal("import_pages");
@@ -90,7 +90,7 @@ public class TestPageImport2 extends AbstractTestPageService
       });
    }
 
-   public void testPageDelete() throws Exception
+   public void disable_testPageDelete() throws Exception
    {
       final DataStorage ds = getComponent(DataStorage.class);
       final SiteKey siteKey = SiteKey.portal("import_pages");

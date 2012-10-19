@@ -1285,6 +1285,19 @@ memory option properties. This should be removed when we can just set the compil
          </properties>
       </profile>
       <profile>
+         <id>postgresql</id>
+         <dependencies>
+            <dependency>
+               <groupId>postgresql</groupId>
+               <artifactId>postgresql</artifactId>
+               <version>9.1-902.jdbc4</version>
+            </dependency>
+         </dependencies>
+         <properties>
+            <surefire.exo.profiles>postgresql</surefire.exo.profiles>
+         </properties>
+      </profile>
+      <profile>
          <id>h2</id>
          <dependencies>
             <dependency>

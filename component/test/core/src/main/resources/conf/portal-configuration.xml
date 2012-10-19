@@ -71,6 +71,14 @@
           <property name="username" value="root"/>
           <property name="password" value=""/>
         </properties-param>
+        <properties-param profiles="postgresql">
+          <name>ref-addresses</name>
+          <description>ref-addresses</description>
+          <property name="driverClassName" value="org.postgresql.Driver"/>
+          <property name="url" value="jdbc:postgresql://127.0.0.1/jdbcjcr"/>
+          <property name="username" value="gatein"/>
+          <property name="password" value="gatein"/>
+        </properties-param>
         <properties-param profiles="h2">
           <name>ref-addresses</name>
           <description>ref-addresses</description>
