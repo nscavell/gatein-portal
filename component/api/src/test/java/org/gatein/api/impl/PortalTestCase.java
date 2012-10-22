@@ -27,6 +27,8 @@ import org.gatein.api.portal.Group;
 import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.Queries;
 import org.gatein.api.portal.User;
+import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteQuery;
 import org.gatein.api.util.Filter;
@@ -317,6 +319,14 @@ public class PortalTestCase extends AbstractAPITestCase
       createSite(SiteType.USER, "user10");
       Site dashboard = portal.getSite(Ids.siteId(new User("user10")));
       assertNotNull(dashboard);
+   }
+   
+   public void testGetNode()
+   {
+      createSite(SiteType.PORTAL, "classic");
+      Node node = portal.getNode(Ids.siteId("classic"), new NodePath("default"));
+      assertNotNull(node);
+      assertEquals("default", node.getName());
    }
 
    // Just remove all sites
