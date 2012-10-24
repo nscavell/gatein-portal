@@ -17,6 +17,10 @@ import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeModel;
 import org.exoplatform.portal.mop.navigation.Scope;
+import org.exoplatform.portal.mop.page.PageContext;
+import org.exoplatform.portal.mop.page.PageKey;
+import org.exoplatform.portal.mop.page.PageService;
+import org.exoplatform.portal.mop.page.PageState;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
@@ -68,6 +72,8 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
     */
    protected Locale userLocale;
 
+   private PageService pageService;
+
    @Override
    protected void setUp() throws Exception
    {
@@ -81,6 +87,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
       DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
       DescriptionService descriptionService = (DescriptionService) container.getComponentInstanceOfType(DescriptionService.class);
       ResourceBundleManager bundleManager = (ResourceBundleManager) container.getComponentInstanceOfType(ResourceBundleManager.class);
+      pageService = (PageService) container.getComponentInstanceOfType(PageService.class);
 
       this.mgr = mgr;
       this.navService = navService;
@@ -111,7 +118,9 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
          NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(0));
          navService.saveNavigation(nav);
          //
-         storage.create(new org.exoplatform.portal.config.model.Page(type.getName(), name, "homepage"));
+         // storage.create(new org.exoplatform.portal.config.model.Page(type.getName(), name, "homepage"));
+         pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), "homepage"), new PageState("displayName",
+               "description", false, null, null, null)));
 
          //
          return navService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);

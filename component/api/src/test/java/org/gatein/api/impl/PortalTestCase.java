@@ -23,16 +23,21 @@
 package org.gatein.api.impl;
 
 import org.exoplatform.portal.mop.SiteType;
+import org.gatein.api.NavigationNotFoundException;
 import org.gatein.api.portal.Group;
 import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.Queries;
 import org.gatein.api.portal.User;
+import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.Site.Id;
 import org.gatein.api.portal.site.SiteQuery;
 import org.gatein.api.util.Filter;
 import org.gatein.api.util.Pagination;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -41,6 +46,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class PortalTestCase extends AbstractAPITestCase
 {
@@ -321,6 +327,69 @@ public class PortalTestCase extends AbstractAPITestCase
       assertNotNull(dashboard);
    }
    
+   public void testGetNavigation()
+   {
+      Id siteId = Ids.siteId("classic");
+
+      try
+      {
+         portal.getNavigation(null, null, null);
+         Assert.fail("Expected NullPointerException");
+      }
+      catch (NullPointerException e)
+      {
+      }
+
+      Assert.assertNull(portal.getNavigation(siteId, null, null));
+
+      createSite(SiteType.PORTAL, "classic");
+
+      portal.saveNavigation(new Navigation(siteId, 20));
+
+      Navigation navigation = portal.getNavigation(siteId, null, null);
+      Assert.assertNotNull(navigation);
+      Assert.assertEquals(20, navigation.getPriority());
+      Assert.assertTrue(navigation.getNodes().isEmpty());
+
+      // TODO Navigation with nodes, filter, visitor
+   }
+
+   public void testSaveNavigation()
+   {
+      createSite(SiteType.PORTAL, "classic");
+      
+      Id siteId = Ids.siteId("classic");
+
+      Navigation navigation = new Navigation(siteId, 10);
+      portal.saveNavigation(navigation);
+      
+      navigation = portal.getNavigation(siteId, null, null);
+      Assert.assertEquals(10, navigation.getPriority());
+
+      navigation.setPriority(20);
+      portal.saveNavigation(navigation);
+
+      navigation = portal.getNavigation(siteId, null, null);
+      Assert.assertEquals(20, navigation.getPriority());
+      
+      Node parent1 = new Node("parent1");
+      parent1.setPageId(Ids.pageId("classic", "homepage"));
+      Node child1 = new Node("child1");
+      child1.setPageId(Ids.pageId("classic", "homepage"));
+      parent1.addChild(child1);
+
+      Node parent2 = new Node("parent2");
+      parent2.setPageId(Ids.pageId("classic", "homepage"));
+      Node child2 = new Node("child2");
+      child2.setPageId(Ids.pageId("classic", "homepage"));
+      parent2.addChild(child2);
+      
+      navigation.addNode(parent1);
+      navigation.addNode(parent2);
+
+      portal.saveNavigation(navigation);
+   }
+
    public void testGetNode()
    {
       createSite(SiteType.PORTAL, "classic");

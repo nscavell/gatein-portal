@@ -3,7 +3,11 @@ package org.gatein.api.impl;
 import java.io.InputStream;
 import java.util.UUID;
 
-import javax.inject.Inject;
+import javax.annotation.Resource;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
 import junit.framework.Assert;
@@ -23,6 +27,9 @@ import org.gatein.api.portal.navigation.NodePath;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
+import org.jboss.shrinkwrap.api.ArchivePath;
+import org.jboss.shrinkwrap.api.Filter;
+import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -33,145 +40,208 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
-public class TmpPortalIT {
+public class TmpPortalIT
+{
 
-    private PortalImpl portal;
-    private POMSession session;
+   private PortalImpl portal;
+   private POMSession session;
 
-    @Deployment
-    public static JavaArchive createDeployment() {
-        JavaArchive javaArchive = ShrinkWrap.create(JavaArchive.class).addClass(TmpPortalIT.class).addPackage("org.gatein.api")
-                .addPackage("org.gatein.api.internal").addPackage("org.gatein.management.api")
-                .addPackage("org.gatein.api.util").addPackage("org.gatein.api.portal").addPackage("org.gatein.api.portal.page")
-                .addPackage("org.gatein.api.portal.site").addPackage("org.gatein.api.portal.navigation")
-                .addPackage("org.gatein.api.impl").addPackage("org.gatein.api.impl.portal")
-                .addPackage("org.gatein.api.impl.portal.navigation").addPackage("org.gatein.api.management")
-                .addPackage("org.gatein.api.management.portal").addPackage("org.gatein.management.api.model");
+   // @Resource(mappedName = "java:jboss/UserTransaction")
+   // private UserTransaction tx;
+   private PortalContainer container;
 
-        final ManifestBuilder mf = ManifestBuilder.newInstance();
-        mf.addManifestHeader("Dependencies", "org.gatein.common, org.gatein.lib, org.picocontainer");
-        javaArchive.setManifest(new Asset() {
-            @Override
-            public InputStream openStream() {
-                return mf.openStream();
+   @Deployment
+   public static JavaArchive createDeployment()
+   {
+      Filter<ArchivePath> filter = new Filter<ArchivePath>()
+      {
+         final Class<?>[] ignore = new Class[]
+         { AbstractAPITestCase.class, PortalTestCase.class, SimpleRequestContext.class };
+
+         @Override
+         public boolean include(ArchivePath object)
+         {
+            for (Class<?> c : ignore)
+            {
+               String n = "/" + c.getName().replace('.', '/');
+               if (object.get().startsWith(n))
+               {
+                  return false;
+               }
             }
-        });
+            return true;
+         }
+      };
 
-        return javaArchive;
-    }
+      JavaArchive javaArchive = ShrinkWrap
+            .create(JavaArchive.class)
+            .addPackages(true, filter, "org.gatein.api", "org.gatein.api.impl", "org.gatein.api.internal",
+                  "org.gatein.management.api", "org.gatein.api.util", "org.gatein.api.portal", "org.gatein.api.portal.page",
+                  "org.gatein.api.portal.site", "org.gatein.api.portal.navigation", "org.gatein.api.impl.portal",
+                  "org.gatein.api.impl.portal.navigation", "org.gatein.api.management", "org.gatein.api.management.portal",
+                  "org.gatein.management.api.model").addClass(ManifestBuilder.class);
 
-    @Before
-    public void setup() {
-        PortalContainer container = PortalContainer.getInstance();
+      final ManifestBuilder mf = ManifestBuilder.newInstance();
+      mf.addManifestHeader("Dependencies", "org.gatein.common, org.gatein.lib, org.picocontainer");
+      javaArchive.setManifest(new Asset()
+      {
+         @Override
+         public InputStream openStream()
+         {
+            return mf.openStream();
+         }
+      });
 
-        POMSessionManager pomSession = (POMSessionManager) container.getComponentInstanceOfType(POMSessionManager.class);
-        session = pomSession.openSession();
+      javaArchive.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
 
-        DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
-        NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
-        DescriptionService descriptionService = (DescriptionService) container
-                .getComponentInstanceOfType(DescriptionService.class);
-        OrganizationService orgService = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
-        ResourceBundleManager bundleManager = (ResourceBundleManager) container
-                .getComponentInstanceOfType(ResourceBundleManager.class);
+      return javaArchive;
+   }
 
-        portal = new PortalImpl(dataStorage, navService, descriptionService, orgService, bundleManager);
-    }
+   @Before
+   public void setup()
+   {
+      container = PortalContainer.getInstance();
 
-    @After
-    public void close() {
-        session.save();
-        session.close();
-    }
+      POMSessionManager pomSession = (POMSessionManager) container.getComponentInstanceOfType(POMSessionManager.class);
+      session = pomSession.openSession();
+      DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
+      NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
+      DescriptionService descriptionService = (DescriptionService) container
+            .getComponentInstanceOfType(DescriptionService.class);
+      OrganizationService orgService = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
+      ResourceBundleManager bundleManager = (ResourceBundleManager) container
+            .getComponentInstanceOfType(ResourceBundleManager.class);
 
-    @Test
-    public void navigation() {
-        Navigation navigation = portal.getNavigation(Ids.siteId("classic"), null, null);
-        printNavigation(navigation);
-    }
+      portal = new PortalImpl(dataStorage, navService, descriptionService, orgService, bundleManager);
+   }
 
-    private void printNavigation(Navigation navigation) {
-        for (Node n : navigation.getNodes()) {
-            printNodeTree(n);
-        }
-    }
-    
-    @Test
-    public void getNode() {
-        Node node = portal.getNode(Ids.siteId("classic"), new NodePath("home", "Test2", "Test3"));
-        
-        printNodeTree(node);
-        
-        Assert.assertNotNull(node);
-        Assert.assertEquals("Test3", node.getName());
+   @After
+   public void close()
+   {
+      if (session != null)
+      {
+         session.close();
+      }
+   }
 
-        Assert.assertNull(node.getChildren());
+   @Test
+   public void navigation()
+   {
+      Navigation navigation = portal.getNavigation(Ids.siteId("classic"), null, null);
+      printNavigation(navigation);
+   }
 
-        node = node.getParent();
-        Assert.assertNotNull(node);
-        Assert.assertEquals("Test2", node.getName());
+   private void printNavigation(Navigation navigation)
+   {
+      for (Node n : navigation.getNodes())
+      {
+         printNodeTree(n);
+      }
+   }
 
-        node = node.getParent();
-        Assert.assertNotNull(node);
-        Assert.assertEquals("home", node.getName());
-
-        node = node.getParent();
-        Assert.assertNull(node);
-    }
-
-    @Test
-    public void addChild() throws Exception {
-        Node homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
-        portal.loadNodes(homeNode, null);
-        
-        Node node2 = new Node(UUID.randomUUID().toString());
-        node2.setPageId(homeNode.getPageId());
-        
-        homeNode.addChild(node2);
-//        portal.saveNode(homeNode);
-        portal.saveNode(node2);
-        
-        homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
-        portal.loadNodes(homeNode, null);
-        printNodeTree(homeNode);
-    }
-    
+   @Test
+   public void withTx() throws NotSupportedException, SystemException, NamingException
+   {
+      // tx.begin();
 
 
-    @Test
-    public void removeChild() throws Exception {
-        Node homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
-        portal.loadNodes(homeNode, null);
-        
-        homeNode.removeNode("Test");
-        portal.saveNode(homeNode);
-        printNodeTree(homeNode);
+      Navigation navigation = portal.getNavigation(Ids.siteId("classic"), null, null);
+      System.out.println(navigation.getPriority());
+      navigation.setPriority(100);
+      portal.saveNavigation(navigation);
 
-        System.out.println("XXXXX");
-        
-        homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
-        portal.loadNodes(homeNode, null);
-        printNodeTree(homeNode);
-    }
+      // session.save();
 
-    private void printNodeTree(Node nc) {
-        while (nc.getParent() != null) {
-            nc = nc.getParent();
-        }
-printNodeTree(nc, 0);
-    }
+      // tx.setRollbackOnly();
 
-    private void printNodeTree(Node nc, int depth) {
-        for (int i = 0; i < depth; i++) {
-            System.out.print("  ");
-        }
-        if (nc.getChildren() != null) {
-            System.out.println(nc.getName());
-            for (Node c : nc.getChildren()) {
-                printNodeTree(c, depth + 1);
-            }
-        } else {
-            System.out.println(nc.getName() + " (children not loaded)");
-        }
-    }
+      // session.close();
+   }
+
+   @Test
+   public void getNode()
+   {
+      Node node = portal.getNode(Ids.siteId("classic"), new NodePath("home", "Test2", "Test3"));
+
+      printNodeTree(node);
+
+      Assert.assertNotNull(node);
+      Assert.assertEquals("Test3", node.getName());
+
+      Assert.assertNull(node.getChildren());
+
+      node = node.getParent();
+      Assert.assertNotNull(node);
+      Assert.assertEquals("Test2", node.getName());
+
+      node = node.getParent();
+      Assert.assertNotNull(node);
+      Assert.assertEquals("home", node.getName());
+
+      node = node.getParent();
+      Assert.assertNull(node);
+   }
+
+   @Test
+   public void addChild() throws Exception
+   {
+      Node homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      portal.loadNodes(homeNode, null);
+
+      Node node2 = new Node(UUID.randomUUID().toString());
+      node2.setPageId(homeNode.getPageId());
+
+      homeNode.addChild(node2);
+      // portal.saveNode(homeNode);
+      portal.saveNode(node2);
+
+      homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      portal.loadNodes(homeNode, null);
+      printNodeTree(homeNode);
+   }
+
+   @Test
+   public void removeChild() throws Exception
+   {
+      Node homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      portal.loadNodes(homeNode, null);
+
+      homeNode.removeNode("Test");
+      portal.saveNode(homeNode);
+      printNodeTree(homeNode);
+
+      System.out.println("XXXXX");
+
+      homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      portal.loadNodes(homeNode, null);
+      printNodeTree(homeNode);
+   }
+
+   private void printNodeTree(Node nc)
+   {
+      while (nc.getParent() != null)
+      {
+         nc = nc.getParent();
+      }
+      printNodeTree(nc, 0);
+   }
+
+   private void printNodeTree(Node nc, int depth)
+   {
+      for (int i = 0; i < depth; i++)
+      {
+         System.out.print("  ");
+      }
+      if (nc.getChildren() != null)
+      {
+         System.out.println(nc.getName());
+         for (Node c : nc.getChildren())
+         {
+            printNodeTree(c, depth + 1);
+         }
+      }
+      else
+      {
+         System.out.println(nc.getName() + " (children not loaded)");
+      }
+   }
 }
