@@ -24,10 +24,12 @@ package org.gatein.api.impl;
 
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.portal.mop.page.PageKey;
 import org.gatein.api.portal.Group;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.Permissions;
 import org.gatein.api.portal.User;
+import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.site.Site;
 
 import java.util.Iterator;
@@ -77,6 +79,22 @@ public class Util
       }
 
       return portalConfig;
+   }
+
+   public static Page.Id from(PageKey pageKey)
+   {
+      SiteKey siteKey = pageKey.getSite();
+      switch (pageKey.getSite().getType())
+      {
+         case PORTAL:
+            return pageId(siteKey.getName(), pageKey.getName());
+         case GROUP:
+            return pageId(new Group(siteKey.getName()), pageKey.getName());
+         case USER:
+            return pageId(new User(siteKey.getName()), pageKey.getName());
+         default:
+            throw new AssertionError();
+      }
    }
 
    public static Site.Id from(SiteKey siteKey)

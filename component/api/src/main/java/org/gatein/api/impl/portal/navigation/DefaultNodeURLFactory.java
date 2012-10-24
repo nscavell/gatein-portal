@@ -21,71 +21,39 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import java.lang.reflect.Field;
-import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
 
+import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.web.application.RequestContext;
+import org.exoplatform.web.url.navigation.NavigationResource;
+import org.exoplatform.web.url.navigation.NodeURL;
 import org.gatein.api.ApiException;
+import org.gatein.api.impl.Util;
 import org.gatein.api.internal.URLFactory;
 import org.gatein.api.portal.navigation.Node;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class NodeAccessor
+public class DefaultNodeURLFactory implements URLFactory
 {
-   public static Field children = getField("children");
-   public static Field childrenLoaded = getField("childrenLoaded");
-
-   public static Field urlFactory = getField("urlFactory");
-
-   private static Field getField(String name)
+   @Override
+   public URI createURL(Node node)
    {
       try
       {
-         Field f = Node.class.getDeclaredField(name);
-         f.setAccessible(true);
-         return f;
+         SiteKey siteKey = Util.from(node.getPageId().getSiteId());
+         RequestContext requestContext = RequestContext.getCurrentInstance();
+         NavigationResource navResource = new NavigationResource(siteKey, node.getPath().subPath(1, node.getPath().size())
+               .toString().substring(1));
+         NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
+         nodeURL.setSchemeUse(true);
+         return new URI(nodeURL.toString());
       }
-      catch (Exception e)
+      catch (URISyntaxException e)
       {
-         throw new RuntimeException(e);
-      }
-   }
-
-   @SuppressWarnings("unchecked")
-   public static List<Node> getChildren(Node node)
-   {
-      try
-      {
-         return (List<Node>) NodeAccessor.children.get(node);
-      }
-      catch (Throwable e)
-      {
-         throw new ApiException("Internal api error", e);
-      }
-   }
-
-   public static void setChildrenLoaded(Node node, boolean loaded)
-   {
-      try
-      {
-         NodeAccessor.childrenLoaded.set(node, loaded);
-      }
-      catch (Throwable e)
-      {
-         throw new ApiException("Internal api error", e);
-      }
-   }
-
-   public static void setURLFactory(Node node, URLFactory urlFactory)
-   {
-      try
-      {
-         NodeAccessor.urlFactory.set(node, urlFactory);
-      }
-      catch (Throwable e)
-      {
-         throw new ApiException("Internal api error", e);
+         throw new ApiException("Failed to resolve url", e);
       }
    }
 }

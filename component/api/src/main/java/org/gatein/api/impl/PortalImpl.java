@@ -28,21 +28,14 @@ import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.mop.description.DescriptionService;
-import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.portal.mop.navigation.NavigationState;
-import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeModel;
-import org.exoplatform.portal.mop.navigation.NodeState;
-import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.portal.DataStorageContext;
-import org.gatein.api.impl.portal.navigation.NavigationUtil;
-import org.gatein.api.impl.portal.navigation.NodeAccessor;
-import org.gatein.api.impl.portal.navigation.NodePathVisitor;
-import org.gatein.api.impl.portal.navigation.NodeVisitorScope;
+import org.gatein.api.impl.portal.navigation.NavigationServiceContext;
+import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
+import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
 import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
@@ -70,6 +63,7 @@ import java.util.List;
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
  * @author <a href="mailto:chris.laprun@jboss.com">Chris Laprun</a>
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class PortalImpl extends DataStorageContext implements Portal, Startable
 {
@@ -193,115 +187,67 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       });
    }
 
-    /**
-     * TODO Map errors
-     * 
-     * TODO Decide on lazy loading - do we allow lazy loading? do we throw an error for unloaded nodes? should we return null
-     * for children that are not loaded?
-     * 
-     * TODO Do we include root node (i.e. navigation node) as parent?
-     */
-    @Override
-    public Navigation getNavigation(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter) {
-        NavigationContext navCtx = getNavigationContext(siteId);
-        NodeContext<NodeContext<?>> rootNodeCtx = getRootNodeContext(visitor, navCtx);
-        return NavigationUtil.from(siteId, navCtx, rootNodeCtx);
-    }
+   /**
+    * TODO Add filter functionality
+    */
+   @Override
+   public Navigation getNavigation(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter)
+   {
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, visitor);
+      return ctx.getNavigation();
+   }
 
-    private NodeContext<NodeContext<?>> getRootNodeContext(NodeVisitor visitor, NavigationContext navCtx) {
-        Scope scope = visitor != null ? new NodeVisitorScope(visitor) : Scope.ALL;
-        NodeContext<NodeContext<?>> rootNodeCtx = navigationService.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
-        return rootNodeCtx;
-    }
+   /**
+    * TODO What if navigation context has changed?
+    */
+   @Override
+   public void saveNavigation(Navigation navigation)
+   {
+      synchronized (navigation)
+      {
+         LoadedNodeScope scope = new LoadedNodeScope(navigation.getNodes());
+         NavigationServiceContext ctx = new NavigationServiceContext(navigationService, navigation.getSiteId(), scope);
+         ctx.saveNavigation(navigation);
+      }
+   }
 
-    /**
-     * TODO Do we cascade save?
-     */
-    @Override
-    public void saveNavigation(Navigation navigation) {
-        synchronized (navigation) {
-            NavigationContext navigationContext = getNavigationContext(navigation.getSiteId());
-            if (navigation.getPriority() != navigationContext.getState().getPriority()) {
-                navigationContext.setState(new NavigationState(navigation.getPriority()));
-            }
-            navigationService.saveNavigation(navigationContext);
-        }
-    }
+   @Override
+   public Node getNode(Site.Id siteId, NodePath nodePath)
+   {
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodePathScope(nodePath));
+      return ctx.getNode(nodePath);
+   }
 
-    /**
-     * TODO Should this method also include a NodeVisitor for what descendants to load?
-     */
-    @Override
-    public Node getNode(Site.Id siteId, NodePath nodePath) {
-        Navigation nav = getNavigation(siteId, new NodePathVisitor(nodePath, false), null);
-        return NavigationUtil.findNode(nav, nodePath);
-    }
+   /**
+    * TODO Wouldn't this return a list of nodes? If it returns the root node, why not just use getNavigation instead?
+    */
+   @Override
+   public Node getNode(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter)
+   {
+      return null;
+   }
 
-    /**
-     * TODO This method doesn't make sense, as it will most likely return a list of nodes
-     */
-    @Override
-    public Node getNode(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter) {
-        return null;
-    }
+   /**
+    * TODO What does this method do?
+    */
+   @Override
+   public void loadNodes(Node parent, NodeVisitor visitor)
+   {
+   }
 
-    /**
-     * TODO Should this be renamed to loadChildNodes? or does it also load ancestors?
-     * 
-     * TODO Should this update the parent as well?
-     * 
-     * TODO Should this add a filter as well?
-     */
-    @Override
-    public void loadNodes(Node parent, NodeVisitor visitor) {
-        synchronized (parent) {
-            Navigation navigation = getNavigation(parent.getPageId().getSiteId(), visitor, null);
-            List<Node> children = new ArrayList<Node>(NavigationUtil.findNode(navigation, parent.getPath()).getChildren());
-            NodeAccessor.setChildren(parent, children);
-        }
-    }
-
-    private NavigationContext getNavigationContext(Site.Id siteId) {
-        SiteKey siteKey = Util.from(siteId);
-        return navigationService.loadNavigation(siteKey);
-    }
-
-    /**
-     * TODO Do we cascade saves (i.e. update parent/children)?
-     */
-    @Override
-    public void saveNode(Node node) {
-        synchronized (node) {
-            NavigationContext navCtx = getNavigationContext(node.getPageId().getSiteId());
-            NodeContext<NodeContext<?>> rootNodeCtx = getRootNodeContext(new NodePathVisitor(node.getPath(), true), navCtx);
-            NodeContext<NodeContext<?>> nodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath());
-
-            if (nodeCtx == null) {
-                NodeContext<NodeContext<?>> parentNodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath()
-                        .getParent());
-                nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
-            }
-
-            if (!node.getName().equals(nodeCtx.getName())) {
-                nodeCtx.setName(node.getName());
-            }
-
-            NodeState nodeState = NavigationUtil.from(node, nodeCtx);
-            if (!nodeState.equals(nodeCtx.getState())) {
-                nodeCtx.setState(nodeState);
-            }
-
-            for (NodeContext<?> childCtx : nodeCtx.getNodes()) {
-                if (node.getChild(childCtx.getName()) == null) {
-                    if (!nodeCtx.removeNode(childCtx.getName())) {
-                        throw new RuntimeException("Failed to remove child");
-                    }   
-                }
-            }
-
-            navigationService.saveNode(nodeCtx, null);
-        }
-    }
+   /**
+    * TODO What if node context has changed (see NavigationImporter)?
+    */
+   @Override
+   public void saveNode(Node node)
+   {
+      synchronized (node)
+      {
+         NavigationServiceContext ctx = new NavigationServiceContext(navigationService, node.getPageId().getSiteId(),
+               new LoadedNodeScope(node));
+         ctx.saveNode(node);
+      }
+   }
 
    @Override
    public Label resolveLabel(Label label)
