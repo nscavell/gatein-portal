@@ -43,6 +43,7 @@
       <org.exoplatform.jcr.version>1.15.0-CR1</org.exoplatform.jcr.version>
       <org.shindig.version>2.0.2.Final-gatein-2</org.shindig.version>
       <nl.captcha.simplecaptcha.version>1.1.1.Final-gatein-2</nl.captcha.simplecaptcha.version>
+      <org.gatein.api.version>1.0.0.Alpha01-SNAPSHOT</org.gatein.api.version>
       <org.gatein.common.version>2.1.0.Beta01</org.gatein.common.version>
       <org.gatein.wci.version>2.3.0.Beta02</org.gatein.wci.version>
       <org.gatein.pc.version>2.4.0.Beta02</org.gatein.pc.version>
@@ -487,7 +488,7 @@
         <dependency>
           <groupId>org.gatein.portal</groupId>
           <artifactId>exo.portal.component.api</artifactId>
-          <version>3.5.0.Beta01-SNAPSHOT</version>
+          <version>3.5.0.Beta02-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.gatein.portal</groupId>
@@ -559,7 +560,7 @@
          <dependency>
             <groupId>org.gatein.portal</groupId>
             <artifactId>exo.portal.component.resources</artifactId>
-            <version>3.5.0.Beta01-SNAPSHOT</version>
+            <version>3.5.0.Beta02-SNAPSHOT</version>
             <type>test-jar</type>
          </dependency>
          <dependency>

@@ -28,8 +28,8 @@
     xmlns="http://www.exoplaform.org/xml/ns/kernel_1_1.xsd">
 
    <component>
-      <key>org.gatein.portal.api.GateIn</key>
-      <type>org.gatein.api.impl.GateInImpl</type>
+      <key>org.gatein.api.Portal</key>
+      <type>org.gatein.api.impl.PortalImpl</type>
    </component>
 
 </configuration>

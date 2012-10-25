@@ -88,7 +88,7 @@ public class ExoPortletApplicationDeployer extends PortletApplicationDeployer
          }
 
 
-         webApp.getServletContext().setAttribute("org.gatein.api.portal", portal);
+         webApp.setAttribute("org.gatein.api.portal", portal);
 
       }
       return md;
