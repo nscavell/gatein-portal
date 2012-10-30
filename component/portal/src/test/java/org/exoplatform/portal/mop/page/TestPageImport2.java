@@ -56,6 +56,8 @@ public class TestPageImport2 extends AbstractTestPageService
       final SiteKey siteKey = SiteKey.portal("import_pages");
       createSite(siteKey);
       final int numberOfPages = Integer.parseInt(System.getProperty("numberOfPages", "25"));
+      final int batch = Integer.parseInt(System.getProperty("batch", "-1"));
+
       timeIt("Saving site", new TimedTask()
       {
          @Override
@@ -65,7 +67,12 @@ public class TestPageImport2 extends AbstractTestPageService
          }
       });
 
-      timeIt("Saving " + numberOfPages + " pages", new TimedTask()
+      String text = "Saving " + numberOfPages + " pages";
+      if (batch > 0)
+      {
+         text = text + " (batch=" + batch+")";
+      }
+      timeIt(text, new TimedTask()
       {
          @Override
          public void execute() throws Exception
@@ -76,6 +83,10 @@ public class TestPageImport2 extends AbstractTestPageService
                Page page = createPage(pageKey);
                service.savePage(new PageContext(pageKey, PageUtils.toPageState(page)));
                ds.save(page);
+               if (batch > 0 && (i % batch) == 0)
+               {
+                  ds.save();
+               }
             }
          }
       });
