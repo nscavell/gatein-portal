@@ -39,7 +39,7 @@ import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
-import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.SiteId;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
@@ -185,7 +185,7 @@ public class NavigationUtil
    static final Logger log = LoggerFactory.getLogger(PortalImpl.class);
 
    @SuppressWarnings("unchecked")
-   public static Node from(Site.Id siteId, NodeContext<NodeContext<?>> nodeInternal)
+   public static Node from(SiteId siteId, NodeContext<NodeContext<?>> nodeInternal)
    {
       Node node;
       if (nodeInternal.getParent() == null)
@@ -226,7 +226,7 @@ public class NavigationUtil
       return node;
    }
 
-   public static Navigation from(Site.Id siteId, NavigationContext navigationInternal,
+   public static Navigation from(SiteId siteId, NavigationContext navigationInternal,
          NodeContext<NodeContext<?>> rootNodeInternal)
    {
       Navigation navigation = new Navigation(siteId, navigationInternal.getState().getPriority());

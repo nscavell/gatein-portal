@@ -22,13 +22,16 @@
 
 package org.gatein.api.management.portal;
 
+import java.util.List;
+
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
-import org.gatein.api.portal.Group;
+import org.gatein.api.portal.Membership;
 import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.Queries;
 import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.page.PageId;
+import org.gatein.api.portal.page.PageQuery;
+import org.gatein.api.portal.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
@@ -41,8 +44,6 @@ import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.model.ModelString;
 import org.gatein.management.api.operation.OperationNames;
 
-import java.util.List;
-
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
@@ -50,9 +51,9 @@ import java.util.List;
 public class PageManagementResource
 {
    private final Portal portal;
-   private final Site.Id siteId;
+   private final SiteId siteId;
 
-   public PageManagementResource(Portal portal, Site.Id siteId)
+   public PageManagementResource(Portal portal, SiteId siteId)
    {
       this.portal = portal;
       this.siteId = siteId;
@@ -62,7 +63,7 @@ public class PageManagementResource
    public ModelList getPages(@ManagedContext ModelList list, @ManagedContext PathAddress address)
    {
       // Populate model
-      populateModel(portal.findPages(Queries.pageQuery().build()), list, address);
+      populateModel(portal.findPages(new PageQuery.Builder().build()), list, address);
 
       return list;
    }
@@ -70,7 +71,7 @@ public class PageManagementResource
    @Managed("{page-name}")
    public ModelObject getPage(@MappedPath("page-name") String name, @ManagedContext ModelObject model)
    {
-      Page page = portal.getPage(new Page.Id(siteId, name));
+      Page page = portal.getPage(new PageId(siteId, name));
       if (page == null) throw new ResourceNotFoundException("Page " + name + " does not exist for site id " + siteId);
 
       // Populate model
@@ -85,11 +86,11 @@ public class PageManagementResource
    {
       try
       {
-         portal.removePage(new Page.Id(siteId, name));
+         portal.removePage(new PageId(siteId, name));
       }
       catch (EntityNotFoundException e)
       {
-         throw new ResourceNotFoundException("Could not remove page because page id " + new Page.Id(siteId, name) + " does not exist.");
+         throw new ResourceNotFoundException("Could not remove page because page id " + new PageId(siteId, name) + " does not exist.");
       }
    }
 
@@ -98,7 +99,7 @@ public class PageManagementResource
    public ModelObject addPage(@MappedPath("page-name") String name, @ManagedContext ModelObject model)
    {
       //Page page = site.createPage(name);
-      Page page = new Page(new Page.Id(siteId, name));
+      Page page = new Page(new PageId(siteId, name));
       portal.savePage(page);
 
       populateModel(page, model);
@@ -136,7 +137,7 @@ public class PageManagementResource
             list.add().asValue(ModelString.class).set("Everyone");
          }
 
-         for (Group.Membership membership : permission.getMemberships())
+         for (Membership membership : permission.getMemberships())
          {
             list.add().asValue(ModelString.class).set(membership.toString());
          }
