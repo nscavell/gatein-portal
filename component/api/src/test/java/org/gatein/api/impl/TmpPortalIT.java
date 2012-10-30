@@ -3,12 +3,9 @@ package org.gatein.api.impl;
 import java.io.InputStream;
 import java.util.UUID;
 
-import javax.annotation.Resource;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
 
 import junit.framework.Assert;
 
@@ -24,12 +21,12 @@ import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
+import org.gatein.api.portal.navigation.Nodes;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.Filter;
-import org.jboss.shrinkwrap.api.Filters;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -127,7 +124,7 @@ public class TmpPortalIT
    @Test
    public void navigation()
    {
-      Navigation navigation = portal.getNavigation(Ids.siteId("classic"), null, null);
+      Navigation navigation = portal.getNavigation(Ids.siteId("classic"), Nodes.visitAll(), null);
       printNavigation(navigation);
    }
 
@@ -218,7 +215,7 @@ public class TmpPortalIT
 
    private void printNodeTree(Node nc)
    {
-      while (nc.getParent() != null)
+      while (nc.getParent().getParent() != null)
       {
          nc = nc.getParent();
       }

@@ -102,6 +102,16 @@ public class NavigationServiceContext
       return NavigationUtil.from(siteId, navCtx, rootNodeCtx);
    }
 
+   public Node getRootNode()
+   {
+      if (navCtx == null)
+      {
+         throw new NavigationNotFoundException(siteId);
+      }
+
+      return NavigationUtil.from(siteId, rootNodeCtx);
+   }
+
    public Node getNode(NodePath nodePath)
    {
       if (navCtx == null)
@@ -109,7 +119,8 @@ public class NavigationServiceContext
          throw new NavigationNotFoundException(siteId);
       }
 
-      return NavigationUtil.findNode(getNavigation(), nodePath);
+      NodeContext<NodeContext<?>> nodeContext = NavigationUtil.findNodeContext(rootNodeCtx, nodePath);
+      return NavigationUtil.from(siteId, nodeContext);
    }
 
    public void saveNavigation(Navigation navigation)
@@ -155,19 +166,58 @@ public class NavigationServiceContext
 
    public void saveNode(Node node)
    {
-      synchronized (node)
-      {
-         NodeContext<NodeContext<?>> nodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath());
-         updateNodeContext(node, nodeCtx);
+      NodeContext<NodeContext<?>> nodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath());
+      updateNodeContext(node, nodeCtx);
 
-         try
+      try
+      {
+         service.saveNode(rootNodeCtx, null);
+      }
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to save node", e);
+      }
+   }
+
+   public void loadNodes(Node parent)
+   {
+      Node updated = getNode(parent.getPath());
+      merge(updated, parent);
+   }
+   
+   private void merge(Node src, Node dst)
+   {
+      List<Node> children = dst.getChildren();
+
+      dst.setIconName(src.getIconName());
+      dst.setLabel(src.getLabel());
+      dst.setPageId(src.getPageId());
+      dst.setVisibility(src.getVisibility());
+
+      for (Node c : children)
+      {
+         dst.removeNode(c.getName());
+      }
+
+      for (Node srcChild : src.getChildren())
+      {
+         Node dstChild = null;
+
+         for (Node c : children)
          {
-            service.saveNode(rootNodeCtx, null);
+            if (c.getName().equals(srcChild.getName()))
+            {
+               dstChild = c;
+            }
          }
-         catch (NavigationServiceException e)
+
+         if (dstChild == null)
          {
-            throw new ApiException("Failed to save node", e);
+            dstChild = src;
          }
+
+         merge(srcChild, dstChild);
+         dst.addChild(dstChild);
       }
    }
 

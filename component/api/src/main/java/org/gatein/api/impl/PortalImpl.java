@@ -36,6 +36,7 @@ import org.gatein.api.impl.portal.DataStorageContext;
 import org.gatein.api.impl.portal.navigation.NavigationServiceContext;
 import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
 import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
+import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
 import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
@@ -44,9 +45,11 @@ import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
+import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.page.PageQuery;
 import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.Site.Id;
 import org.gatein.api.portal.site.SiteQuery;
 import org.gatein.api.util.Filter;
 import org.gatein.api.util.Pagination;
@@ -203,12 +206,9 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void saveNavigation(Navigation navigation)
    {
-      synchronized (navigation)
-      {
-         LoadedNodeScope scope = new LoadedNodeScope(navigation.getNodes());
-         NavigationServiceContext ctx = new NavigationServiceContext(navigationService, navigation.getSiteId(), scope);
-         ctx.saveNavigation(navigation);
-      }
+      LoadedNodeScope scope = new LoadedNodeScope(navigation.getNodes());
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, navigation.getSiteId(), scope);
+      ctx.saveNavigation(navigation);
    }
 
    @Override
@@ -218,21 +218,19 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       return ctx.getNode(nodePath);
    }
 
-   /**
-    * TODO Wouldn't this return a list of nodes? If it returns the root node, why not just use getNavigation instead?
-    */
    @Override
    public Node getNode(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter)
    {
-      return null;
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodeVisitorScope(visitor));
+      return ctx.getRootNode();
    }
 
-   /**
-    * TODO What does this method do?
-    */
    @Override
    public void loadNodes(Node parent, NodeVisitor visitor)
    {
+      Site.Id siteId = parent.getPageId().getSiteId();
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodeVisitorScope(visitor));
+      ctx.loadNodes(parent);
    }
 
    /**
@@ -241,12 +239,9 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void saveNode(Node node)
    {
-      synchronized (node)
-      {
-         NavigationServiceContext ctx = new NavigationServiceContext(navigationService, node.getPageId().getSiteId(),
-               new LoadedNodeScope(node));
-         ctx.saveNode(node);
-      }
+      Site.Id siteId = node.getPageId().getSiteId();
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new LoadedNodeScope(node));
+      ctx.saveNode(node);
    }
 
    @Override

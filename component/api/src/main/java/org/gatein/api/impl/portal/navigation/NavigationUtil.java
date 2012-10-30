@@ -1,24 +1,24 @@
 /*
-* JBoss, a division of Red Hat
-* Copyright 2012, Red Hat Middleware, LLC, and individual contributors as indicated
-* by the @authors tag. See the copyright.txt in the distribution for a
-* full listing of individual contributors.
-*
-* This is free software; you can redistribute it and/or modify it
-* under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2.1 of
-* the License, or (at your option) any later version.
-*
-* This software is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this software; if not, write to the Free
-* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-*/
+ * JBoss, a division of Red Hat
+ * Copyright 2012, Red Hat Middleware, LLC, and individual contributors as indicated
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.gatein.api.impl.portal.navigation;
 
 import java.util.ArrayList;
@@ -31,6 +31,7 @@ import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.gatein.api.ApiException;
+import org.gatein.api.impl.PortalImpl;
 import org.gatein.api.impl.Util;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
@@ -39,6 +40,8 @@ import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
 import org.gatein.api.portal.site.Site;
+import org.gatein.common.logging.Logger;
+import org.gatein.common.logging.LoggerFactory;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -179,13 +182,15 @@ public class NavigationUtil
       return new Visibility(flag, publicationDate);
    }
 
+   static final Logger log = LoggerFactory.getLogger(PortalImpl.class);
+
    @SuppressWarnings("unchecked")
-   private static Node from(Site.Id siteId, NodeContext<NodeContext<?>> nodeInternal)
+   public static Node from(Site.Id siteId, NodeContext<NodeContext<?>> nodeInternal)
    {
       Node node;
       if (nodeInternal.getParent() == null)
       {
-         node = new Node("default"); // TODO Make immutable except for children
+         node = new RootNode();
       }
       else
       {
@@ -197,12 +202,8 @@ public class NavigationUtil
          List<Node> children = new ArrayList<Node>(nodeInternal.getNodeCount());
          for (NodeContext<?> childNodeCtx : nodeInternal.getNodes())
          {
-            // TODO Why are there nodes with the name 'notfound'?
-            if (!childNodeCtx.getName().equals("notfound"))
-            {
-               Node childNode = from(siteId, (NodeContext<NodeContext<?>>) childNodeCtx);
-               children.add(childNode);
-            }
+            Node childNode = from(siteId, (NodeContext<NodeContext<?>>) childNodeCtx);
+            children.add(childNode);
          }
          node.addChildren(children);
          node.setChildrenLoaded(true);
@@ -211,13 +212,15 @@ public class NavigationUtil
       return node;
    }
 
-
    public static Node from(String name, NodeState state)
    {
       Node node = new Node(name);
       node.setIconName(state.getIcon());
       // n.setLabel(label); // TODO Set label on node
-      node.setPageId(Util.from(state.getPageRef()));
+      if (state.getPageRef() != null)
+      {
+         node.setPageId(Util.from(state.getPageRef()));
+      }
       node.setVisibility(from(state));
       node.setUrlFactory(new DefaultNodeURLFactory());
       return node;
