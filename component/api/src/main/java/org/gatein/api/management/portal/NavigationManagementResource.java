@@ -28,7 +28,7 @@ import org.gatein.api.portal.Localized;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
@@ -49,9 +49,9 @@ import static org.gatein.api.portal.navigation.Nodes.*;
 public class NavigationManagementResource
 {
    private final Portal portal;
-   private final Site.Id siteId;
+   private final SiteId siteId;
 
-   public NavigationManagementResource(Portal portal, Site.Id siteId)
+   public NavigationManagementResource(Portal portal, SiteId siteId)
    {
       this.portal = portal;
       this.siteId = siteId;

@@ -26,7 +26,7 @@ import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.page.Page.Id;
+import org.gatein.api.portal.page.PageId;
 
 public class RootNode extends Node
 {
@@ -50,7 +50,7 @@ public class RootNode extends Node
    }
 
    @Override
-   public void setPageId(Id pageId)
+   public void setPageId(PageId pageId)
    {
       // TODO Auto-generated method stub
       super.setPageId(pageId);

@@ -40,15 +40,14 @@ import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.Site.Id;
+import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class NavigationServiceContext
 {
-   private final Id siteId;
+   private final SiteId siteId;
 
    private final SiteKey siteKey;
 
@@ -60,12 +59,12 @@ public class NavigationServiceContext
 
    private NodeContext<NodeContext<?>> rootNodeCtx;
 
-   public NavigationServiceContext(NavigationService service, Site.Id siteId, NodeVisitor visitor)
+   public NavigationServiceContext(NavigationService service, SiteId siteId, NodeVisitor visitor)
    {
       this(service, siteId, visitor != null ? new NodeVisitorScope(visitor) : Scope.ALL);
    }
 
-   public NavigationServiceContext(NavigationService service, Site.Id siteId, Scope scope)
+   public NavigationServiceContext(NavigationService service, SiteId siteId, Scope scope)
    {
       this.service = service;
       this.siteId = siteId;

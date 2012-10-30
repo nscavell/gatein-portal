@@ -22,11 +22,15 @@
 
 package org.gatein.api.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
-import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.services.organization.OrganizationService;
@@ -37,7 +41,6 @@ import org.gatein.api.impl.portal.navigation.NavigationServiceContext;
 import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
 import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
 import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
-import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
@@ -45,22 +48,18 @@ import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.page.Page;
+import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.page.PageQuery;
 import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.Site.Id;
+import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.portal.site.SiteQuery;
+import org.gatein.api.portal.site.SiteType;
 import org.gatein.api.util.Filter;
 import org.gatein.api.util.Pagination;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.picocontainer.Startable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
@@ -70,15 +69,15 @@ import java.util.List;
  */
 public class PortalImpl extends DataStorageContext implements Portal, Startable
 {
-   private static final Query<PortalConfig> SITES = new Query<PortalConfig>(SiteType.PORTAL.getName(), null, PortalConfig.class);
-   private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(SiteType.GROUP.getName(), null, PortalConfig.class);
-   private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(SiteType.USER.getName(), null, PortalConfig.class);
+   private static final Query<PortalConfig> SITES = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.PORTAL.getName(), null, PortalConfig.class);
+   private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.GROUP.getName(), null, PortalConfig.class);
+   private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.USER.getName(), null, PortalConfig.class);
 
    //TODO: Do we want a better name for loggeer ? Probably need to standardize our logging for api
    static final Logger log = LoggerFactory.getLogger(PortalImpl.class);
 
    //TODO: should be configurable
-   public Site.Id DEFAULT_SITE = Ids.siteId("classic");
+   public SiteId DEFAULT_SITE = new SiteId("classic");
 
    private final NavigationService navigationService;
    private final DescriptionService descriptionService;
@@ -95,7 +94,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public Site getSite(Site.Id siteId)
+   public Site getSite(SiteId siteId)
    {
       if (siteId == null) throw new IllegalArgumentException("siteId cannot be null");
 
@@ -123,7 +122,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       }
 
       List<Site> sites = new ArrayList<Site>();
-      for (Site.Type type : query.getSiteTypes())
+      for (SiteType type : query.getSiteTypes())
       {
          List<PortalConfig> internalSites;
          switch (type)
@@ -176,7 +175,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public void removeSite(Site.Id siteId)
+   public void removeSite(SiteId siteId)
    {
       SiteKey siteKey = Util.from(siteId);
 
@@ -194,7 +193,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
     * TODO Add filter functionality
     */
    @Override
-   public Navigation getNavigation(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter)
+   public Navigation getNavigation(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, visitor);
       return ctx.getNavigation();
@@ -212,14 +211,14 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public Node getNode(Site.Id siteId, NodePath nodePath)
+   public Node getNode(SiteId siteId, NodePath nodePath)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodePathScope(nodePath));
       return ctx.getNode(nodePath);
    }
 
    @Override
-   public Node getNode(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter)
+   public Node getNode(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodeVisitorScope(visitor));
       return ctx.getRootNode();
@@ -228,7 +227,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void loadNodes(Node parent, NodeVisitor visitor)
    {
-      Site.Id siteId = parent.getPageId().getSiteId();
+      SiteId siteId = parent.getPageId().getSiteId();
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodeVisitorScope(visitor));
       ctx.loadNodes(parent);
    }
@@ -239,7 +238,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void saveNode(Node node)
    {
-      Site.Id siteId = node.getPageId().getSiteId();
+      SiteId siteId = node.getPageId().getSiteId();
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new LoadedNodeScope(node));
       ctx.saveNode(node);
    }
@@ -251,7 +250,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public Page getPage(Page.Id pageId)
+   public Page getPage(PageId pageId)
    {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
    }
@@ -269,7 +268,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public void removePage(Page.Id pageId)
+   public void removePage(PageId pageId)
    {
       //To change body of implemented methods use File | Settings | File Templates.
    }
@@ -327,7 +326,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
 //      return rc.getLocale();
 //   }
 
-//   public ResourceBundle getNavigationResourceBundle(Site.Id id)
+   // public ResourceBundle getNavigationResourceBundle(SiteId id)
 //   {
 //      SiteKey siteKey = Util.from(id);
 //      return bundleManager.getNavigationResourceBundle(getUserLocale().getLanguage(), siteKey.getTypeName(), siteKey.getName());

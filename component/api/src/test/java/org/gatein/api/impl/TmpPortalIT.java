@@ -17,11 +17,11 @@ import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
-import org.gatein.api.portal.Ids;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
+import org.gatein.api.portal.site.SiteId;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
@@ -124,7 +124,7 @@ public class TmpPortalIT
    @Test
    public void navigation()
    {
-      Navigation navigation = portal.getNavigation(Ids.siteId("classic"), Nodes.visitAll(), null);
+      Navigation navigation = portal.getNavigation(new SiteId("classic"), Nodes.visitAll(), null);
       printNavigation(navigation);
    }
 
@@ -142,7 +142,7 @@ public class TmpPortalIT
       // tx.begin();
 
 
-      Navigation navigation = portal.getNavigation(Ids.siteId("classic"), null, null);
+      Navigation navigation = portal.getNavigation(new SiteId("classic"), null, null);
       System.out.println(navigation.getPriority());
       navigation.setPriority(100);
       portal.saveNavigation(navigation);
@@ -157,7 +157,7 @@ public class TmpPortalIT
    @Test
    public void getNode()
    {
-      Node node = portal.getNode(Ids.siteId("classic"), new NodePath("home", "Test2", "Test3"));
+      Node node = portal.getNode(new SiteId("classic"), new NodePath("home", "Test2", "Test3"));
 
       printNodeTree(node);
 
@@ -181,7 +181,7 @@ public class TmpPortalIT
    @Test
    public void addChild() throws Exception
    {
-      Node homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      Node homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
       portal.loadNodes(homeNode, null);
 
       Node node2 = new Node(UUID.randomUUID().toString());
@@ -191,7 +191,7 @@ public class TmpPortalIT
       // portal.saveNode(homeNode);
       portal.saveNode(node2);
 
-      homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
       portal.loadNodes(homeNode, null);
       printNodeTree(homeNode);
    }
@@ -199,7 +199,7 @@ public class TmpPortalIT
    @Test
    public void removeChild() throws Exception
    {
-      Node homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      Node homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
       portal.loadNodes(homeNode, null);
 
       homeNode.removeNode("Test");
@@ -208,7 +208,7 @@ public class TmpPortalIT
 
       System.out.println("XXXXX");
 
-      homeNode = portal.getNode(Ids.siteId("classic"), new NodePath("home"));
+      homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
       portal.loadNodes(homeNode, null);
       printNodeTree(homeNode);
    }
