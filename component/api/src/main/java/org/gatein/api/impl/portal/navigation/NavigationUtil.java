@@ -185,17 +185,9 @@ public class NavigationUtil
    static final Logger log = LoggerFactory.getLogger(PortalImpl.class);
 
    @SuppressWarnings("unchecked")
-   public static Node from(SiteId siteId, NodeContext<NodeContext<?>> nodeInternal)
+   private static Node from(SiteId siteId, NodeContext<NodeContext<?>> nodeInternal)
    {
-      Node node;
-      if (nodeInternal.getParent() == null)
-      {
-         node = new RootNode();
-      }
-      else
-      {
-         node = from(nodeInternal.getName(), nodeInternal.getState());
-      }
+      Node node = from(nodeInternal.getName(), nodeInternal.getState());
 
       if (nodeInternal.isExpanded())
       {
@@ -226,12 +218,15 @@ public class NavigationUtil
       return node;
    }
 
+   @SuppressWarnings("unchecked")
    public static Navigation from(SiteId siteId, NavigationContext navigationInternal,
          NodeContext<NodeContext<?>> rootNodeInternal)
    {
       Navigation navigation = new Navigation(siteId, navigationInternal.getState().getPriority());
-      Node rootNode = from(siteId, rootNodeInternal);
-      navigation.setNodes(new ArrayList<Node>(rootNode.getChildren()));
+      for (NodeContext<?> cInternal : rootNodeInternal.getNodes())
+      {
+         navigation.addNode(from(siteId, (NodeContext<NodeContext<?>>) cInternal));
+      }
       return navigation;
    }
 }

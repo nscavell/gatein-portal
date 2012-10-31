@@ -189,14 +189,16 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       });
    }
 
-   /**
-    * TODO Add filter functionality
-    */
    @Override
    public Navigation getNavigation(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, visitor);
-      return ctx.getNavigation();
+      Navigation navigation = ctx.getNavigation();
+      if (filter != null)
+      {
+         ctx.applyFilter(navigation.getRootNode(), filter);
+      }
+      return navigation;
    }
 
    /**
@@ -205,7 +207,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void saveNavigation(Navigation navigation)
    {
-      LoadedNodeScope scope = new LoadedNodeScope(navigation.getNodes());
+      LoadedNodeScope scope = new LoadedNodeScope(navigation.getRootNode());
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, navigation.getSiteId(), scope);
       ctx.saveNavigation(navigation);
    }
@@ -221,7 +223,12 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    public Node getNode(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, siteId, new NodeVisitorScope(visitor));
-      return ctx.getRootNode();
+      Node rootNode = ctx.getNavigation().getRootNode();
+      if (filter != null)
+      {
+         ctx.applyFilter(rootNode, filter);
+      }
+      return rootNode;
    }
 
    @Override

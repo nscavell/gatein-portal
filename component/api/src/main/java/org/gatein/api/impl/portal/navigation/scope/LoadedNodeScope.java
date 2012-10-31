@@ -21,7 +21,6 @@
  */
 package org.gatein.api.impl.portal.navigation.scope;
 
-import java.util.List;
 import java.util.Stack;
 
 import org.exoplatform.portal.mop.navigation.NodeState;
@@ -43,12 +42,7 @@ public class LoadedNodeScope implements Scope
          node = node.getParent();
       }
 
-      visitor = new NodePathVisitor(node.getChildren());
-   }
-
-   public LoadedNodeScope(List<Node> nodes)
-   {
-      visitor = new NodePathVisitor(nodes);
+      visitor = new NodePathVisitor(node);
    }
 
    @Override
@@ -59,34 +53,19 @@ public class LoadedNodeScope implements Scope
 
    public static class NodePathVisitor implements Visitor
    {
-      private final List<Node> nodes;
+      private final Node rootNode;
 
       private final Stack<Node> stack = new Stack<Node>();
 
-      public NodePathVisitor(List<Node> nodes)
+      public NodePathVisitor(Node rootNode)
       {
-         this.nodes = nodes;
+         this.rootNode = rootNode;
       }
 
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         Node node = null;
-         if (depth == 1)
-         {
-            for (Node n : nodes)
-            {
-               if (n.getName().equals(name))
-               {
-                  node = n;
-               }
-            }
-         }
-         else if (depth > 1)
-         {
-            node = stack.peek().getChild(name);
-         }
-
+         Node node = depth == 0 ? rootNode : stack.peek().getChild(name);
          stack.add(node);
 
          if (depth == 0 || (node != null && node.isChildrenLoaded()))

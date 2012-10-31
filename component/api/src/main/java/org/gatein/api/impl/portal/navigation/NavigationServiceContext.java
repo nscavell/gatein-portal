@@ -41,6 +41,7 @@ import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.util.Filter;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -101,16 +102,6 @@ public class NavigationServiceContext
       return NavigationUtil.from(siteId, navCtx, rootNodeCtx);
    }
 
-   public Node getRootNode()
-   {
-      if (navCtx == null)
-      {
-         throw new NavigationNotFoundException(siteId);
-      }
-
-      return NavigationUtil.from(siteId, rootNodeCtx);
-   }
-
    public Node getNode(NodePath nodePath)
    {
       if (navCtx == null)
@@ -118,8 +109,23 @@ public class NavigationServiceContext
          throw new NavigationNotFoundException(siteId);
       }
 
-      NodeContext<NodeContext<?>> nodeContext = NavigationUtil.findNodeContext(rootNodeCtx, nodePath);
-      return NavigationUtil.from(siteId, nodeContext);
+      Navigation navigation = getNavigation();
+      return NavigationUtil.findNode(navigation, nodePath);
+   }
+
+   public void applyFilter(Node node, Filter<Node> filter)
+   {
+      for (Node c : node.getChildren())
+      {
+         if (filter.accept(c))
+         {
+            applyFilter(c, filter);
+         }
+         else
+         {
+            node.removeNode(c.getName());
+         }
+      }
    }
 
    public void saveNavigation(Navigation navigation)
