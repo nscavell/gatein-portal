@@ -46,6 +46,7 @@ public class TmpPortalIT
    // @Resource(mappedName = "java:jboss/UserTransaction")
    // private UserTransaction tx;
    private PortalContainer container;
+   private NavigationService navService;
 
    @Deployment
    public static JavaArchive createDeployment()
@@ -102,7 +103,7 @@ public class TmpPortalIT
       POMSessionManager pomSession = (POMSessionManager) container.getComponentInstanceOfType(POMSessionManager.class);
       session = pomSession.openSession();
       DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
-      NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
+      navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
       DescriptionService descriptionService = (DescriptionService) container
             .getComponentInstanceOfType(DescriptionService.class);
       OrganizationService orgService = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
@@ -130,10 +131,14 @@ public class TmpPortalIT
 
    private void printNavigation(Navigation navigation)
    {
-      for (Node n : navigation.getNodes())
-      {
-         printNodeTree(n);
-      }
+      printNodeTree(navigation.getRootNode());
+   }
+
+   @Test
+   public void labelTest()
+   {
+      Navigation navigation = portal.getNavigation(new SiteId("classic"), Nodes.visitAll(), null);
+      printNavigation(navigation);
    }
 
    @Test
@@ -215,7 +220,7 @@ public class TmpPortalIT
 
    private void printNodeTree(Node nc)
    {
-      while (nc.getParent().getParent() != null)
+      while (nc.getParent() != null)
       {
          nc = nc.getParent();
       }
@@ -230,7 +235,7 @@ public class TmpPortalIT
       }
       if (nc.getChildren() != null)
       {
-         System.out.println(nc.getName());
+         System.out.println(nc.getName() + " " + nc.getLabel());
          for (Node c : nc.getChildren())
          {
             printNodeTree(c, depth + 1);

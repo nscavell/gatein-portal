@@ -21,21 +21,32 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
+import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.navigation.NavigationServiceException;
 import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeContext;
+import org.exoplatform.portal.mop.navigation.NodeFilter;
 import org.exoplatform.portal.mop.navigation.NodeModel;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.gatein.api.ApiException;
 import org.gatein.api.NavigationNotFoundException;
 import org.gatein.api.impl.Util;
+import org.gatein.api.impl.portal.navigation.filter.NodeFilterWrapper;
+import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
+import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
 import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
+import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
@@ -48,37 +59,149 @@ import org.gatein.api.util.Filter;
  */
 public class NavigationServiceContext
 {
+   private DescriptionService descriptionService;
+
+   private NodeFilter filter;
+
+   private NavigationContext navCtx;
+
+   private Navigation navigation;
+
+   private NodeContext<NodeContext<?>> rootNodeCtx;
+
+   private Scope scope;
+
+   private final NavigationService service;
+
    private final SiteId siteId;
 
    private final SiteKey siteKey;
 
-   private final NavigationService service;
-
-   private final Scope scope;
-
-   private NavigationContext navCtx;
-
-   private NodeContext<NodeContext<?>> rootNodeCtx;
-
-   public NavigationServiceContext(NavigationService service, SiteId siteId, NodeVisitor visitor)
-   {
-      this(service, siteId, visitor != null ? new NodeVisitorScope(visitor) : Scope.ALL);
-   }
-
-   public NavigationServiceContext(NavigationService service, SiteId siteId, Scope scope)
+   public NavigationServiceContext(NavigationService service, DescriptionService descriptionService, SiteId siteId)
    {
       this.service = service;
+      this.descriptionService = descriptionService;
       this.siteId = siteId;
-      this.scope = scope;
 
       siteKey = Util.from(siteId);
 
+   }
+
+   private Label getLabel(NodeContext<NodeContext<?>> node)
+   {
+      if (node.getState().getLabel() != null)
+      {
+         return new Label(node.getState().getLabel());
+      }
+
+      Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(node.getId());
+      if (descriptions != null && !descriptions.isEmpty())
+      {
+         Map<Locale, String> m = new HashMap<Locale, String>();
+         for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
+         {
+            m.put(entry.getKey(), entry.getValue().getName());
+         }
+         return new Label(m);
+      }
+
+      return null;
+   }
+
+   private Node getNode(NodeContext<NodeContext<?>> nodeCtx)
+   {
+      Node node = ObjectFactory.createNode(nodeCtx.getName(), nodeCtx.getState());
+      node.setLabel(getLabel(nodeCtx));
+
+      if (nodeCtx.isExpanded())
+      {
+         for (NodeContext<?> c : nodeCtx.getNodes())
+         {
+            @SuppressWarnings("unchecked")
+            Node n = getNode((NodeContext<NodeContext<?>>) c);
+            node.addChild(n);
+         }
+         node.setChildrenLoaded(true);
+      }
+
+      return node;
+   }
+
+   public Navigation getNavigation()
+   {
+      return navigation;
+   }
+
+   public NavigationContext getNavigationContext()
+   {
+      return navCtx;
+   }
+
+   public Node getNode(NodePath nodePath)
+   {
+      if (navigation == null)
+      {
+         throw new NavigationNotFoundException(siteId);
+      }
+
+      Iterator<String> itr = nodePath.iterator();
+      itr.next();
+
+      Node n = navigation.getRootNode();
+      while (itr.hasNext())
+      {
+         n = n.getChild(itr.next());
+         if (n == null)
+         {
+            return null;
+         }
+      }
+
+      return n;
+   }
+
+   public NodeContext<NodeContext<?>> getNodeContext(NodePath nodePath)
+   {
+      if (navCtx == null)
+      {
+         throw new NavigationNotFoundException(siteId);
+      }
+
+      Iterator<String> itr = nodePath.iterator();
+      itr.next();
+
+      NodeContext<NodeContext<?>> n = rootNodeCtx;
+      while (itr.hasNext())
+      {
+         n = n.get(itr.next());
+         if (n == null)
+         {
+            return null;
+         }
+      }
+      return n;
+   }
+
+   public void init()
+   {
       try
       {
          navCtx = service.loadNavigation(siteKey);
          if (navCtx != null)
          {
             rootNodeCtx = service.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
+            if (filter != null)
+            {
+               rootNodeCtx.filter(filter);
+            }
+
+            navigation = new Navigation(siteId, navCtx.getState().getPriority());
+            for (NodeContext<?> c : rootNodeCtx.getNodes())
+            {
+               @SuppressWarnings("unchecked")
+               Node n = getNode((NodeContext<NodeContext<?>>) c);
+               navigation.addNode(n);
+            }
          }
       }
       catch (NavigationServiceException e)
@@ -87,109 +210,12 @@ public class NavigationServiceContext
       }
    }
 
-   public NavigationContext getNavigationContext()
-   {
-      return navCtx;
-   }
-
-   public Navigation getNavigation()
-   {
-      if (navCtx == null)
-      {
-         return null;
-      }
-
-      return NavigationUtil.from(siteId, navCtx, rootNodeCtx);
-   }
-
-   public Node getNode(NodePath nodePath)
-   {
-      if (navCtx == null)
-      {
-         throw new NavigationNotFoundException(siteId);
-      }
-
-      Navigation navigation = getNavigation();
-      return NavigationUtil.findNode(navigation, nodePath);
-   }
-
-   public void applyFilter(Node node, Filter<Node> filter)
-   {
-      for (Node c : node.getChildren())
-      {
-         if (filter.accept(c))
-         {
-            applyFilter(c, filter);
-         }
-         else
-         {
-            node.removeNode(c.getName());
-         }
-      }
-   }
-
-   public void saveNavigation(Navigation navigation)
-   {
-      boolean create = navCtx == null;
-
-      if (create)
-      {
-         navCtx = new NavigationContext(Util.from(navigation.getSiteId()), new NavigationState(navigation.getPriority()));
-      }
-      else
-      {
-         updateNavigationContext(navigation);
-      }
-
-      try
-      {
-         service.saveNavigation(navCtx);
-
-         if (create)
-         {
-            rootNodeCtx = service.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
-         }
-      }
-      catch (NavigationServiceException e)
-      {
-         throw new ApiException("Failed to save navigation", e);
-      }
-
-      for (Node node : navigation.getNodes())
-      {
-         saveNode(node);
-      }
-   }
-
-   private void updateNavigationContext(Navigation navigation)
-   {
-      if (navigation.getPriority() != navCtx.getState().getPriority())
-      {
-         navCtx.setState(new NavigationState(navigation.getPriority()));
-      }
-   }
-
-   public void saveNode(Node node)
-   {
-      NodeContext<NodeContext<?>> nodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath());
-      updateNodeContext(node, nodeCtx);
-
-      try
-      {
-         service.saveNode(rootNodeCtx, null);
-      }
-      catch (NavigationServiceException e)
-      {
-         throw new ApiException("Failed to save node", e);
-      }
-   }
-
    public void loadNodes(Node parent)
    {
       Node updated = getNode(parent.getPath());
       merge(updated, parent);
    }
-   
+
    private void merge(Node src, Node dst)
    {
       List<Node> children = dst.getChildren();
@@ -213,6 +239,7 @@ public class NavigationServiceContext
             if (c.getName().equals(srcChild.getName()))
             {
                dstChild = c;
+               merge(srcChild, dstChild);
             }
          }
 
@@ -221,18 +248,88 @@ public class NavigationServiceContext
             dstChild = src;
          }
 
-         merge(srcChild, dstChild);
          dst.addChild(dstChild);
       }
+   }
+
+   public void saveNavigation(Navigation navigation)
+   {
+      boolean create = navCtx == null;
+
+      if (create)
+      {
+         navCtx = new NavigationContext(Util.from(navigation.getSiteId()), new NavigationState(navigation.getPriority()));
+      }
+      else
+      {
+         if (navigation.getPriority() != navCtx.getState().getPriority())
+         {
+            navCtx.setState(new NavigationState(navigation.getPriority()));
+         }
+      }
+
+      try
+      {
+         service.saveNavigation(navCtx);
+
+         if (create)
+         {
+            rootNodeCtx = service.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
+         }
+      }
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to save navigation", e);
+      }
+
+      saveNode(navigation.getRootNode());
+   }
+
+   public void saveNode(Node node)
+   {
+      NodeContext<NodeContext<?>> nodeCtx = getNodeContext(node.getPath());
+      updateNodeContext(node, nodeCtx);
+
+      try
+      {
+         service.saveNode(nodeCtx, null);
+      }
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to save node", e);
+      }
+   }
+
+   public void setFilter(Filter<Node> filter)
+   {
+      if (filter != null)
+      {
+         this.filter = new NodeFilterWrapper(filter);
+      }
+   }
+
+   public void setScope(Node node)
+   {
+      this.scope = new LoadedNodeScope(node);
+   }
+
+   public void setScope(NodePath nodePath)
+   {
+      this.scope = new NodePathScope(nodePath);
+   }
+
+   public void setScope(NodeVisitor visitor)
+   {
+      this.scope = new NodeVisitorScope(visitor);
    }
 
    private void updateNodeContext(Node node, NodeContext<NodeContext<?>> nodeCtx)
    {
       boolean create = nodeCtx == null;
-      
+
       if (create)
       {
-         NodeContext<NodeContext<?>> parentNodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getParent().getPath());
+         NodeContext<NodeContext<?>> parentNodeCtx = getNodeContext(node.getParent().getPath());
          nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
       }
 
@@ -241,7 +338,7 @@ public class NavigationServiceContext
          nodeCtx.setName(node.getName());
       }
 
-      NodeState nodeState = NavigationUtil.from(node, nodeCtx);
+      NodeState nodeState = ObjectFactory.createNodeState(node);
       if (!nodeState.equals(nodeCtx.getState()))
       {
          nodeCtx.setState(nodeState);
