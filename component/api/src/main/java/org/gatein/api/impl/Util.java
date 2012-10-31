@@ -96,6 +96,11 @@ public class Util
       }
    }
 
+   public static PageKey from(PageId pageId)
+   {
+      return new PageKey(from(pageId.getSiteId()), pageId.getPageName());
+   }
+
    public static SiteId from(SiteKey siteKey)
    {
       switch (siteKey.getType())
