@@ -27,7 +27,6 @@ import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.gatein.api.impl.portal.navigation.NavigationUtil;
-import org.gatein.api.impl.portal.navigation.RootNode;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodeVisitor;
 
@@ -63,7 +62,7 @@ public class NodeVisitorScope implements Scope
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         Node node = depth == 0 ? new RootNode() : NavigationUtil.from(name, state);
+         Node node = NavigationUtil.from(depth == 0 ? Node.ROOT_NODE_NAME : name, state);
 
          if (!stack.isEmpty())
          {
