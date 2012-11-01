@@ -30,16 +30,14 @@ import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.navigation.NodeURL;
 import org.gatein.api.ApiException;
 import org.gatein.api.impl.Util;
-import org.gatein.api.internal.URLFactory;
 import org.gatein.api.portal.navigation.Node;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class DefaultNodeURLFactory implements URLFactory
+public class NodeURLFactory
 {
-   @Override
-   public URI createURL(Node node)
+   public static URI createURL(Node node)
    {
       try
       {

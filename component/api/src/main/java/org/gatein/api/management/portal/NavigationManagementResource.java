@@ -100,7 +100,9 @@ public class NavigationManagementResource
       NodePath nodePath = path(path);
       Node parent = getNode(nodePath.getParent(), true);
 
-      Node node = parent.addChild(nodePath.getLastSegment());
+      Node node = new Node(nodePath.getLastSegment());
+      parent.addNode(node);
+
       portal.saveNode(node);
 
       populateModel(node, model);

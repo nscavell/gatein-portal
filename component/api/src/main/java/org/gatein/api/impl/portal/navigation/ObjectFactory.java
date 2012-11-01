@@ -45,8 +45,7 @@ public class ObjectFactory
       {
          node.setPageId(Util.from(state.getPageRef()));
       }
-      node.setVisibility(from(state));
-      node.setUrlFactory(new DefaultNodeURLFactory());
+      node.setVisibility(createVisibility(state));
       return node;
    }
 
@@ -97,7 +96,7 @@ public class ObjectFactory
       }
    }
 
-   private static Visibility from(NodeState nodeState)
+   public static Visibility createVisibility(NodeState nodeState)
    {
       Flag flag = from(nodeState.getVisibility());
 

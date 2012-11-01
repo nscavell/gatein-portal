@@ -65,10 +65,10 @@ public class LoadedNodeScope implements Scope
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         Node node = depth == 0 ? rootNode : stack.peek().getChild(name);
+         Node node = depth == 0 ? rootNode : stack.peek().getNode(name);
          stack.add(node);
 
-         if (depth == 0 || (node != null && node.isChildrenLoaded()))
+         if (depth == 0 || (node != null && node.isNodesLoaded()))
          {
             return VisitMode.ALL_CHILDREN;
          }

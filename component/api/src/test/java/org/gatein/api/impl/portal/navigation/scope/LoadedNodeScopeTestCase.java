@@ -26,6 +26,7 @@ import junit.framework.TestCase;
 import org.exoplatform.portal.mop.navigation.Scope.Visitor;
 import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeAccessor;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -37,15 +38,15 @@ public class LoadedNodeScopeTestCase extends TestCase
       Node r = new Node("default");
 
       Node p = new Node("1");
-      p.setChildrenLoaded(true);
-      r.addChild(p);
+      NodeAccessor.setNodesLoaded(p, true);
+      r.addNode(p);
 
-      p.addChild("1-1");
-      p.getChild("1-1").setChildrenLoaded(true);
-      p.getChild("1-1").addChild("1-1-1");
-      p.getChild("1-1").addChild("1-1-2");
+      p.addNode(new Node("1-1"));
+      NodeAccessor.setNodesLoaded(p.getNode("1-1"), true);
+      p.getNode("1-1").addNode(new Node("1-1-1"));
+      p.getNode("1-1").addNode(new Node("1-1-2"));
 
-      p.addChild("1-2");
+      p.addNode(new Node("1-2"));
 
       Visitor visitor = new LoadedNodeScope(r).get();
 

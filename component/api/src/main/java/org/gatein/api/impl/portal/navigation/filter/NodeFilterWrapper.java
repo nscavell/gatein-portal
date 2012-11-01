@@ -38,7 +38,7 @@ public class NodeFilterWrapper implements org.exoplatform.portal.mop.navigation.
    @Override
    public boolean accept(int depth, String id, String name, NodeState state)
    {
-      Node node = ObjectFactory.createNode(depth == 0 ? Node.ROOT_NODE_NAME : name, state);
+      Node node = ObjectFactory.createNode(depth == 0 ? Node.ROOT_NAME : name, state);
       return filter.accept(node);
    }
 }
