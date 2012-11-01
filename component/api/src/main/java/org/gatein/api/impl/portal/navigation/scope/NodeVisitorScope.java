@@ -21,14 +21,18 @@
  */
 package org.gatein.api.impl.portal.navigation.scope;
 
-import java.util.Stack;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
+import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.navigation.ObjectFactory;
-import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
+import org.gatein.api.portal.navigation.Visibility;
+import org.gatein.api.portal.page.PageId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -48,11 +52,11 @@ public class NodeVisitorScope implements Scope
       return nodePathVisitor;
    }
 
-   public static class NodeVisitorWrapper implements Visitor
+   class NodeVisitorWrapper implements Visitor
    {
       private final NodeVisitor nodeVisitor;
 
-      private final Stack<Node> stack = new Stack<Node>();
+      private final List<String> pathList = new LinkedList<String>();
 
       public NodeVisitorWrapper(NodeVisitor nodeVisitor)
       {
@@ -62,22 +66,55 @@ public class NodeVisitorScope implements Scope
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         Node node = ObjectFactory.createNode(depth == 0 ? Node.ROOT_NODE_NAME : name, state);
+         pathList.add(name);
 
-         if (!stack.isEmpty())
-         {
-            stack.peek().addChild(node);
-         }
+         NodePath nodePath = new NodePath(pathList);
+         NodeDetails details = new NodeDetails(state, nodePath);
 
-         stack.add(node);
-
-         return nodeVisitor.visit(depth, node) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
+         return nodeVisitor.visit(depth, name, details) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
       }
 
       @Override
       public void leave(int depth, String id, String name, NodeState state)
       {
-         stack.pop();
+         pathList.remove(pathList.size() - 1);
+      }
+
+   }
+
+   class NodeDetails implements NodeVisitor.NodeDetails
+   {
+      private NodeState nodeState;
+      private NodePath nodePath;
+
+      public NodeDetails(NodeState nodeState, NodePath nodePath)
+      {
+         this.nodeState = nodeState;
+         this.nodePath = nodePath;
+      }
+
+      @Override
+      public Visibility getVisibility()
+      {
+         return ObjectFactory.createVisibility(nodeState);
+      }
+
+      @Override
+      public String getIconName()
+      {
+         return nodeState.getIcon();
+      }
+
+      @Override
+      public PageId getPageId()
+      {
+         return Util.from(nodeState.getPageRef());
+      }
+
+      @Override
+      public NodePath getNodePath()
+      {
+         return nodePath;
       }
    }
 }

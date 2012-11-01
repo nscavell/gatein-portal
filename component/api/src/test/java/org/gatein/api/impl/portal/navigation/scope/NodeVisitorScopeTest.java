@@ -27,10 +27,9 @@ import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.portal.mop.Visibility;
 import org.exoplatform.portal.mop.navigation.NodeState;
-import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.exoplatform.portal.mop.navigation.Scope.Visitor;
+import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.exoplatform.portal.mop.page.PageKey;
-import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodeVisitor;
 
 /**
@@ -46,23 +45,16 @@ public class NodeVisitorScopeTest extends TestCase
       
       mock.instrument(true);
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(0, "id", "default", nodeState));
-      assertNotNull(mock.node);
-      assertNull(mock.node.getParent());
+      assertNotNull(mock.name);
 
       mock.instrument(true);
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(1, "id", "1", nodeState));
-      assertNotNull(mock.node);
-      assertNotNull(mock.node.getParent());
-      assertNotNull(mock.node.getChildren());
-      assertFalse(mock.node.isChildrenLoaded());
+      assertNotNull(mock.name);
       assertEquals(1, mock.depth);
 
       mock.instrument(false);
       assertEquals(VisitMode.NO_CHILDREN, visitor.enter(2, "id", "1-1", nodeState));
-      assertNotNull(mock.node);
-      assertNotNull(mock.node.getParent());
-      assertNotNull(mock.node.getChildren());
-      assertFalse(mock.node.isChildrenLoaded());
+      assertNotNull(mock.name);
       assertEquals(2, mock.depth);
       
       visitor.leave(2, "id", "1-1", nodeState);
@@ -76,23 +68,23 @@ public class NodeVisitorScopeTest extends TestCase
    {
       private int depth;
 
-      private Node node;
-
       private boolean visit;
 
+      private String name;
+
       @Override
-      public boolean visit(int depth, Node node)
+      public boolean visit(int depth, String name, NodeDetails details)
       {
          this.depth = depth;
-         this.node = node;
+         this.name = name;
          return visit;
       }
 
       public void instrument(boolean visit)
       {
          this.visit = visit;
+         name = null;
          depth = -1;
-         node = null;
       }
    }
 }

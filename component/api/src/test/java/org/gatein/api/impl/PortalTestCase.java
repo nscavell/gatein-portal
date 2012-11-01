@@ -385,13 +385,13 @@ public class PortalTestCase extends AbstractAPITestCase
       parent1.setPageId(new PageId("classic", "homepage"));
       Node child1 = new Node("child1");
       child1.setPageId(new PageId("classic", "homepage"));
-      parent1.addChild(child1);
+      parent1.addNode(child1);
 
       Node parent2 = new Node("parent2");
       parent2.setPageId(new PageId("classic", "homepage"));
       Node child2 = new Node("child2");
       child2.setPageId(new PageId("classic", "homepage"));
-      parent2.addChild(child2);
+      parent2.addNode(child2);
       
       navigation.addNode(parent1);
       navigation.addNode(parent2);

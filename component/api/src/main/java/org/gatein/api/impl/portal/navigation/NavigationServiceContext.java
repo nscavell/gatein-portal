@@ -23,6 +23,7 @@ package org.gatein.api.impl.portal.navigation;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,6 +50,7 @@ import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeAccessor;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.site.SiteId;
@@ -84,7 +86,6 @@ public class NavigationServiceContext
       this.siteId = siteId;
 
       siteKey = Util.from(siteId);
-
    }
 
    private Label getLabel(NodeContext<NodeContext<?>> node)
@@ -119,9 +120,9 @@ public class NavigationServiceContext
          {
             @SuppressWarnings("unchecked")
             Node n = getNode((NodeContext<NodeContext<?>>) c);
-            node.addChild(n);
+            node.addNode(n);
          }
-         node.setChildrenLoaded(true);
+         NodeAccessor.setNodesLoaded(node, true);
       }
 
       return node;
@@ -150,7 +151,7 @@ public class NavigationServiceContext
       Node n = navigation.getRootNode();
       while (itr.hasNext())
       {
-         n = n.getChild(itr.next());
+         n = n.getNode(itr.next());
          if (n == null)
          {
             return null;
@@ -202,6 +203,9 @@ public class NavigationServiceContext
                Node n = getNode((NodeContext<NodeContext<?>>) c);
                navigation.addNode(n);
             }
+
+            Node rootNode = navigation.getRootNode();
+            rootNode.setUri(NodeURLFactory.createURL(rootNode));
          }
       }
       catch (NavigationServiceException e)
@@ -218,19 +222,15 @@ public class NavigationServiceContext
 
    private void merge(Node src, Node dst)
    {
-      List<Node> children = dst.getChildren();
+      List<Node> children = new LinkedList<Node>(dst.getNodes());
 
       dst.setIconName(src.getIconName());
       dst.setLabel(src.getLabel());
       dst.setPageId(src.getPageId());
       dst.setVisibility(src.getVisibility());
+      dst.getNodes().clear();
 
-      for (Node c : children)
-      {
-         dst.removeNode(c.getName());
-      }
-
-      for (Node srcChild : src.getChildren())
+      for (Node srcChild : src.getNodes())
       {
          Node dstChild = null;
 
@@ -248,7 +248,7 @@ public class NavigationServiceContext
             dstChild = src;
          }
 
-         dst.addChild(dstChild);
+         dst.addNode(dstChild);
       }
    }
 
@@ -330,7 +330,7 @@ public class NavigationServiceContext
       if (create)
       {
          NodeContext<NodeContext<?>> parentNodeCtx = getNodeContext(node.getParent().getPath());
-         nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
+         nodeCtx = parentNodeCtx.add(node.getParent().getNodes().indexOf(node), node.getName());
       }
 
       if (!node.getName().equals(nodeCtx.getName()))
@@ -346,7 +346,7 @@ public class NavigationServiceContext
 
       for (NodeContext<?> childCtx : nodeCtx.getNodes())
       {
-         if (node.getChild(childCtx.getName()) == null)
+         if (node.getNode(childCtx.getName()) == null)
          {
             if (!nodeCtx.removeNode(childCtx.getName()))
             {
@@ -355,7 +355,7 @@ public class NavigationServiceContext
          }
       }
 
-      for (Node childNode : node.getChildren())
+      for (Node childNode : node.getNodes())
       {
          NodeContext<NodeContext<?>> childNodeCtx = nodeCtx.get(childNode.getName());
          updateNodeContext(childNode, childNodeCtx);
