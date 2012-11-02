@@ -148,7 +148,7 @@ public class NavigationServiceContext
       Iterator<String> itr = nodePath.iterator();
       itr.next();
 
-      Node n = navigation.getRootNode();
+      Node n = NodeAccessor.getRootNode(navigation);
       while (itr.hasNext())
       {
          n = n.getNode(itr.next());
@@ -204,8 +204,8 @@ public class NavigationServiceContext
                navigation.addNode(n);
             }
 
-            Node rootNode = navigation.getRootNode();
-            rootNode.setUri(NodeURLFactory.createURL(rootNode));
+            Node rootNode = NodeAccessor.getRootNode(navigation);
+            rootNode.setBaseURI(NodeURLFactory.createURL(rootNode));
          }
       }
       catch (NavigationServiceException e)
@@ -216,7 +216,7 @@ public class NavigationServiceContext
 
    public void loadNodes(Node parent)
    {
-      Node updated = getNode(parent.getPath());
+      Node updated = getNode(parent.getNodePath());
       merge(updated, parent);
    }
 
@@ -282,12 +282,12 @@ public class NavigationServiceContext
          throw new ApiException("Failed to save navigation", e);
       }
 
-      saveNode(navigation.getRootNode());
+      saveNode(NodeAccessor.getRootNode(navigation));
    }
 
    public void saveNode(Node node)
    {
-      NodeContext<NodeContext<?>> nodeCtx = getNodeContext(node.getPath());
+      NodeContext<NodeContext<?>> nodeCtx = getNodeContext(node.getNodePath());
       updateNodeContext(node, nodeCtx);
 
       try
@@ -329,7 +329,7 @@ public class NavigationServiceContext
 
       if (create)
       {
-         NodeContext<NodeContext<?>> parentNodeCtx = getNodeContext(node.getParent().getPath());
+         NodeContext<NodeContext<?>> parentNodeCtx = getNodeContext(node.getParent().getNodePath());
          nodeCtx = parentNodeCtx.add(node.getParent().getNodes().indexOf(node), node.getName());
       }
 

@@ -19,6 +19,7 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeAccessor;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
@@ -131,7 +132,7 @@ public class TmpPortalIT
 
    private void printNavigation(Navigation navigation)
    {
-      printNodeTree(navigation.getRootNode());
+      printNodeTree(NodeAccessor.getRootNode(navigation));
    }
 
    @Test

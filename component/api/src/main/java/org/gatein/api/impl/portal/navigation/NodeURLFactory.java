@@ -43,7 +43,8 @@ public class NodeURLFactory
       {
          SiteKey siteKey = Util.from(node.getPageId().getSiteId());
          RequestContext requestContext = RequestContext.getCurrentInstance();
-         NavigationResource navResource = new NavigationResource(siteKey, node.getPath().subPath(1, node.getPath().size())
+         NavigationResource navResource = new NavigationResource(siteKey, node.getNodePath()
+               .subPath(1, node.getNodePath().size())
                .toString().substring(1));
          NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
          nodeURL.setSchemeUse(true);

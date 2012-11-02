@@ -27,4 +27,9 @@ public class NodeAccessor
    {
       ((NodeList) node.getNodes()).setLoaded(loaded);
    }
+
+   public static Node getRootNode(Navigation navigation)
+   {
+      return navigation.getRootNode();
+   }
 }
