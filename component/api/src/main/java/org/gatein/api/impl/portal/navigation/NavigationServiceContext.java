@@ -186,8 +186,9 @@ public class NavigationServiceContext
                navigation.addNode(n);
             }
 
-            Node rootNode = NodeAccessor.getRootNode(navigation);
-            rootNode.setBaseURI(NodeURLFactory.createURL(rootNode));
+            // Node rootNode = NodeAccessor.getRootNode(navigation);
+            // rootNode.setBaseURI(NodeURLFactory.createBaseURL(navigation.getSiteId())); // TODO This doesn't work at the
+            // moment, the URL is context dependent! for example two users may go to the server with different hostnames
          }
       }
       catch (NavigationServiceException e)
@@ -272,7 +273,7 @@ public class NavigationServiceContext
    public void saveNode(Node node)
    {
       NodeContext<NodeContext<?>> nodeCtx = getNodeContext(node.getNodePath());
-      updateNodeContext(node, nodeCtx);
+      updateNodeContext(node, nodeCtx, null);
 
       try
       {
@@ -283,7 +284,7 @@ public class NavigationServiceContext
          throw new ApiException("Failed to save node", e);
       }
 
-      if (node.getLabel().isLocalized())
+      if (node.getLabel() != null && node.getLabel().isLocalized())
       {
          if (!node.getLabel().equals(getLabel(nodeCtx)))
          {
@@ -308,25 +309,27 @@ public class NavigationServiceContext
       this.scope = new NodeVisitorScope(visitor);
    }
 
-   private void updateNodeContext(Node node, NodeContext<NodeContext<?>> nodeCtx)
+   private void updateNodeContext(Node node, NodeContext<NodeContext<?>> nodeCtx, NodeContext<NodeContext<?>> parentNodeCtx)
    {
       boolean create = nodeCtx == null;
 
       if (create)
       {
-         NodeContext<NodeContext<?>> parentNodeCtx = getNodeContext(node.getParent().getNodePath());
          nodeCtx = parentNodeCtx.add(node.getParent().getNodes().indexOf(node), node.getName());
       }
 
-      if (!node.getName().equals(nodeCtx.getName()))
+      if (node.getParent() != null)
       {
-         nodeCtx.setName(node.getName());
-      }
+         if (!node.getName().equals(nodeCtx.getName()))
+         {
+            nodeCtx.setName(node.getName());
+         }
 
-      NodeState nodeState = ObjectFactory.createNodeState(node);
-      if (!nodeState.equals(nodeCtx.getState()))
-      {
-         nodeCtx.setState(nodeState);
+         NodeState nodeState = ObjectFactory.createNodeState(node);
+         if (!nodeState.equals(nodeCtx.getState()))
+         {
+            nodeCtx.setState(nodeState);
+         }
       }
 
       for (NodeContext<?> childCtx : nodeCtx.getNodes())
@@ -343,7 +346,7 @@ public class NavigationServiceContext
       for (Node childNode : node.getNodes())
       {
          NodeContext<NodeContext<?>> childNodeCtx = nodeCtx.get(childNode.getName());
-         updateNodeContext(childNode, childNodeCtx);
+         updateNodeContext(childNode, childNodeCtx, nodeCtx);
       }
    }
 }

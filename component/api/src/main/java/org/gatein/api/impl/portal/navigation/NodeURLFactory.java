@@ -30,22 +30,20 @@ import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.navigation.NodeURL;
 import org.gatein.api.ApiException;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class NodeURLFactory
 {
-   public static URI createURL(Node node)
+   public static URI createBaseURL(SiteId siteId)
    {
       try
       {
-         SiteKey siteKey = Util.from(node.getPageId().getSiteId());
+         SiteKey siteKey = Util.from(siteId);
          RequestContext requestContext = RequestContext.getCurrentInstance();
-         NavigationResource navResource = new NavigationResource(siteKey, node.getNodePath()
-               .subPath(1, node.getNodePath().size())
-               .toString().substring(1));
+         NavigationResource navResource = new NavigationResource(siteKey, "");
          NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
          nodeURL.setSchemeUse(true);
          return new URI(nodeURL.toString());

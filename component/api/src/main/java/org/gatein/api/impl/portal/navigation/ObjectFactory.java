@@ -56,7 +56,7 @@ public class ObjectFactory
 
    public static NodeState createNodeState(Node node)
    {
-      String label = !node.getLabel().isLocalized() ? node.getLabel().getValue() : null;
+      String label = node.getLabel() != null && !node.getLabel().isLocalized() ? node.getLabel().getValue() : null;
       String icon = node.getIconName();
 
       PublicationDate publicationDate = node.getVisibility().getPublicationDate();
@@ -79,7 +79,7 @@ public class ObjectFactory
 
       org.exoplatform.portal.mop.Visibility visibility = from(node.getVisibility().getFlag());
       
-      PageKey pageKey = Util.from(node.getPageId());
+      PageKey pageKey = node.getPageId() != null ? Util.from(node.getPageId()) : null;
 
       return new NodeState(label, icon, startPublicationTime, endPublicationTime, visibility, pageKey);
    }
@@ -114,7 +114,7 @@ public class ObjectFactory
       }
       else
       {
-         return new Label((String) null);
+         return null;
       }
    }
 
