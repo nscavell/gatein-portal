@@ -133,8 +133,6 @@ public class NavigationServiceContext
       }
 
       Iterator<String> itr = nodePath.iterator();
-      itr.next();
-
       Node n = NodeAccessor.getRootNode(navigation);
       while (itr.hasNext())
       {
@@ -156,8 +154,6 @@ public class NavigationServiceContext
       }
 
       Iterator<String> itr = nodePath.iterator();
-      itr.next();
-
       NodeContext<NodeContext<?>> n = rootNodeCtx;
       while (itr.hasNext())
       {
@@ -179,11 +175,18 @@ public class NavigationServiceContext
          {
             rootNodeCtx = service.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
             navigation = new Navigation(siteId, navCtx.getState().getPriority());
-            for (NodeContext<?> c : rootNodeCtx.getNodes())
+            if (rootNodeCtx.isExpanded())
             {
-               @SuppressWarnings("unchecked")
-               Node n = getNode((NodeContext<NodeContext<?>>) c);
-               navigation.addNode(n);
+               Node rootNode = NodeAccessor.getRootNode(navigation);
+
+               for (NodeContext<?> c : rootNodeCtx.getNodes())
+               {
+                  @SuppressWarnings("unchecked")
+                  Node n = getNode((NodeContext<NodeContext<?>>) c);
+                  rootNode.addNode(n);
+               }
+
+               NodeAccessor.setNodesLoaded(rootNode, true);
             }
 
             // Node rootNode = NodeAccessor.getRootNode(navigation);
@@ -284,6 +287,11 @@ public class NavigationServiceContext
          throw new ApiException("Failed to save node", e);
       }
 
+      saveLabel(node, nodeCtx);
+   }
+
+   private void saveLabel(Node node, NodeContext<NodeContext<?>> nodeCtx)
+   {
       if (node.getLabel() != null && node.getLabel().isLocalized())
       {
          if (!node.getLabel().equals(getLabel(nodeCtx)))
@@ -291,6 +299,11 @@ public class NavigationServiceContext
             Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getLabel());
             descriptionService.setDescriptions(nodeCtx.getId(), descriptions);
          }
+      }
+
+      for (Node c : node.getNodes())
+      {
+         saveLabel(c, nodeCtx.get(c.getName()));
       }
    }
 

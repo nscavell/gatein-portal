@@ -35,7 +35,7 @@ public class NodePathScopeTestCase extends TestCase
 {
    public void testNodePathScope()
    {
-      Visitor visitor = new NodePathScope(new NodePath("default", "1", "1-1", "1-1-1")).get();
+      Visitor visitor = new NodePathScope(new NodePath("1", "1-1", "1-1-1")).get();
 
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(0, null, "default", null));
 
