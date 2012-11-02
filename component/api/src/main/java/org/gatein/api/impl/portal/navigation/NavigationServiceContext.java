@@ -94,7 +94,7 @@ public class NavigationServiceContext
          {
             @SuppressWarnings("unchecked")
             Node n = getNode((NodeContext<NodeContext<?>>) c);
-            node.addNode(n);
+            node.addChild(n);
          }
          NodeAccessor.setNodesLoaded(node, true);
       }
@@ -136,7 +136,7 @@ public class NavigationServiceContext
       Node n = NodeAccessor.getRootNode(navigation);
       while (itr.hasNext())
       {
-         n = n.getNode(itr.next());
+         n = n.getChild(itr.next());
          if (n == null)
          {
             return null;
@@ -183,7 +183,7 @@ public class NavigationServiceContext
                {
                   @SuppressWarnings("unchecked")
                   Node n = getNode((NodeContext<NodeContext<?>>) c);
-                  rootNode.addNode(n);
+                  rootNode.addChild(n);
                }
 
                NodeAccessor.setNodesLoaded(rootNode, true);
@@ -208,15 +208,15 @@ public class NavigationServiceContext
 
    private void merge(Node src, Node dst)
    {
-      List<Node> children = new LinkedList<Node>(dst.getNodes());
+      List<Node> children = new LinkedList<Node>(dst.getChildren());
 
       dst.setIconName(src.getIconName());
       dst.setLabel(src.getLabel());
       dst.setPageId(src.getPageId());
       dst.setVisibility(src.getVisibility());
-      dst.getNodes().clear();
+      dst.getChildren().clear();
 
-      for (Node srcChild : src.getNodes())
+      for (Node srcChild : src.getChildren())
       {
          Node dstChild = null;
 
@@ -234,7 +234,7 @@ public class NavigationServiceContext
             dstChild = src;
          }
 
-         dst.addNode(dstChild);
+         dst.addChild(dstChild);
       }
    }
 
@@ -301,7 +301,7 @@ public class NavigationServiceContext
          }
       }
 
-      for (Node c : node.getNodes())
+      for (Node c : node.getChildren())
       {
          saveLabel(c, nodeCtx.get(c.getName()));
       }
@@ -328,7 +328,7 @@ public class NavigationServiceContext
 
       if (create)
       {
-         nodeCtx = parentNodeCtx.add(node.getParent().getNodes().indexOf(node), node.getName());
+         nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
       }
 
       if (node.getParent() != null)
@@ -347,7 +347,7 @@ public class NavigationServiceContext
 
       for (NodeContext<?> childCtx : nodeCtx.getNodes())
       {
-         if (node.getNode(childCtx.getName()) == null)
+         if (node.getChild(childCtx.getName()) == null)
          {
             if (!nodeCtx.removeNode(childCtx.getName()))
             {
@@ -356,7 +356,7 @@ public class NavigationServiceContext
          }
       }
 
-      for (Node childNode : node.getNodes())
+      for (Node childNode : node.getChildren())
       {
          NodeContext<NodeContext<?>> childNodeCtx = nodeCtx.get(childNode.getName());
          updateNodeContext(childNode, childNodeCtx, nodeCtx);

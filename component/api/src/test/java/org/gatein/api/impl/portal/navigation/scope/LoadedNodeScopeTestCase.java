@@ -39,14 +39,14 @@ public class LoadedNodeScopeTestCase extends TestCase
 
       Node p = new Node("1");
       NodeAccessor.setNodesLoaded(p, true);
-      r.addNode(p);
+      r.addChild(p);
 
-      p.addNode(new Node("1-1"));
-      NodeAccessor.setNodesLoaded(p.getNode("1-1"), true);
-      p.getNode("1-1").addNode(new Node("1-1-1"));
-      p.getNode("1-1").addNode(new Node("1-1-2"));
+      p.addChild(new Node("1-1"));
+      NodeAccessor.setNodesLoaded(p.getChild("1-1"), true);
+      p.getChild("1-1").addChild(new Node("1-1-1"));
+      p.getChild("1-1").addChild(new Node("1-1-2"));
 
-      p.addNode(new Node("1-2"));
+      p.addChild(new Node("1-2"));
 
       Visitor visitor = new LoadedNodeScope(r).get();
 

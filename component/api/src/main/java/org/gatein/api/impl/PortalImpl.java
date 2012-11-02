@@ -197,7 +197,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       Navigation navigation = ctx.getNavigation();
       if (navigation != null && filter != null)
       {
-         filter(navigation.getNodes(), filter);
+         filter(navigation.getChildren(), filter);
       }
       return navigation;
    }
@@ -232,7 +232,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       Node rootNode = NodeAccessor.getRootNode(ctx.getNavigation());
       if (rootNode != null && filter != null)
       {
-         filter(rootNode.getNodes(), filter);
+         filter(rootNode.getChildren(), filter);
       }
       return rootNode;
    }
@@ -240,7 +240,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void loadNodes(Node parent, NodeVisitor visitor)
    {
-      SiteId siteId = parent.getPageId().getSiteId();
+      SiteId siteId = parent.getSiteId();
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(visitor);
       ctx.init();
@@ -251,7 +251,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    @Override
    public void saveNode(Node node)
    {
-      SiteId siteId = node.getPageId().getSiteId();
+      SiteId siteId = node.getSiteId();
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(node);
       ctx.init();

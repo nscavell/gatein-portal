@@ -28,7 +28,7 @@ import org.gatein.api.impl.Util;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.SiteId;
 
 import java.util.Locale;
 
@@ -39,7 +39,7 @@ public class PortalRequestImpl extends PortalRequest
 {
    private final PortalRequestContext context;
    private final User user;
-   private final Site.Id siteId;
+   private final SiteId siteId;
    private final NodePath nodePath;
    private final Portal portal;
 
@@ -61,7 +61,7 @@ public class PortalRequestImpl extends PortalRequest
    }
 
    @Override
-   public Site.Id getSiteId()
+   public SiteId getSiteId()
    {
       return siteId;
    }

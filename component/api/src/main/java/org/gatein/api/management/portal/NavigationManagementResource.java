@@ -87,7 +87,7 @@ public class NavigationManagementResource
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
 
       Node parent = node.getParent();
-      parent.removeNode(node.getName());
+      parent.removeChild(node.getName());
       portal.saveNode(parent);
    }
 
@@ -101,7 +101,7 @@ public class NavigationManagementResource
       Node parent = getNode(nodePath.getParent(), true);
 
       Node node = new Node(nodePath.getLastSegment());
-      parent.addNode(node);
+      parent.addChild(node);
 
       portal.saveNode(node);
 
@@ -114,7 +114,7 @@ public class NavigationManagementResource
    {
       model.set("priority", navigation.getPriority());
       ModelList modelNodes = model.get("node").setEmptyList();
-      for (Node node : navigation.getNodes())
+      for (Node node : navigation.getChildren())
       {
          ModelReference modelNode = modelNodes.add().asValue(ModelReference.class);
          modelNode.set("name", node.getName());

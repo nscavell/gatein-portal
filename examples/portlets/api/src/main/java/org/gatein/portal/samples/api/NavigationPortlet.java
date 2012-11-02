@@ -29,6 +29,7 @@ import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteQuery;
+import org.gatein.api.portal.site.SiteType;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletConfig;
@@ -58,21 +59,21 @@ public class NavigationPortlet extends GenericPortlet
       writer.println("<h1>Sites</h1>");
       Portal portal = PortalRequest.getInstance().getPortal();
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(Site.Type.SITE).build());
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
       for (Site site : sites)
       {
          outputSite(site, writer);
       }
 
       writer.println("<h1>Spaces</h1>");
-      List<Site> spaces = portal.findSites(new SiteQuery.Builder().withSiteTypes(Site.Type.SPACE).build());
+      List<Site> spaces = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).build());
       for (Site space : spaces)
       {
          outputSite(space, writer);
       }
 
       writer.println("<h1>Dashboard</h1>");
-      List<Site> dashboards = portal.findSites(new SiteQuery.Builder().withSiteTypes(Site.Type.DASHBOARD).build());
+      List<Site> dashboards = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).build());
       for (Site dashboard : dashboards)
       {
          outputSite(dashboard, writer);
@@ -87,7 +88,7 @@ public class NavigationPortlet extends GenericPortlet
       Navigation navigation = PortalRequest.getInstance().getPortal().getNavigation(site.getId(), Nodes.visitAll(), null);
       if (navigation != null)
       {
-         for (Node node : navigation.getNodes())
+         for (Node node : navigation.getChildren())
          {
             outputNode(node, writer);
          }
@@ -101,11 +102,10 @@ public class NavigationPortlet extends GenericPortlet
 
    private void outputNode(Node node, PrintWriter writer)
    {
-      //Collection<? extends Navigation> children = node.getChildren();
-      int size = node.getChildCount();
+      int size = node.getChildren().size();
       boolean isLeaf = size == 0;
       writer.println("<li>"
-         + (isLeaf ? "<a style='font-weight: bold; text-decoration: underline; color: #336666;' href='" + node.getPath() + "'>" : "")
+         + (isLeaf ? "<a style='font-weight: bold; text-decoration: underline; color: #336666;' href='" + node.getURI() + "'>" : "")
          + node.getLabel().getValue()
          + (isLeaf ? "</a>" : "")
          + "</li>");

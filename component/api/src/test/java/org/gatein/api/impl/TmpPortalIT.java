@@ -170,7 +170,7 @@ public class TmpPortalIT
       Assert.assertNotNull(node);
       Assert.assertEquals("Test3", node.getName());
 
-      Assert.assertNull(node.getNodes());
+      Assert.assertNull(node.getChildren());
 
       node = node.getParent();
       Assert.assertNotNull(node);
@@ -193,7 +193,7 @@ public class TmpPortalIT
       Node node2 = new Node(UUID.randomUUID().toString());
       node2.setPageId(homeNode.getPageId());
 
-      homeNode.addNode(node2);
+      homeNode.addChild(node2);
       // portal.saveNode(homeNode);
       portal.saveNode(node2);
 
@@ -208,7 +208,7 @@ public class TmpPortalIT
       Node homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
       portal.loadNodes(homeNode, null);
 
-      homeNode.removeNode("Test");
+      homeNode.removeChild("Test");
       portal.saveNode(homeNode);
       printNodeTree(homeNode);
 
@@ -234,10 +234,10 @@ public class TmpPortalIT
       {
          System.out.print("  ");
       }
-      if (nc.getNodes() != null)
+      if (nc.getChildren() != null)
       {
          System.out.println(nc.getName() + " " + nc.getLabel());
-         for (Node c : nc.getNodes())
+         for (Node c : nc.getChildren())
          {
             printNodeTree(c, depth + 1);
          }
