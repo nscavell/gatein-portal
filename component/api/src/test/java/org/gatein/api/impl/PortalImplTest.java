@@ -39,12 +39,6 @@ import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
-import org.exoplatform.portal.mop.navigation.NavigationContext;
-import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.portal.mop.navigation.NavigationState;
-import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeModel;
-import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
@@ -124,6 +118,47 @@ public class PortalImplTest
 
       Node node = portal.getNode(siteId, Nodes.visitAll(), null);
       assertNotNull(node);
+      assertTrue(node.isNodesLoaded());
+      assertTrue(node.getNode("parent").getNode("child").isNodesLoaded());
+
+      node = portal.getNode(siteId, Nodes.visitChildren(), null);
+      assertNotNull(node);
+      assertTrue(node.isNodesLoaded());
+      assertFalse(node.getNode("parent").isNodesLoaded());
+   }
+
+   @Test
+   public void loadNodes()
+   {
+      createNavigationWithChildren();
+
+      Node node = portal.getNode(siteId, Nodes.visitChildren(), null);
+      Node parent = node.getNode("parent");
+      assertNotNull(node);
+      assertTrue(node.isNodesLoaded());
+      assertFalse(parent.isNodesLoaded());
+
+      portal.loadNodes(node, Nodes.visitAll()); // TODO Problem as we don't know siteId!
+
+      assertSame(parent, node.getNode("parent"));
+      assertTrue(parent.isNodesLoaded());
+   }
+
+   @Test
+   public void saveNode()
+   {
+      createNavigationWithChildren();
+
+      Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
+      Node parent = navigation.getNode("parent");
+      Node child2 = new Node("child2");
+      parent.addNode(child2);
+      
+      assertNull(portal.getNode(siteId, child2.getNodePath()));
+
+      portal.saveNode(parent); // TODO Problem as we don't know siteId!
+
+      assertNotNull(portal.getNode(siteId, child2.getNodePath()));
    }
 
    @Test
