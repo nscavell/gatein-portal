@@ -1,87 +1,81 @@
 /*
-* JBoss, a division of Red Hat
-* Copyright 2012, Red Hat Middleware, LLC, and individual contributors as indicated
-* by the @authors tag. See the copyright.txt in the distribution for a
-* full listing of individual contributors.
-*
-* This is free software; you can redistribute it and/or modify it
-* under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2.1 of
-* the License, or (at your option) any later version.
-*
-* This software is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this software; if not, write to the Free
-* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-*/
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 
 package org.gatein.api.impl;
-
-import org.exoplatform.portal.config.DataStorage;
-import org.exoplatform.portal.config.Query;
-import org.exoplatform.portal.config.model.PortalConfig;
-import org.exoplatform.portal.mop.SiteKey;
-import org.exoplatform.portal.mop.SiteType;
-import org.exoplatform.portal.mop.description.DescriptionService;
-import org.exoplatform.portal.mop.navigation.NavigationContext;
-import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.portal.mop.navigation.NavigationState;
-import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeModel;
-import org.exoplatform.portal.mop.navigation.NodeState;
-import org.exoplatform.portal.mop.navigation.Scope;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.resources.ResourceBundleManager;
-import org.gatein.api.Portal;
-import org.gatein.api.impl.portal.DataStorageContext;
-import org.gatein.api.impl.portal.navigation.NavigationUtil;
-import org.gatein.api.impl.portal.navigation.NodeAccessor;
-import org.gatein.api.impl.portal.navigation.NodePathVisitor;
-import org.gatein.api.impl.portal.navigation.NodeVisitorScope;
-import org.gatein.api.portal.Ids;
-import org.gatein.api.portal.Label;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.page.PageQuery;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteQuery;
-import org.gatein.api.util.Filter;
-import org.gatein.api.util.Pagination;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
-import org.picocontainer.Startable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.exoplatform.portal.config.DataStorage;
+import org.exoplatform.portal.config.Query;
+import org.exoplatform.portal.config.model.PortalConfig;
+import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.portal.mop.description.DescriptionService;
+import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.services.organization.OrganizationService;
+import org.exoplatform.services.resources.ResourceBundleManager;
+import org.gatein.api.Portal;
+import org.gatein.api.impl.portal.DataStorageContext;
+import org.gatein.api.impl.portal.navigation.NavigationServiceContext;
+import org.gatein.api.portal.Label;
+import org.gatein.api.portal.Permission;
+import org.gatein.api.portal.User;
+import org.gatein.api.portal.navigation.Navigation;
+import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeAccessor;
+import org.gatein.api.portal.navigation.NodePath;
+import org.gatein.api.portal.navigation.NodeVisitor;
+import org.gatein.api.portal.page.Page;
+import org.gatein.api.portal.page.PageId;
+import org.gatein.api.portal.page.PageQuery;
+import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.portal.site.SiteQuery;
+import org.gatein.api.portal.site.SiteType;
+import org.gatein.api.util.Filter;
+import org.gatein.api.util.Pagination;
+import org.gatein.common.logging.Logger;
+import org.gatein.common.logging.LoggerFactory;
+import org.picocontainer.Startable;
+
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
  * @author <a href="mailto:chris.laprun@jboss.com">Chris Laprun</a>
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class PortalImpl extends DataStorageContext implements Portal, Startable
 {
-   private static final Query<PortalConfig> SITES = new Query<PortalConfig>(SiteType.PORTAL.getName(), null, PortalConfig.class);
-   private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(SiteType.GROUP.getName(), null, PortalConfig.class);
-   private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(SiteType.USER.getName(), null, PortalConfig.class);
+   private static final Query<PortalConfig> SITES = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.PORTAL.getName(), null, PortalConfig.class);
+   private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.GROUP.getName(), null, PortalConfig.class);
+   private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.USER.getName(), null, PortalConfig.class);
 
    //TODO: Do we want a better name for loggeer ? Probably need to standardize our logging for api
    static final Logger log = LoggerFactory.getLogger(PortalImpl.class);
 
    //TODO: should be configurable
-   public Site.Id DEFAULT_SITE = Ids.siteId("classic");
+   public SiteId DEFAULT_SITE = new SiteId("classic");
 
    private final NavigationService navigationService;
    private final DescriptionService descriptionService;
@@ -98,7 +92,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public Site getSite(Site.Id siteId)
+   public Site getSite(SiteId siteId)
    {
       if (siteId == null) throw new IllegalArgumentException("siteId cannot be null");
 
@@ -126,7 +120,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       }
 
       List<Site> sites = new ArrayList<Site>();
-      for (Site.Type type : query.getSiteTypes())
+      for (SiteType type : query.getSiteTypes())
       {
          List<PortalConfig> internalSites;
          switch (type)
@@ -179,7 +173,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public void removeSite(Site.Id siteId)
+   public void removeSite(SiteId siteId)
    {
       SiteKey siteKey = Util.from(siteId);
 
@@ -193,115 +187,77 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       });
    }
 
-    /**
-     * TODO Map errors
-     * 
-     * TODO Decide on lazy loading - do we allow lazy loading? do we throw an error for unloaded nodes? should we return null
-     * for children that are not loaded?
-     * 
-     * TODO Do we include root node (i.e. navigation node) as parent?
-     */
-    @Override
-    public Navigation getNavigation(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter) {
-        NavigationContext navCtx = getNavigationContext(siteId);
-        NodeContext<NodeContext<?>> rootNodeCtx = getRootNodeContext(visitor, navCtx);
-        return NavigationUtil.from(siteId, navCtx, rootNodeCtx);
-    }
+   @Override
+   public Navigation getNavigation(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
+   {
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
+      ctx.setScope(visitor);
+      ctx.init();
 
-    private NodeContext<NodeContext<?>> getRootNodeContext(NodeVisitor visitor, NavigationContext navCtx) {
-        Scope scope = visitor != null ? new NodeVisitorScope(visitor) : Scope.ALL;
-        NodeContext<NodeContext<?>> rootNodeCtx = navigationService.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
-        return rootNodeCtx;
-    }
+      Navigation navigation = ctx.getNavigation();
+      if (navigation != null && filter != null)
+      {
+         filter(navigation.getNodes(), filter);
+      }
+      return navigation;
+   }
 
-    /**
-     * TODO Do we cascade save?
-     */
-    @Override
-    public void saveNavigation(Navigation navigation) {
-        synchronized (navigation) {
-            NavigationContext navigationContext = getNavigationContext(navigation.getSiteId());
-            if (navigation.getPriority() != navigationContext.getState().getPriority()) {
-                navigationContext.setState(new NavigationState(navigation.getPriority()));
-            }
-            navigationService.saveNavigation(navigationContext);
-        }
-    }
+   @Override
+   public void saveNavigation(Navigation navigation)
+   {
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, navigation.getSiteId());
+      ctx.setScope(NodeAccessor.getRootNode(navigation));
+      ctx.init();
 
-    /**
-     * TODO Should this method also include a NodeVisitor for what descendants to load?
-     */
-    @Override
-    public Node getNode(Site.Id siteId, NodePath nodePath) {
-        Navigation nav = getNavigation(siteId, new NodePathVisitor(nodePath, false), null);
-        return NavigationUtil.findNode(nav, nodePath);
-    }
+      ctx.saveNavigation(navigation);
+   }
 
-    /**
-     * TODO This method doesn't make sense, as it will most likely return a list of nodes
-     */
-    @Override
-    public Node getNode(Site.Id siteId, NodeVisitor visitor, Filter<Node> filter) {
-        return null;
-    }
+   @Override
+   public Node getNode(SiteId siteId, NodePath nodePath)
+   {
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
+      ctx.setScope(nodePath);
+      ctx.init();
 
-    /**
-     * TODO Should this be renamed to loadChildNodes? or does it also load ancestors?
-     * 
-     * TODO Should this update the parent as well?
-     * 
-     * TODO Should this add a filter as well?
-     */
-    @Override
-    public void loadNodes(Node parent, NodeVisitor visitor) {
-        synchronized (parent) {
-            Navigation navigation = getNavigation(parent.getPageId().getSiteId(), visitor, null);
-            List<Node> children = new ArrayList<Node>(NavigationUtil.findNode(navigation, parent.getPath()).getChildren());
-            NodeAccessor.setChildren(parent, children);
-        }
-    }
+      return ctx.getNode(nodePath);
+   }
 
-    private NavigationContext getNavigationContext(Site.Id siteId) {
-        SiteKey siteKey = Util.from(siteId);
-        return navigationService.loadNavigation(siteKey);
-    }
+   @Override
+   public Node getNode(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
+   {
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
+      ctx.setScope(visitor);
+      ctx.init();
 
-    /**
-     * TODO Do we cascade saves (i.e. update parent/children)?
-     */
-    @Override
-    public void saveNode(Node node) {
-        synchronized (node) {
-            NavigationContext navCtx = getNavigationContext(node.getPageId().getSiteId());
-            NodeContext<NodeContext<?>> rootNodeCtx = getRootNodeContext(new NodePathVisitor(node.getPath(), true), navCtx);
-            NodeContext<NodeContext<?>> nodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath());
+      Node rootNode = NodeAccessor.getRootNode(ctx.getNavigation());
+      if (rootNode != null && filter != null)
+      {
+         filter(rootNode.getNodes(), filter);
+      }
+      return rootNode;
+   }
 
-            if (nodeCtx == null) {
-                NodeContext<NodeContext<?>> parentNodeCtx = NavigationUtil.findNodeContext(rootNodeCtx, node.getPath()
-                        .getParent());
-                nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
-            }
+   @Override
+   public void loadNodes(Node parent, NodeVisitor visitor)
+   {
+      SiteId siteId = parent.getSiteId();
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
+      ctx.setScope(visitor);
+      ctx.init();
 
-            if (!node.getName().equals(nodeCtx.getName())) {
-                nodeCtx.setName(node.getName());
-            }
+      ctx.loadNodes(parent);
+   }
 
-            NodeState nodeState = NavigationUtil.from(node, nodeCtx);
-            if (!nodeState.equals(nodeCtx.getState())) {
-                nodeCtx.setState(nodeState);
-            }
+   @Override
+   public void saveNode(Node node)
+   {
+      SiteId siteId = node.getSiteId();
+      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
+      ctx.setScope(node);
+      ctx.init();
 
-            for (NodeContext<?> childCtx : nodeCtx.getNodes()) {
-                if (node.getChild(childCtx.getName()) == null) {
-                    if (!nodeCtx.removeNode(childCtx.getName())) {
-                        throw new RuntimeException("Failed to remove child");
-                    }   
-                }
-            }
-
-            navigationService.saveNode(nodeCtx, null);
-        }
-    }
+      ctx.saveNode(node);
+   }
 
    @Override
    public Label resolveLabel(Label label)
@@ -310,7 +266,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public Page getPage(Page.Id pageId)
+   public Page getPage(PageId pageId)
    {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
    }
@@ -328,7 +284,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public void removePage(Page.Id pageId)
+   public void removePage(PageId pageId)
    {
       //To change body of implemented methods use File | Settings | File Templates.
    }
@@ -386,7 +342,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
 //      return rc.getLocale();
 //   }
 
-//   public ResourceBundle getNavigationResourceBundle(Site.Id id)
+   // public ResourceBundle getNavigationResourceBundle(SiteId id)
 //   {
 //      SiteKey siteKey = Util.from(id);
 //      return bundleManager.getNavigationResourceBundle(getUserLocale().getLanguage(), siteKey.getTypeName(), siteKey.getName());

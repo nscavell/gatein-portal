@@ -22,18 +22,19 @@
 
 package org.gatein.api.impl;
 
-import org.exoplatform.portal.config.model.PortalConfig;
-import org.exoplatform.portal.mop.SiteKey;
-import org.gatein.api.portal.Group;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.Permissions;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.site.Site;
-
 import java.util.Iterator;
 import java.util.Locale;
 
-import static org.gatein.api.portal.Ids.*;
+import org.exoplatform.portal.config.model.PortalConfig;
+import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.portal.mop.page.PageKey;
+import org.gatein.api.portal.Group;
+import org.gatein.api.portal.Membership;
+import org.gatein.api.portal.Permission;
+import org.gatein.api.portal.User;
+import org.gatein.api.portal.page.PageId;
+import org.gatein.api.portal.site.Site;
+import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -79,22 +80,43 @@ public class Util
       return portalConfig;
    }
 
-   public static Site.Id from(SiteKey siteKey)
+   public static PageId from(PageKey pageKey)
    {
-      switch (siteKey.getType())
+      SiteKey siteKey = pageKey.getSite();
+      switch (pageKey.getSite().getType())
       {
          case PORTAL:
-            return siteId(siteKey.getName());
+            return new PageId(siteKey.getName(), pageKey.getName());
          case GROUP:
-            return siteId(new Group(siteKey.getName()));
+            return new PageId(new Group(siteKey.getName()), pageKey.getName());
          case USER:
-            return siteId(new User(siteKey.getName()));
+            return new PageId(new User(siteKey.getName()), pageKey.getName());
          default:
             throw new AssertionError();
       }
    }
 
-   public static SiteKey from(Site.Id siteId)
+   public static PageKey from(PageId pageId)
+   {
+      return new PageKey(from(pageId.getSiteId()), pageId.getPageName());
+   }
+
+   public static SiteId from(SiteKey siteKey)
+   {
+      switch (siteKey.getType())
+      {
+         case PORTAL:
+            return new SiteId(siteKey.getName());
+         case GROUP:
+            return new SiteId(new Group(siteKey.getName()));
+         case USER:
+            return new SiteId(new User(siteKey.getName()));
+         default:
+            throw new AssertionError();
+      }
+   }
+
+   public static SiteKey from(SiteId siteId)
    {
       switch (siteId.getType())
       {
@@ -116,11 +138,11 @@ public class Util
 
       if (permissions.length == 1 && permissions[0].equals("Everyone"))
       {
-         return Permissions.everyone();
+         return Permission.everyone();
       }
       else
       {
-         return Permissions.memberships(permissions);
+         return null; // TODO new Permission(permissions);
       }
    }
 
@@ -135,11 +157,11 @@ public class Util
       else
       {
          String[] permissions = new String[permission.getMemberships().size()];
-         Iterator<Group.Membership> memberships = permission.getMemberships().iterator();
+         Iterator<Membership> memberships = permission.getMemberships().iterator();
          for (int i=0; i < permissions.length; i++)
          {
             // Membership.toString gives us this, however it's safer to not rely on it.
-            Group.Membership membership = memberships.next();
+            Membership membership = memberships.next();
             permissions[i] = membership.getMembershipType() + ":" + membership.getGroup().getId();
          }
 
