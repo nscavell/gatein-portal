@@ -46,6 +46,7 @@ import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeAccessor;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.page.Page;
@@ -208,7 +209,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    public void saveNavigation(Navigation navigation)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, navigation.getSiteId());
-      ctx.setScope(navigation.getRootNode());
+      ctx.setScope(NodeAccessor.getRootNode(navigation));
       ctx.init();
 
       ctx.saveNavigation(navigation);
@@ -232,7 +233,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       ctx.setFilter(filter);
       ctx.init();
 
-      Node rootNode = ctx.getNavigation().getRootNode();
+      Node rootNode = NodeAccessor.getRootNode(ctx.getNavigation());
       return rootNode;
    }
 
