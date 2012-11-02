@@ -203,39 +203,12 @@ public class NavigationServiceContext
    public void loadNodes(Node parent)
    {
       Node updated = getNode(parent.getNodePath());
-      merge(updated, parent);
-   }
-
-   private void merge(Node src, Node dst)
-   {
-      List<Node> children = new LinkedList<Node>(dst.getNodes());
-
-      dst.setIconName(src.getIconName());
-      dst.setLabel(src.getLabel());
-      dst.setPageId(src.getPageId());
-      dst.setVisibility(src.getVisibility());
-      dst.getNodes().clear();
-
-      for (Node srcChild : src.getNodes())
+      parent.getNodes().clear();
+      for (Node c : updated.getNodes())
       {
-         Node dstChild = null;
-
-         for (Node c : children)
-         {
-            if (c.getName().equals(srcChild.getName()))
-            {
-               dstChild = c;
-               merge(srcChild, dstChild);
-            }
-         }
-
-         if (dstChild == null)
-         {
-            dstChild = src;
-         }
-
-         dst.addNode(dstChild);
+         parent.getNodes().add(new Node(c));
       }
+      NodeAccessor.setNodesLoaded(parent, updated.isNodesLoaded());
    }
 
    public void saveNavigation(Navigation navigation)
