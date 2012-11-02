@@ -30,6 +30,7 @@ import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope.Visitor;
 import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.exoplatform.portal.mop.page.PageKey;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 
 /**
@@ -45,17 +46,20 @@ public class NodeVisitorScopeTest extends TestCase
       
       mock.instrument(true);
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(0, "id", "default", nodeState));
-      assertNotNull(mock.name);
+      assertNull(mock.name);
+      assertNull(mock.details);
 
       mock.instrument(true);
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(1, "id", "1", nodeState));
       assertNotNull(mock.name);
       assertEquals(1, mock.depth);
+      assertEquals(new NodePath("1"), mock.details.getNodePath());
 
       mock.instrument(false);
       assertEquals(VisitMode.NO_CHILDREN, visitor.enter(2, "id", "1-1", nodeState));
       assertNotNull(mock.name);
       assertEquals(2, mock.depth);
+      assertEquals(new NodePath("1", "1-1"), mock.details.getNodePath());
       
       visitor.leave(2, "id", "1-1", nodeState);
       visitor.leave(1, "id", "1", nodeState);
@@ -72,11 +76,14 @@ public class NodeVisitorScopeTest extends TestCase
 
       private String name;
 
+      private NodeDetails details;
+
       @Override
       public boolean visit(int depth, String name, NodeDetails details)
       {
          this.depth = depth;
          this.name = name;
+         this.details = details;
          return visit;
       }
 
