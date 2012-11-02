@@ -1,24 +1,24 @@
 /*
-* JBoss, a division of Red Hat
-* Copyright 2012, Red Hat Middleware, LLC, and individual contributors as indicated
-* by the @authors tag. See the copyright.txt in the distribution for a
-* full listing of individual contributors.
-*
-* This is free software; you can redistribute it and/or modify it
-* under the terms of the GNU Lesser General Public License as
-* published by the Free Software Foundation; either version 2.1 of
-* the License, or (at your option) any later version.
-*
-* This software is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this software; if not, write to the Free
-* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-* 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-*/
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 
 package org.gatein.api.impl;
 
@@ -38,9 +38,6 @@ import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.portal.DataStorageContext;
 import org.gatein.api.impl.portal.navigation.NavigationServiceContext;
-import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
-import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
-import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
@@ -195,16 +192,13 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(visitor);
-      ctx.setFilter(filter);
       ctx.init();
 
       Navigation navigation = ctx.getNavigation();
+      filter(navigation.getNodes(), filter);
       return navigation;
    }
 
-   /**
-    * TODO What if navigation context has changed?
-    */
    @Override
    public void saveNavigation(Navigation navigation)
    {
@@ -230,10 +224,10 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(visitor);
-      ctx.setFilter(filter);
       ctx.init();
 
       Node rootNode = NodeAccessor.getRootNode(ctx.getNavigation());
+      filter(rootNode.getNodes(), filter);
       return rootNode;
    }
 
@@ -248,9 +242,6 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       ctx.loadNodes(parent);
    }
 
-   /**
-    * TODO What if node context has changed (see NavigationImporter)?
-    */
    @Override
    public void saveNode(Node node)
    {
