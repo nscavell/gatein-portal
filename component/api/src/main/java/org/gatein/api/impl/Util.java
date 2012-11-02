@@ -23,7 +23,9 @@
 package org.gatein.api.impl;
 
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
@@ -142,7 +144,13 @@ public class Util
       }
       else
       {
-         return null; // TODO new Permission(permissions);
+         Set<Membership> memberships = new LinkedHashSet<Membership>(permissions.length);
+         for (String permission : permissions)
+         {
+            memberships.add(Membership.fromString(permission));
+         }
+
+         return new Permission(memberships);
       }
    }
 
