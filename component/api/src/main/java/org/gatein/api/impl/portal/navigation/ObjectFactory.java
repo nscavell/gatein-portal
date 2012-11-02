@@ -32,6 +32,7 @@ import org.exoplatform.portal.mop.page.PageKey;
 import org.gatein.api.ApiException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.portal.Label;
+import org.gatein.api.portal.Localized.Value;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
@@ -120,7 +121,12 @@ public class ObjectFactory
 
    public static Map<Locale, Described.State> createDescriptions(Label label)
    {
-      return null;
+      Map<Locale, Described.State> descriptions = new HashMap<Locale, Described.State>();
+      for (Value<String> v : label.getLocalizedValues())
+      {
+         descriptions.put(v.getLocale(), new Described.State(v.getValue(), null));
+      }
+      return descriptions;
    }
 
    public static Visibility createVisibility(NodeState nodeState)

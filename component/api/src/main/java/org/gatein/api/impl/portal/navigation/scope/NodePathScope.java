@@ -56,7 +56,11 @@ public class NodePathScope implements Scope
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         if (depth < nodePath.size() && nodePath.getSegment(depth).equals(name))
+         if (depth == 0)
+         {
+            return VisitMode.ALL_CHILDREN;
+         }
+         else if (depth <= nodePath.size() && nodePath.getSegment(depth - 1).equals(name))
          {
             return VisitMode.ALL_CHILDREN;
          }

@@ -22,6 +22,11 @@
 package org.gatein.api.impl;
 
 import static org.junit.Assert.*;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 import junit.framework.AssertionFailedError;
 
 import org.exoplatform.component.test.ConfigurationUnit;
@@ -45,9 +50,11 @@ import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Portal;
+import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.After;
@@ -111,12 +118,34 @@ public class PortalImplTest
    }
 
    @Test
-   public void getNavigation()
+   public void getNode()
    {
-      Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
-      assertNull(navigation);
+      createNavigationWithChildren();
+
+      Node node = portal.getNode(siteId, Nodes.visitAll(), null);
+      assertNotNull(node);
    }
-   
+
+   @Test
+   public void getNodeWithNodePath()
+   {
+      createNavigationWithChildren();
+
+      Node node = portal.getNode(siteId, new NodePath());
+      assertEquals(null, node.getName());
+      assertTrue(node.isNodesLoaded());
+      assertFalse(node.getNode("parent").isNodesLoaded());
+
+      node = portal.getNode(siteId, new NodePath("parent"));
+      assertEquals("parent", node.getName());
+      assertTrue(node.isNodesLoaded());
+      assertFalse(node.getNode("child").isNodesLoaded());
+
+      node = portal.getNode(siteId, new NodePath("parent", "child"));
+      assertEquals("child", node.getName());
+      assertTrue(node.isNodesLoaded());
+   }
+
    @Test
    public void createNavigationNoChildren()
    {
@@ -145,6 +174,46 @@ public class PortalImplTest
       assertEquals(1, n.getNodes().size());
       assertEquals(1, n.getNode("parent").getNodes().size());
       assertEquals(0, n.getNode("parent").getNode("child").getNodes().size());
+   }
+
+   @Test
+   public void simpleLabel()
+   {
+      Navigation navigation = new Navigation(siteId, 10);
+
+      Node n = new Node("parent");
+      n.setLabel(new Label("simple"));
+      navigation.addNode(n);
+
+      portal.saveNavigation(navigation);
+
+      n = portal.getNode(siteId, n.getNodePath());
+
+      assertEquals("simple", n.getLabel().getValue());
+      assertFalse(n.getLabel().isLocalized());
+   }
+
+   @Test
+   public void extendedLabel()
+   {
+      Navigation navigation = new Navigation(siteId, 10);
+
+      Node n = new Node("parent");
+
+      Map<Locale, String> m = new HashMap<Locale, String>();
+      m.put(Locale.ENGLISH, "extended");
+      m.put(Locale.FRENCH, "prolongé");
+      
+      n.setLabel(new Label(m));
+      navigation.addNode(n);
+
+      portal.saveNavigation(navigation);
+
+      n = portal.getNode(siteId, n.getNodePath());
+
+      assertTrue(n.getLabel().isLocalized());
+      assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
+      assertEquals("prolongé", n.getLabel().getValue(Locale.FRENCH));
    }
 
    void createSite(SiteType type, String name)
