@@ -1,8 +1,8 @@
 /*
- * JBoss, a division of Red Hat
- * Copyright 2012, Red Hat Middleware, LLC, and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -21,7 +21,6 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,6 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.exoplatform.portal.mop.Described;
+import org.exoplatform.portal.mop.Described.State;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
@@ -36,14 +36,12 @@ import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.navigation.NavigationServiceException;
 import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeFilter;
 import org.exoplatform.portal.mop.navigation.NodeModel;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.gatein.api.ApiException;
 import org.gatein.api.NavigationNotFoundException;
 import org.gatein.api.impl.Util;
-import org.gatein.api.impl.portal.navigation.filter.NodeFilterWrapper;
 import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
 import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
 import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
@@ -54,7 +52,6 @@ import org.gatein.api.portal.navigation.NodeAccessor;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.util.Filter;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -62,8 +59,6 @@ import org.gatein.api.util.Filter;
 public class NavigationServiceContext
 {
    private DescriptionService descriptionService;
-
-   private NodeFilter filter;
 
    private NavigationContext navCtx;
 
@@ -88,27 +83,6 @@ public class NavigationServiceContext
       siteKey = Util.from(siteId);
    }
 
-   private Label getLabel(NodeContext<NodeContext<?>> node)
-   {
-      if (node.getState().getLabel() != null)
-      {
-         return new Label(node.getState().getLabel());
-      }
-
-      Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(node.getId());
-      if (descriptions != null && !descriptions.isEmpty())
-      {
-         Map<Locale, String> m = new HashMap<Locale, String>();
-         for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
-         {
-            m.put(entry.getKey(), entry.getValue().getName());
-         }
-         return new Label(m);
-      }
-
-      return null;
-   }
-
    private Node getNode(NodeContext<NodeContext<?>> nodeCtx)
    {
       Node node = ObjectFactory.createNode(nodeCtx.getName(), nodeCtx.getState());
@@ -126,6 +100,19 @@ public class NavigationServiceContext
       }
 
       return node;
+   }
+
+   private Label getLabel(NodeContext<NodeContext<?>> nodeCtx)
+   {
+      if (nodeCtx.getState().getLabel() != null)
+      {
+         return new Label(nodeCtx.getState().getLabel());
+      }
+      else
+      {
+         Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(nodeCtx.getId());
+         return ObjectFactory.createLabel(descriptions);
+      }
    }
 
    public Navigation getNavigation()
@@ -191,11 +178,6 @@ public class NavigationServiceContext
          if (navCtx != null)
          {
             rootNodeCtx = service.loadNode(NodeModel.SELF_MODEL, navCtx, scope, null);
-            if (filter != null)
-            {
-               rootNodeCtx.filter(filter);
-            }
-
             navigation = new Navigation(siteId, navCtx.getState().getPriority());
             for (NodeContext<?> c : rootNodeCtx.getNodes())
             {
@@ -285,6 +267,8 @@ public class NavigationServiceContext
       saveNode(NodeAccessor.getRootNode(navigation));
    }
 
+   // TODO Detect if NodeContext or Descriptions have changed since Node was loaded. If they have we probably want to throw a
+   // OptimisticLockException or something like that.
    public void saveNode(Node node)
    {
       NodeContext<NodeContext<?>> nodeCtx = getNodeContext(node.getNodePath());
@@ -298,13 +282,14 @@ public class NavigationServiceContext
       {
          throw new ApiException("Failed to save node", e);
       }
-   }
 
-   public void setFilter(Filter<Node> filter)
-   {
-      if (filter != null)
+      if (node.getLabel().isLocalized())
       {
-         this.filter = new NodeFilterWrapper(filter);
+         if (!node.getLabel().equals(getLabel(nodeCtx)))
+         {
+            Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getLabel());
+            descriptionService.setDescriptions(nodeCtx.getId(), descriptions);
+         }
       }
    }
 

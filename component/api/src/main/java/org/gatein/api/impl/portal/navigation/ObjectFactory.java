@@ -1,8 +1,8 @@
 /*
- * JBoss, a division of Red Hat
- * Copyright 2012, Red Hat Middleware, LLC, and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,11 +22,16 @@
 package org.gatein.api.impl.portal.navigation;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
+import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.gatein.api.ApiException;
 import org.gatein.api.impl.Util;
+import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
@@ -51,7 +56,7 @@ public class ObjectFactory
 
    public static NodeState createNodeState(Node node)
    {
-      String label = node.getLabel() != null ? node.getLabel().getValue() : null;
+      String label = !node.getLabel().isLocalized() ? node.getLabel().getValue() : null;
       String icon = node.getIconName();
 
       PublicationDate publicationDate = node.getVisibility().getPublicationDate();
@@ -94,6 +99,28 @@ public class ObjectFactory
          default:
             throw new ApiException("Unknown visibility flag '" + flag + "'");
       }
+   }
+
+   public static Label createLabel(Map<Locale, Described.State> descriptions)
+   {
+      if (descriptions != null && !descriptions.isEmpty())
+      {
+         Map<Locale, String> m = new HashMap<Locale, String>();
+         for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
+         {
+            m.put(entry.getKey(), entry.getValue().getName());
+         }
+         return new Label(m);
+      }
+      else
+      {
+         return new Label((String) null);
+      }
+   }
+
+   public static Map<Locale, Described.State> createDescriptions(Label label)
+   {
+      return null;
    }
 
    public static Visibility createVisibility(NodeState nodeState)
