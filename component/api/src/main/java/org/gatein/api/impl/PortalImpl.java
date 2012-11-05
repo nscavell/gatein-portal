@@ -197,7 +197,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       Navigation navigation = ctx.getNavigation();
       if (navigation != null && filter != null)
       {
-         filter(navigation.getNodes(), filter);
+         filter(navigation.getChildren(), filter);
       }
       return navigation;
    }
@@ -232,7 +232,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       Node rootNode = NodeAccessor.getRootNode(ctx.getNavigation());
       if (rootNode != null && filter != null)
       {
-         filter(rootNode.getNodes(), filter);
+         filter(rootNode.getChildren(), filter);
       }
       return rootNode;
    }

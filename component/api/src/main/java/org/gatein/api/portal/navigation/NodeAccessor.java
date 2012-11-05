@@ -25,7 +25,7 @@ public class NodeAccessor
 {
    public static void setNodesLoaded(Node node, boolean loaded)
    {
-      ((NodeList) node.getNodes()).setLoaded(loaded);
+      ((NodeList) node.getChildren()).setLoaded(loaded);
    }
 
    public static Node getRootNode(Navigation navigation)

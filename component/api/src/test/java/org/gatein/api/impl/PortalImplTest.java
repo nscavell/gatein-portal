@@ -112,19 +112,19 @@ public class PortalImplTest
    }
 
    @Test
-   public void getNode()
+   public void getChild()
    {
       createNavigationWithChildren();
 
       Node node = portal.getNode(siteId, Nodes.visitAll(), null);
       assertNotNull(node);
-      assertTrue(node.isNodesLoaded());
-      assertTrue(node.getNode("parent").getNode("child").isNodesLoaded());
+      assertTrue(node.isChildrenLoaded());
+      assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
 
       node = portal.getNode(siteId, Nodes.visitChildren(), null);
       assertNotNull(node);
-      assertTrue(node.isNodesLoaded());
-      assertFalse(node.getNode("parent").isNodesLoaded());
+      assertTrue(node.isChildrenLoaded());
+      assertFalse(node.getChild("parent").isChildrenLoaded());
    }
 
    @Test
@@ -133,14 +133,14 @@ public class PortalImplTest
       createNavigationWithChildren();
 
       Node node = portal.getNode(siteId, Nodes.visitChildren(), null);
-      Node parent = node.getNode("parent");
+      Node parent = node.getChild("parent");
       assertNotNull(node);
-      assertTrue(node.isNodesLoaded());
-      assertFalse(parent.isNodesLoaded());
+      assertTrue(node.isChildrenLoaded());
+      assertFalse(parent.isChildrenLoaded());
 
       portal.loadNodes(parent, Nodes.visitAll()); // TODO Problem as we don't know siteId!
 
-      assertTrue(parent.isNodesLoaded());
+      assertTrue(parent.isChildrenLoaded());
    }
 
    @Test
@@ -149,9 +149,9 @@ public class PortalImplTest
       createNavigationWithChildren();
 
       Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
-      Node parent = navigation.getNode("parent");
+      Node parent = navigation.getChild("parent");
       Node child2 = new Node("child2");
-      parent.addNode(child2);
+      parent.addChild(child2);
       
       assertNull(portal.getNode(siteId, child2.getNodePath()));
 
@@ -161,23 +161,23 @@ public class PortalImplTest
    }
 
    @Test
-   public void getNodeWithNodePath()
+   public void getChildWithNodePath()
    {
       createNavigationWithChildren();
 
       Node node = portal.getNode(siteId, new NodePath());
       assertEquals(null, node.getName());
-      assertTrue(node.isNodesLoaded());
-      assertFalse(node.getNode("parent").isNodesLoaded());
+      assertTrue(node.isChildrenLoaded());
+      assertFalse(node.getChild("parent").isChildrenLoaded());
 
       node = portal.getNode(siteId, new NodePath("parent"));
       assertEquals("parent", node.getName());
-      assertTrue(node.isNodesLoaded());
-      assertFalse(node.getNode("child").isNodesLoaded());
+      assertTrue(node.isChildrenLoaded());
+      assertFalse(node.getChild("child").isChildrenLoaded());
 
       node = portal.getNode(siteId, new NodePath("parent", "child"));
       assertEquals("child", node.getName());
-      assertTrue(node.isNodesLoaded());
+      assertTrue(node.isChildrenLoaded());
    }
 
    @Test
@@ -190,24 +190,24 @@ public class PortalImplTest
 
       assertEquals(10, n.getPriority());
       assertEquals(siteId, n.getSiteId());
-      assertTrue(n.getNodes().isEmpty());
+      assertTrue(n.getChildren().isEmpty());
    }
 
    @Test
    public void createNavigationWithChildren()
    {
       Navigation n = new Navigation(siteId, 10);
-      n.addNode(new Node("parent"));
-      n.getNode("parent").addNode(new Node("child"));
+      n.addChild(new Node("parent"));
+      n.getChild("parent").addChild(new Node("child"));
       portal.saveNavigation(n);
 
       n = portal.getNavigation(siteId, Nodes.visitAll(), null);
 
       assertEquals(10, n.getPriority());
       assertEquals(siteId, n.getSiteId());
-      assertEquals(1, n.getNodes().size());
-      assertEquals(1, n.getNode("parent").getNodes().size());
-      assertEquals(0, n.getNode("parent").getNode("child").getNodes().size());
+      assertEquals(1, n.getChildren().size());
+      assertEquals(1, n.getChild("parent").getChildren().size());
+      assertEquals(0, n.getChild("parent").getChild("child").getChildren().size());
    }
 
    @Test
@@ -217,7 +217,7 @@ public class PortalImplTest
 
       Node n = new Node("parent");
       n.setLabel(new Label("simple"));
-      navigation.addNode(n);
+      navigation.addChild(n);
 
       portal.saveNavigation(navigation);
 
@@ -239,7 +239,7 @@ public class PortalImplTest
       m.put(Locale.FRENCH, "prolongé");
       
       n.setLabel(new Label(m));
-      navigation.addNode(n);
+      navigation.addChild(n);
 
       portal.saveNavigation(navigation);
 

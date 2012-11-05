@@ -358,7 +358,7 @@ public class PortalTestCase extends AbstractAPITestCase
       Navigation navigation = portal.getNavigation(siteId, null, null);
       Assert.assertNotNull(navigation);
       Assert.assertEquals(20, navigation.getPriority());
-      Assert.assertTrue(navigation.getNodes().isEmpty());
+      Assert.assertTrue(navigation.getChildren().isEmpty());
 
       // TODO Navigation with nodes, filter, visitor
    }
@@ -385,16 +385,16 @@ public class PortalTestCase extends AbstractAPITestCase
       parent1.setPageId(new PageId("classic", "homepage"));
       Node child1 = new Node("child1");
       child1.setPageId(new PageId("classic", "homepage"));
-      parent1.addNode(child1);
+      parent1.addChild(child1);
 
       Node parent2 = new Node("parent2");
       parent2.setPageId(new PageId("classic", "homepage"));
       Node child2 = new Node("child2");
       child2.setPageId(new PageId("classic", "homepage"));
-      parent2.addNode(child2);
+      parent2.addChild(child2);
       
-      navigation.addNode(parent1);
-      navigation.addNode(parent2);
+      navigation.addChild(parent1);
+      navigation.addChild(parent2);
 
       portal.saveNavigation(navigation);
    }

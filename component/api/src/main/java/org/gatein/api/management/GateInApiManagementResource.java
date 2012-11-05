@@ -239,7 +239,7 @@ public class GateInApiManagementResource
       // Navigation
       Navigation navigation = portal.getNavigation(id, Nodes.visitNone(), null);
       ModelList navList = siteModel.get("navigation", ModelList.class);
-      for (Node child : navigation.getNodes())
+      for (Node child : navigation.getChildren())
       {
          ModelReference navRef = navList.add().asValue(ModelReference.class);
          navRef.set("name", child.getName());

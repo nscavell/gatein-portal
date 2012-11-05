@@ -22,8 +22,6 @@
 package org.gatein.api.impl.portal.navigation;
 
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -94,7 +92,7 @@ public class NavigationServiceContext
          {
             @SuppressWarnings("unchecked")
             Node n = getNode((NodeContext<NodeContext<?>>) c);
-            node.addNode(n);
+            node.addChild(n);
          }
          NodeAccessor.setNodesLoaded(node, true);
       }
@@ -136,7 +134,7 @@ public class NavigationServiceContext
       Node n = NodeAccessor.getRootNode(navigation);
       while (itr.hasNext())
       {
-         n = n.getNode(itr.next());
+         n = n.getChild(itr.next());
          if (n == null)
          {
             return null;
@@ -183,7 +181,7 @@ public class NavigationServiceContext
                {
                   @SuppressWarnings("unchecked")
                   Node n = getNode((NodeContext<NodeContext<?>>) c);
-                  rootNode.addNode(n);
+                  rootNode.addChild(n);
                }
 
                NodeAccessor.setNodesLoaded(rootNode, true);
@@ -203,12 +201,12 @@ public class NavigationServiceContext
    public void loadNodes(Node parent)
    {
       Node updated = getNode(parent.getNodePath());
-      parent.getNodes().clear();
-      for (Node c : updated.getNodes())
+      parent.getChildren().clear();
+      for (Node c : updated.getChildren())
       {
-         parent.getNodes().add(new Node(c));
+         parent.getChildren().add(new Node(c));
       }
-      NodeAccessor.setNodesLoaded(parent, updated.isNodesLoaded());
+      NodeAccessor.setNodesLoaded(parent, updated.isChildrenLoaded());
    }
 
    public void saveNavigation(Navigation navigation)
@@ -274,7 +272,7 @@ public class NavigationServiceContext
          }
       }
 
-      for (Node c : node.getNodes())
+      for (Node c : node.getChildren())
       {
          saveLabel(c, nodeCtx.get(c.getName()));
       }
@@ -301,7 +299,7 @@ public class NavigationServiceContext
 
       if (create)
       {
-         nodeCtx = parentNodeCtx.add(node.getParent().getNodes().indexOf(node), node.getName());
+         nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
       }
 
       if (node.getParent() != null)
@@ -320,7 +318,7 @@ public class NavigationServiceContext
 
       for (NodeContext<?> childCtx : nodeCtx.getNodes())
       {
-         if (node.getNode(childCtx.getName()) == null)
+         if (node.getChild(childCtx.getName()) == null)
          {
             if (!nodeCtx.removeNode(childCtx.getName()))
             {
@@ -329,7 +327,7 @@ public class NavigationServiceContext
          }
       }
 
-      for (Node childNode : node.getNodes())
+      for (Node childNode : node.getChildren())
       {
          NodeContext<NodeContext<?>> childNodeCtx = nodeCtx.get(childNode.getName());
          updateNodeContext(childNode, childNodeCtx, nodeCtx);
