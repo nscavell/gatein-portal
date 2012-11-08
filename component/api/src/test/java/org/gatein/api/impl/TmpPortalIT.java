@@ -1,6 +1,7 @@
 package org.gatein.api.impl;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 import javax.naming.NamingException;
@@ -132,7 +133,7 @@ public class TmpPortalIT
 
    private void printNavigation(Navigation navigation)
    {
-      printNodeTree(NodeAccessor.getRootNode(navigation));
+      printNodeTree(navigation.getChildren(), 0);
    }
 
    @Test
@@ -146,7 +147,6 @@ public class TmpPortalIT
    public void withTx() throws NotSupportedException, SystemException, NamingException
    {
       // tx.begin();
-
 
       Navigation navigation = portal.getNavigation(new SiteId("classic"), null, null);
       System.out.println(navigation.getPriority());
@@ -219,32 +219,25 @@ public class TmpPortalIT
       printNodeTree(homeNode);
    }
 
-   private void printNodeTree(Node nc)
+   private void printNodeTree(Node n)
    {
-      while (nc.getParent() != null)
+      while (n.getParent() != null)
       {
-         nc = nc.getParent();
+         n = n.getParent();
       }
-      printNodeTree(nc, 0);
+      printNodeTree(n.getChildren(), 0);
    }
 
-   private void printNodeTree(Node nc, int depth)
+   private void printNodeTree(List<Node> nodes, int depth)
    {
-      for (int i = 0; i < depth; i++)
+      for (Node n : nodes)
       {
-         System.out.print("  ");
-      }
-      if (nc.getChildren() != null)
-      {
-         System.out.println(nc.getName() + " " + nc.getLabel());
-         for (Node c : nc.getChildren())
+         for (int i = 0; i < depth; i++)
          {
-            printNodeTree(c, depth + 1);
+            System.out.print("  ");
          }
-      }
-      else
-      {
-         System.out.println(nc.getName() + " (children not loaded)");
+         System.out.println(n.getName() + " " + n.getLabel());
+         printNodeTree(n.getChildren(), depth + 1);
       }
    }
 }
