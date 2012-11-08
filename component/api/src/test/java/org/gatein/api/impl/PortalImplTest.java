@@ -113,7 +113,7 @@ public class PortalImplTest
    }
 
    @Test
-   public void getNode()
+   public void getChild()
    {
       createNavigationWithChildren();
 
@@ -162,7 +162,7 @@ public class PortalImplTest
    }
 
    @Test
-   public void getNodeWithNodePath()
+   public void getChildWithNodePath()
    {
       createNavigationWithChildren();
 
