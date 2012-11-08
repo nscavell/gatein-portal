@@ -139,9 +139,8 @@ public class PortalImplTest
       assertTrue(node.isChildrenLoaded());
       assertFalse(parent.isChildrenLoaded());
 
-      portal.loadNodes(node, Nodes.visitAll()); // TODO Problem as we don't know siteId!
+      portal.loadNodes(parent, Nodes.visitAll()); // TODO Problem as we don't know siteId!
 
-      assertSame(parent, node.getChild("parent"));
       assertTrue(parent.isChildrenLoaded());
    }
 
@@ -157,7 +156,7 @@ public class PortalImplTest
       
       assertNull(portal.getNode(siteId, child2.getNodePath()));
 
-      portal.saveNode(parent); // TODO Problem as we don't know siteId!
+      portal.saveNode(parent);
 
       assertNotNull(portal.getNode(siteId, child2.getNodePath()));
    }

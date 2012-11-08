@@ -22,8 +22,6 @@
 package org.gatein.api.impl.portal.navigation;
 
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -203,39 +201,12 @@ public class NavigationServiceContext
    public void loadNodes(Node parent)
    {
       Node updated = getNode(parent.getNodePath());
-      merge(updated, parent);
-   }
-
-   private void merge(Node src, Node dst)
-   {
-      List<Node> children = new LinkedList<Node>(dst.getChildren());
-
-      dst.setIconName(src.getIconName());
-      dst.setLabel(src.getLabel());
-      dst.setPageId(src.getPageId());
-      dst.setVisibility(src.getVisibility());
-      dst.getChildren().clear();
-
-      for (Node srcChild : src.getChildren())
+      parent.getChildren().clear();
+      for (Node c : updated.getChildren())
       {
-         Node dstChild = null;
-
-         for (Node c : children)
-         {
-            if (c.getName().equals(srcChild.getName()))
-            {
-               dstChild = c;
-               merge(srcChild, dstChild);
-            }
-         }
-
-         if (dstChild == null)
-         {
-            dstChild = src;
-         }
-
-         dst.addChild(dstChild);
+         parent.addChild(new Node(c));
       }
+      NodeAccessor.setNodesLoaded(parent, updated.isChildrenLoaded());
    }
 
    public void saveNavigation(Navigation navigation)
