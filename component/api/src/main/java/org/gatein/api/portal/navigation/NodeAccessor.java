@@ -28,8 +28,8 @@ public class NodeAccessor
       ((NodeList) node.getChildren()).setLoaded(loaded);
    }
 
-   public static Node getRootNode(Navigation navigation)
+   public static void setNodesLoaded(Navigation navigation, boolean loaded)
    {
-      return navigation.getRootNode();
+      ((NodeList) navigation.getChildren()).setLoaded(loaded);
    }
 }

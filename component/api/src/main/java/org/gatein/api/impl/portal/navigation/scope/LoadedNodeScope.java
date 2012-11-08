@@ -21,11 +21,13 @@
  */
 package org.gatein.api.impl.portal.navigation.scope;
 
+import java.util.List;
 import java.util.Stack;
 
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
+import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 
 /**
@@ -33,7 +35,7 @@ import org.gatein.api.portal.navigation.Node;
  */
 public class LoadedNodeScope implements Scope
 {
-   private final NodePathVisitor visitor;
+   private final LoadedNodeVisitor visitor;
 
    public LoadedNodeScope(Node node)
    {
@@ -42,7 +44,12 @@ public class LoadedNodeScope implements Scope
          node = node.getParent();
       }
 
-      visitor = new NodePathVisitor(node);
+      visitor = new LoadedNodeVisitor(node.isChildrenLoaded() ? node.getChildren() : null);
+   }
+
+   public LoadedNodeScope(Navigation navigation)
+   {
+      visitor = new LoadedNodeVisitor(navigation.isChildrenLoaded() ? navigation.getChildren() : null);
    }
 
    @Override
@@ -51,37 +58,51 @@ public class LoadedNodeScope implements Scope
       return visitor;
    }
 
-   public static class NodePathVisitor implements Visitor
+   private static class LoadedNodeVisitor implements Visitor
    {
-      private final Node rootNode;
+      private final List<Node> nodes;
 
       private final Stack<Node> stack = new Stack<Node>();
 
-      public NodePathVisitor(Node rootNode)
+      public LoadedNodeVisitor(List<Node> nodes)
       {
-         this.rootNode = rootNode;
+         this.nodes = nodes;
       }
 
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         Node node = depth == 0 ? rootNode : stack.peek().getChild(name);
-         stack.add(node);
-
-         if (depth == 0 || (node != null && node.isChildrenLoaded()))
+         if (depth == 0)
          {
             return VisitMode.ALL_CHILDREN;
          }
+         else if (depth == 1)
+         {
+            for (Node n : nodes)
+            {
+               if (n.getName().equals(name))
+               {
+                  stack.add(n);
+                  return VisitMode.ALL_CHILDREN;
+               }
+            }
+            return VisitMode.NO_CHILDREN;
+         }
          else
          {
-            return VisitMode.NO_CHILDREN;
+            Node n = stack.peek().getChild(name);
+            stack.add(n);
+            return n != null && n.isChildrenLoaded() ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
          }
       }
 
       @Override
       public void leave(int depth, String id, String name, NodeState state)
       {
-         stack.pop();
+         if (depth > 0)
+         {
+            stack.pop();
+         }
       }
    }
 }

@@ -193,22 +193,15 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(visitor);
       ctx.init();
-
-      Navigation navigation = ctx.getNavigation();
-      if (navigation != null && filter != null)
-      {
-         filter(navigation.getChildren(), filter);
-      }
-      return navigation;
+      return ctx.getNavigation();
    }
 
    @Override
    public void saveNavigation(Navigation navigation)
    {
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, navigation.getSiteId());
-      ctx.setScope(NodeAccessor.getRootNode(navigation));
+      ctx.setScope(navigation);
       ctx.init();
-
       ctx.saveNavigation(navigation);
    }
 
@@ -218,7 +211,6 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(nodePath);
       ctx.init();
-
       return ctx.getNode(nodePath);
    }
 
@@ -228,13 +220,7 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(visitor);
       ctx.init();
-
-      Node rootNode = NodeAccessor.getRootNode(ctx.getNavigation());
-      if (rootNode != null && filter != null)
-      {
-         filter(rootNode.getChildren(), filter);
-      }
-      return rootNode;
+      return ctx.getNode();
    }
 
    @Override
@@ -244,7 +230,6 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(visitor);
       ctx.init();
-
       ctx.loadNodes(parent);
    }
 
@@ -255,7 +240,6 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
       ctx.setScope(node);
       ctx.init();
-
       ctx.saveNode(node);
    }
 

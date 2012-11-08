@@ -359,6 +359,8 @@ public class PortalTestCase extends AbstractAPITestCase
       Assert.assertNotNull(navigation);
       Assert.assertEquals(20, navigation.getPriority());
       Assert.assertTrue(navigation.getChildren().isEmpty());
+
+      // TODO Navigation with nodes, filter, visitor
    }
 
    public void testSaveNavigation()
