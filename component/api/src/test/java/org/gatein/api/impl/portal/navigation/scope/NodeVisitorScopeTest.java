@@ -21,7 +21,9 @@
  */
 package org.gatein.api.impl.portal.navigation.scope;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
@@ -32,13 +34,14 @@ import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
-
+import org.junit.Test;
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class NodeVisitorScopeTest extends TestCase
+public class NodeVisitorScopeTest
 {
-   public void testNodePathScope()
+   @Test
+   public void nodePathScope()
    {
       NodeState nodeState = new NodeState("label", "icon", -1, -1, Visibility.DISPLAYED, new PageKey(new SiteKey(SiteType.PORTAL, "site"), "page"));
       NodeVisitorMock mock = new NodeVisitorMock();

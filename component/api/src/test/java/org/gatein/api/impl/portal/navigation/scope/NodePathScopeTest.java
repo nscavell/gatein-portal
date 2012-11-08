@@ -21,48 +21,34 @@
  */
 package org.gatein.api.impl.portal.navigation.scope;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
 
 import org.exoplatform.portal.mop.navigation.Scope.Visitor;
 import org.exoplatform.portal.mop.navigation.VisitMode;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodeAccessor;
+import org.gatein.api.portal.navigation.NodePath;
+import org.junit.Test;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class LoadedNodeScopeTestCase extends TestCase
+public class NodePathScopeTest
 {
-   public void testLoadedNodeScope() throws IllegalArgumentException, IllegalAccessException
+   @Test
+   public void nodePathScope()
    {
-      Node r = new Node("default");
-
-      Node p = new Node("1");
-      NodeAccessor.setNodesLoaded(p, true);
-      r.addChild(p);
-
-      p.addChild(new Node("1-1"));
-      NodeAccessor.setNodesLoaded(p.getChild("1-1"), true);
-      p.getChild("1-1").addChild(new Node("1-1-1"));
-      p.getChild("1-1").addChild(new Node("1-1-2"));
-
-      p.addChild(new Node("1-2"));
-
-      Visitor visitor = new LoadedNodeScope(r).get();
+      Visitor visitor = new NodePathScope(new NodePath("1", "1-1", "1-1-1")).get();
 
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(0, null, "default", null));
+
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(1, null, "1", null));
+      assertEquals(VisitMode.NO_CHILDREN, visitor.enter(1, null, "2", null));
+
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(2, null, "1-1", null));
-      assertEquals(VisitMode.NO_CHILDREN, visitor.enter(3, null, "1-1-1", null));
-      visitor.leave(3, null, "1-1-1", null);
-      assertEquals(VisitMode.NO_CHILDREN, visitor.enter(3, null, "1-1-2", null));
-      visitor.leave(3, null, "1-1-2", null);
-      visitor.leave(2, null, "1-1", null);
       assertEquals(VisitMode.NO_CHILDREN, visitor.enter(2, null, "1-2", null));
-      visitor.leave(2, null, "1-2", null);
-      assertEquals(VisitMode.NO_CHILDREN, visitor.enter(2, null, "1-3", null));
-      visitor.leave(2, null, "1-3", null);
-      visitor.leave(1, null, "1", null);
-      visitor.leave(0, null, "default", null);
+
+      assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(3, null, "1-1-1", null));
+      assertEquals(VisitMode.NO_CHILDREN, visitor.enter(3, null, "1-1-2", null));
+
+      assertEquals(VisitMode.NO_CHILDREN, visitor.enter(4, null, "1-1-1-1", null));
    }
 }
