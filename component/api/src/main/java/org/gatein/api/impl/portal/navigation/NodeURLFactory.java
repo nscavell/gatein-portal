@@ -28,7 +28,6 @@ import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.navigation.NodeURL;
-import org.gatein.api.ApiException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.portal.site.SiteId;
 
@@ -37,20 +36,23 @@ import org.gatein.api.portal.site.SiteId;
  */
 public class NodeURLFactory
 {
-   public static URI createBaseURL(SiteId siteId)
+   public URI createBaseURL(SiteId siteId)
    {
       try
       {
          SiteKey siteKey = Util.from(siteId);
          RequestContext requestContext = RequestContext.getCurrentInstance();
-         NavigationResource navResource = new NavigationResource(siteKey, "");
-         NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
-         nodeURL.setSchemeUse(true);
-         return new URI(nodeURL.toString());
+         if (requestContext != null)
+         {
+            NavigationResource navResource = new NavigationResource(siteKey, "");
+            NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
+            nodeURL.setSchemeUse(true);
+            return new URI(nodeURL.toString());
+         }
       }
       catch (URISyntaxException e)
       {
-         throw new ApiException("Failed to resolve url", e);
       }
+      return null;
    }
 }

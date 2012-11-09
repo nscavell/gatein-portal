@@ -21,6 +21,7 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -142,6 +143,7 @@ public class NavigationServiceContext
          {
             @SuppressWarnings("unchecked")
             Node n = getNode((NodeContext<NodeContext<?>>) c);
+            n.setBaseURI(new NodeURLFactory().createBaseURL(siteId));
             nodes.add(n);
          }
          return nodes;
