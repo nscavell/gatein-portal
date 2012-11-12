@@ -22,8 +22,14 @@
 
 package org.gatein.api.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -53,6 +59,7 @@ import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -100,14 +107,14 @@ public class PortalImplTest
 
    @Test
    public void getNavigationInvalidSite()
-   { // TODO Not working at the moment, question? should the navigation be created when the site is?
+   { // TODO Is Navigation always created for a site?
       portal.getNavigation(new SiteId("invalid"), Nodes.visitAll(), null);
       fail("Expected SiteNotFoundException");
    }
 
    @Test
    public void getNavigationNoNavigation()
-   {
+   { // TODO Is Navigation always created for a site?
       Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
       assertNull(navigation);
    }
@@ -139,18 +146,34 @@ public class PortalImplTest
       assertTrue(node.isChildrenLoaded());
       assertFalse(parent.isChildrenLoaded());
 
-      portal.loadNodes(parent, Nodes.visitAll()); // TODO Problem as we don't know siteId!
+      portal.loadNodes(parent, Nodes.visitAll());
 
       assertTrue(parent.isChildrenLoaded());
    }
 
    @Test
-   public void saveNode()
+   public void stateClean()
+   {
+      createNavigationWithChildren();
+
+      WeakReference<Node> n = new WeakReference<Node>(portal.getNode(siteId, new NodePath("parent")));
+
+      System.gc();
+
+      long timeout = System.currentTimeMillis() + 2000;
+      while (System.currentTimeMillis() < timeout && n.get() != null);
+
+      Assert.assertNull(n.get());
+   }
+
+   @Test
+   public void saveNode() throws InterruptedException
    {
       createNavigationWithChildren();
 
       Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
       Node parent = navigation.getChild("parent");
+
       Node child2 = new Node("child2");
       parent.addChild(child2);
       

@@ -22,6 +22,8 @@
 package org.gatein.api.impl.portal.navigation;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +42,7 @@ import org.exoplatform.portal.mop.navigation.NodeModel;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.gatein.api.ApiException;
+import org.gatein.api.impl.StateMap;
 import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.navigation.scope.LoadedNodeScope;
 import org.gatein.api.impl.portal.navigation.scope.NodePathScope;
@@ -71,6 +74,8 @@ public class NavigationServiceContext
 
    private final SiteKey siteKey;
 
+   private static StateMap<Node, NodeContext<NodeContext<?>>> stateMap = new StateMap<Node, NodeContext<NodeContext<?>>>();
+
    public NavigationServiceContext(NavigationService service, DescriptionService descriptionService, SiteId siteId)
    {
       this.service = service;
@@ -93,8 +98,13 @@ public class NavigationServiceContext
             Node n = getNode((NodeContext<NodeContext<?>>) c);
             node.addChild(n);
          }
-         NodeAccessor.setNodesLoaded(node, true);
       }
+      else
+      {
+         NodeAccessor.setNodesLoaded(node, false);
+      }
+
+      stateMap.put(node, nodeCtx);
 
       return node;
    }
@@ -124,11 +134,14 @@ public class NavigationServiceContext
       List<Node> nodes = getNodes();
       if (nodes != null)
       {
-         for (Node n : getNodes())
+         for (Node n : nodes)
          {
             navigation.addChild(n);
          }
-         NodeAccessor.setNodesLoaded(navigation, true);
+      }
+      else
+      {
+         NodeAccessor.setNodesLoaded(navigation, false);
       }
 
       return navigation;
@@ -143,7 +156,13 @@ public class NavigationServiceContext
          {
             @SuppressWarnings("unchecked")
             Node n = getNode((NodeContext<NodeContext<?>>) c);
-            n.setBaseURI(new NodeURLFactory().createBaseURL(siteId));
+
+            URI uri = new NodeURLFactory().createBaseURL(siteId);
+            if (uri != null)
+            {
+               n.setBaseURI(uri);
+            }
+
             nodes.add(n);
          }
          return nodes;
@@ -166,11 +185,14 @@ public class NavigationServiceContext
       List<Node> nodes = getNodes();
       if (nodes != null)
       {
-         for (Node n : getNodes())
+         for (Node n : nodes)
          {
             node.addChild(n);
          }
-         NodeAccessor.setNodesLoaded(node, true);
+      }
+      else
+      {
+         NodeAccessor.setNodesLoaded(node, false);
       }
 
       return node;
@@ -345,47 +367,121 @@ public class NavigationServiceContext
    {
       this.scope = new NodeVisitorScope(visitor);
    }
-   
-   private NodeContext<NodeContext<?>> updateNodeContext(Node node, NodeContext<NodeContext<?>> nodeCtx, NodeContext<NodeContext<?>> parentNodeCtx)
+
+   private NodeContext<NodeContext<?>> updateNodeContext(Node node, NodeContext<NodeContext<?>> nodeCtx,
+         NodeContext<NodeContext<?>> parentNodeCtx)
    {
       boolean create = nodeCtx == null;
 
       if (create)
       {
          nodeCtx = parentNodeCtx.add(node.getParent().getChildren().indexOf(node), node.getName());
-      }
+         nodeCtx.setState(ObjectFactory.createNodeState(node));
 
-      if (node.getParent() != null)
-      {
-         if (!node.getName().equals(nodeCtx.getName()))
+         for (Node c : node.getChildren())
          {
-            nodeCtx.setName(node.getName());
-         }
-
-         NodeState nodeState = ObjectFactory.createNodeState(node);
-         if (!nodeState.equals(nodeCtx.getState()))
-         {
-            nodeCtx.setState(nodeState);
+            updateNodeContext(c, null, nodeCtx);
          }
       }
-
-      for (NodeContext<?> childCtx : nodeCtx.getNodes())
+      else
       {
-         if (node.getChild(childCtx.getName()) == null)
+         NodeContext<NodeContext<?>> originalCtx = stateMap.get(node);
+         if (originalCtx == null)
          {
-            if (!nodeCtx.removeNode(childCtx.getName()))
+            throw new IllegalArgumentException("Node not associated with portal");
+         }
+
+         if (node.getParent() != null)
+         {
+            // TODO Do we merge state or simply overwrite? Merging is difficult as it could already have changed
+            NodeState nodeState = ObjectFactory.createNodeState(node);
+            if (!nodeState.equals(nodeCtx.getState()))
             {
-               throw new ApiException("Failed to remove child");
+               nodeCtx.setState(nodeState);
+            }
+         }
+
+         if (node.isChildrenLoaded())
+         {
+            List<Diff> d = new LinkedList<Diff>();
+
+            for (int i = 0; i < node.getChildren().size(); i++)
+            {
+               Node child = node.getChildren().get(i);
+               NodeContext<NodeContext<?>> orgChildCtx = originalCtx.get(child.getName());
+
+               if (orgChildCtx == null)
+               {
+                  d.add(new Diff(i, child, DiffOp.ADD));
+               }
+               else if (orgChildCtx.getIndex() != i)
+               {
+                  d.add(new Diff(i, child, DiffOp.MOVE));
+               }
+            }
+
+            for (NodeContext<?> c : originalCtx.getNodes())
+            {
+               if (node.getChild(c.getName()) == null)
+               {
+                  d.add(new Diff(originalCtx.getIndex(), null, DiffOp.REMOVE));
+               }
+            }
+
+            Collections.sort(d, new DiffComparator());
+
+            for (Diff o : d)
+            {
+               NodeContext<NodeContext<?>> c = nodeCtx.get(o.node.getName());
+               switch (o.operation)
+               {
+                  case REMOVE:
+                     if (c != null)
+                     {
+                        c.remove();
+                     }
+                     break;
+                  case ADD:
+                     updateNodeContext(o.node, c, nodeCtx);
+                     break;
+                  case MOVE:
+                     c.remove();
+                     nodeCtx.add(o.index, c);
+                     updateNodeContext(o.node, c, nodeCtx);
+                     break;
+               }
             }
          }
       }
 
-      for (Node childNode : node.getChildren())
-      {
-         NodeContext<NodeContext<?>> childNodeCtx = nodeCtx.get(childNode.getName());
-         updateNodeContext(childNode, childNodeCtx, nodeCtx);
-      }
-      
       return nodeCtx;
+   }
+
+   class Diff
+   {
+      private int index;
+      private Node node;
+      private DiffOp operation;
+
+      public Diff(int index, Node data, DiffOp operation)
+      {
+         this.index = index;
+         this.node = data;
+         this.operation = operation;
+      }
+   }
+
+   enum DiffOp
+   {
+      REMOVE, ADD, MOVE;
+   }
+
+   class DiffComparator implements Comparator<Diff>
+   {
+      @Override
+      public int compare(Diff o1, Diff o2)
+      {
+         return Integer.compare(o1.index, o2.index);
+      }
    }
 }
