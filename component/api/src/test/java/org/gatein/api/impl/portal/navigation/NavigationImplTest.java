@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.api.impl;
+package org.gatein.api.impl.portal.navigation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,6 +51,7 @@ import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Portal;
+import org.gatein.api.impl.Util;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.navigation.Navigation;
@@ -72,7 +73,7 @@ import org.junit.Test;
       @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.api-configuration.xml")
 // @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.application-registry-configuration.xml")
 })
-public class PortalImplTest
+public class NavigationImplTest
 {
    @ClassRule
    public static KernelLifeCycle kernelLifeCycle = new KernelLifeCycle();
