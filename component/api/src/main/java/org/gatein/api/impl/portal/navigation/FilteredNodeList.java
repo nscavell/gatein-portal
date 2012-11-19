@@ -22,7 +22,6 @@
 
 package org.gatein.api.impl.portal.navigation;
 
-import org.gatein.api.internal.DelegateList;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.util.Filter;
 
