@@ -101,7 +101,7 @@ public class ListDiff
 
    public static enum DiffOp
    {
-      REMOVE, ADD, MOVE, UNCHANGED;
+      REMOVE, ADD, MOVE, UNCHANGED
    }
 
    static class DiffComparator implements Comparator<Diff>
@@ -109,7 +109,7 @@ public class ListDiff
       @Override
       public int compare(Diff o1, Diff o2)
       {
-         return Integer.compare(o1.index, o2.index);
+         return (o1.index<o2.index ? -1 : (o1.index==o2.index ? 0 : 1));
       }
    }
 }
