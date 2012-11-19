@@ -37,15 +37,10 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.portal.DataStorageContext;
-import org.gatein.api.impl.portal.navigation.NavigationServiceContext;
-import org.gatein.api.portal.Label;
+import org.gatein.api.impl.portal.navigation.NavigationImpl;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodeAccessor;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.page.PageQuery;
@@ -188,68 +183,6 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    }
 
    @Override
-   public Navigation getNavigation(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
-   {
-      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
-      ctx.setScope(visitor);
-      ctx.init();
-      return ctx.getNavigation();
-   }
-
-   @Override
-   public void saveNavigation(Navigation navigation)
-   {
-      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, navigation.getSiteId());
-      ctx.setScope(navigation);
-      ctx.init();
-      ctx.saveNavigation(navigation);
-   }
-
-   @Override
-   public Node getNode(SiteId siteId, NodePath nodePath)
-   {
-      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
-      ctx.setScope(nodePath);
-      ctx.init();
-      return ctx.getNode(nodePath);
-   }
-
-   @Override
-   public Node getNode(SiteId siteId, NodeVisitor visitor, Filter<Node> filter)
-   {
-      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
-      ctx.setScope(visitor);
-      ctx.init();
-      return ctx.getNode();
-   }
-
-   @Override
-   public void loadNodes(Node parent, NodeVisitor visitor)
-   {
-      SiteId siteId = parent.getSiteId();
-      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
-      ctx.setScope(visitor);
-      ctx.init();
-      ctx.loadNodes(parent);
-   }
-
-   @Override
-   public void saveNode(Node node)
-   {
-      SiteId siteId = node.getSiteId();
-      NavigationServiceContext ctx = new NavigationServiceContext(navigationService, descriptionService, siteId);
-      ctx.setScope(node);
-      ctx.init();
-      ctx.saveNode(node);
-   }
-
-   @Override
-   public Label resolveLabel(Label label)
-   {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
-   }
-
-   @Override
    public Page getPage(PageId pageId)
    {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
@@ -352,5 +285,11 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
    public void stop()
    {
       //nothing
+   }
+
+   @Override
+   public Navigation getNavigation(SiteId siteId)
+   {
+      return new NavigationImpl(siteId, navigationService, descriptionService);
    }
 }

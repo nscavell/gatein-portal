@@ -28,6 +28,7 @@ import org.gatein.api.portal.Localized;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
+import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
@@ -41,6 +42,7 @@ import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
 
 import static org.gatein.api.portal.navigation.Nodes.*;
+import static org.gatein.api.portal.navigation.NodePath.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -48,20 +50,18 @@ import static org.gatein.api.portal.navigation.Nodes.*;
 @Managed
 public class NavigationManagementResource
 {
-   private final Portal portal;
-   private final SiteId siteId;
+   private Navigation navigation;
 
    public NavigationManagementResource(Portal portal, SiteId siteId)
    {
-      this.portal = portal;
-      this.siteId = siteId;
+      this.navigation = portal.getNavigation(siteId);
    }
 
    @Managed
    public ModelObject getNavigation(@ManagedContext ModelObject model, @ManagedContext PathAddress address)
    {
       // Populate the model
-      populateModel(portal.getNavigation(siteId, visitChildren(), null), model, address);
+      populateModel(model, address);
 
       return model;
    }
@@ -69,7 +69,7 @@ public class NavigationManagementResource
    @Managed("{path: .*}")
    public ModelObject getNode(@MappedPath("path") String path, @ManagedContext ModelObject model)
    {
-      Node node = portal.getNode(siteId, path(path));
+      Node node = navigation.getNode(fromString(path), visitNone());
 
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
 
@@ -83,12 +83,12 @@ public class NavigationManagementResource
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the navigation node")
    public void removeNode(@MappedPath("path") String path, @ManagedContext ModelObject model)
    {
-      Node node = portal.getNode(siteId, path(path));
+      Node node = navigation.getNode(fromString(path), visitNone());
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
 
       Node parent = node.getParent();
       parent.removeChild(node.getName());
-      portal.saveNode(parent);
+      navigation.saveNode(parent);
    }
 
    @Managed("{path: .*}")
@@ -96,37 +96,36 @@ public class NavigationManagementResource
    public ModelObject addNode(@MappedPath("path") String path,
                               @ManagedContext ModelObject model)
    {
+      NodePath nodePath = NodePath.fromString(path);
+      Node parent = navigation.getNode(nodePath.parent(), visitNone());
 
-      NodePath nodePath = path(path);
-      Node parent = getNode(nodePath.getParent(), true);
+      Node node = parent.addChild(nodePath.getLastSegment());
 
-      Node node = new Node(nodePath.getLastSegment());
-      parent.addChild(node);
-
-      portal.saveNode(node);
+      navigation.saveNode(node);
 
       populateModel(node, model);
 
       return model;
    }
 
-   private void populateModel(Navigation navigation, ModelObject model, PathAddress address)
+   private void populateModel(ModelObject model, PathAddress address)
    {
+      Node node = navigation.loadNodes(visitChildren());
       model.set("priority", navigation.getPriority());
       ModelList modelNodes = model.get("node").setEmptyList();
-      for (Node node : navigation.getChildren())
+      for (Node n : node.getChildren())
       {
          ModelReference modelNode = modelNodes.add().asValue(ModelReference.class);
-         modelNode.set("name", node.getName());
+         modelNode.set("name", n.getName());
 
-         modelNode.set(address.append(node.getName()));
+         modelNode.set(address.append(n.getName()));
       }
    }
 
    private void populateModel(Node node, ModelObject model)
    {
       model.set("name", node.getName());
-      Label label = portal.resolveLabel(node.getLabel());
+      Label label = node.getLabel();
       ModelList modelLabel = model.get("label", ModelList.class);
       if (label.isLocalized())
       {
@@ -155,7 +154,7 @@ public class NavigationManagementResource
 
    private Node getNode(NodePath path, boolean require)
    {
-      Node node = portal.getNode(siteId, path);
+      Node node = navigation.getNode(path, visitChildren());
       if (node == null && require) throw new ResourceNotFoundException("Node not found for path " + path);
 
       return node;

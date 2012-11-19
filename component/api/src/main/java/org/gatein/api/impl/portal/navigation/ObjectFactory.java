@@ -43,9 +43,13 @@ import org.gatein.api.portal.navigation.Visibility.Flag;
  */
 public class ObjectFactory
 {
+   private ObjectFactory()
+   {
+   }
+
    public static Node createNode(String name, NodeState state)
    {
-      Node node = new Node(name);
+      Node node = new NodeImpl(name);
       node.setIconName(state.getIcon());
       if (state.getPageRef() != null)
       {

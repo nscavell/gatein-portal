@@ -21,9 +21,6 @@
  */
 package org.gatein.api.impl.portal.navigation.scope;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
@@ -56,7 +53,7 @@ public class NodeVisitorScope implements Scope
    {
       private final NodeVisitor nodeVisitor;
 
-      private final List<String> pathList = new LinkedList<String>();
+      private NodePath nodePath;
 
       public NodeVisitorWrapper(NodeVisitor nodeVisitor)
       {
@@ -66,34 +63,16 @@ public class NodeVisitorScope implements Scope
       @Override
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
-         NodePath nodePath;
-         NodeDetails details = null;
-
-         if (depth == 0)
-         {
-            name = null;
-            nodePath = new NodePath();
-         }
-         else
-         {
-            pathList.add(name);
-
-            nodePath = new NodePath(pathList);
-            details = new NodeDetails(state, nodePath);
-         }
-
+         nodePath = depth == 0 ? NodePath.root() : nodePath.append(name);
+         NodeDetails details = depth == 0 ? null : new NodeDetails(state, nodePath);
          return nodeVisitor.visit(depth, name, details) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
       }
 
       @Override
       public void leave(int depth, String id, String name, NodeState state)
       {
-         if (depth != 0)
-         {
-            pathList.remove(pathList.size() - 1);
-         }
+         nodePath = nodePath.parent();
       }
-
    }
 
    class NodeDetails implements NodeVisitor.NodeDetails
@@ -110,19 +89,19 @@ public class NodeVisitorScope implements Scope
       @Override
       public Visibility getVisibility()
       {
-         return nodeState != null ? ObjectFactory.createVisibility(nodeState) : null;
+         return ObjectFactory.createVisibility(nodeState);
       }
 
       @Override
       public String getIconName()
       {
-         return nodeState != null ? nodeState.getIcon() : null;
+         return nodeState.getIcon();
       }
 
       @Override
       public PageId getPageId()
       {
-         return nodeState != null ? Util.from(nodeState.getPageRef()) : null;
+         return Util.from(nodeState.getPageRef());
       }
 
       @Override

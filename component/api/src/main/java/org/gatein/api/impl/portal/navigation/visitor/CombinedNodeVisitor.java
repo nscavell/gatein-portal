@@ -19,17 +19,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.gatein.api.portal.navigation;
+package org.gatein.api.impl.portal.navigation.visitor;
 
-public class NodeAccessor
+import org.gatein.api.portal.navigation.NodeVisitor;
+
+public class CombinedNodeVisitor implements NodeVisitor
 {
-   public static void setNodesLoaded(Node node, boolean loaded)
+   private NodeVisitor[] visitors;
+
+   public CombinedNodeVisitor(NodeVisitor... visitors)
    {
-      ((NodeList) node.getChildren()).setLoaded(loaded);
+      this.visitors = visitors;
    }
 
-   public static void setNodesLoaded(Navigation navigation, boolean loaded)
+   @Override
+   public boolean visit(int depth, String name, NodeDetails details)
    {
-      ((NodeList) navigation.getChildren()).setLoaded(loaded);
+      for (NodeVisitor v : visitors)
+      {
+         if (v.visit(depth, name, details))
+         {
+            return true;
+         }
+      }
+      return false;
    }
 }

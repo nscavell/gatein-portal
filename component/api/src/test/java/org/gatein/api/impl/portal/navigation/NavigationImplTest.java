@@ -20,9 +20,13 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.api.impl;
+package org.gatein.api.impl.portal.navigation;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -40,11 +44,16 @@ import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
+import org.exoplatform.portal.mop.navigation.NavigationContext;
+import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Portal;
+import org.gatein.api.SiteNotFoundException;
+import org.gatein.api.impl.Util;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.navigation.Navigation;
@@ -65,7 +74,7 @@ import org.junit.Test;
       @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.api-configuration.xml")
 // @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.application-registry-configuration.xml")
 })
-public class PortalImplTest
+public class NavigationImplTest
 {
    @ClassRule
    public static KernelLifeCycle kernelLifeCycle = new KernelLifeCycle();
@@ -76,6 +85,8 @@ public class PortalImplTest
 
    private PortalContainer container;
 
+   private Navigation navigation;
+
    @Before
    public void before()
    {
@@ -84,6 +95,8 @@ public class PortalImplTest
       assertNotNull("Portal component not found in container", portal);
 
       siteId = new SiteId("classic");
+
+      navigation = portal.getNavigation(siteId);
 
       RequestLifeCycle.begin(container);
       createSite(SiteType.PORTAL, "classic");
@@ -98,18 +111,10 @@ public class PortalImplTest
       deleteSite(SiteType.PORTAL, "classic");
    }
 
-   @Test
+   @Test(expected = SiteNotFoundException.class)
    public void getNavigationInvalidSite()
-   { // TODO Not working at the moment, question? should the navigation be created when the site is?
-      portal.getNavigation(new SiteId("invalid"), Nodes.visitAll(), null);
-      fail("Expected SiteNotFoundException");
-   }
-
-   @Test
-   public void getNavigationNoNavigation()
    {
-      Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
-      assertNull(navigation);
+      portal.getNavigation(new SiteId("invalid")).loadNodes(Nodes.visitAll());
    }
 
    @Test
@@ -117,12 +122,12 @@ public class PortalImplTest
    {
       createNavigationWithChildren();
 
-      Node node = portal.getNode(siteId, Nodes.visitAll(), null);
+      Node node = navigation.loadNodes(Nodes.visitAll());
       assertNotNull(node);
       assertTrue(node.isChildrenLoaded());
       assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
 
-      node = portal.getNode(siteId, Nodes.visitChildren(), null);
+      node = navigation.loadNodes(Nodes.visitChildren());
       assertNotNull(node);
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("parent").isChildrenLoaded());
@@ -133,32 +138,33 @@ public class PortalImplTest
    {
       createNavigationWithChildren();
 
-      Node node = portal.getNode(siteId, Nodes.visitChildren(), null);
+      Node node = navigation.loadNodes(Nodes.visitChildren());
       assertNotNull(node);
       Node parent = node.getChild("parent");
       assertTrue(node.isChildrenLoaded());
       assertFalse(parent.isChildrenLoaded());
 
-      portal.loadNodes(parent, Nodes.visitAll()); // TODO Problem as we don't know siteId!
+      navigation.loadChildren(parent);
 
       assertTrue(parent.isChildrenLoaded());
    }
 
    @Test
-   public void saveNode()
+   public void saveNode() throws InterruptedException
    {
       createNavigationWithChildren();
 
-      Navigation navigation = portal.getNavigation(siteId, Nodes.visitAll(), null);
-      Node parent = navigation.getChild("parent");
-      Node child2 = new Node("child2");
-      parent.addChild(child2);
+      Node node = navigation.loadNodes(Nodes.visitAll());
+
+      Node parent = node.getChild("parent");
+
+      Node child2 = parent.addChild("child2");
       
-      assertNull(portal.getNode(siteId, child2.getNodePath()));
+      assertNull(navigation.getNode(child2.getNodePath(), Nodes.visitNone()));
 
-      portal.saveNode(parent);
+      navigation.saveNode(parent);
 
-      assertNotNull(portal.getNode(siteId, child2.getNodePath()));
+      assertNotNull(navigation.getNode(child2.getNodePath(), Nodes.visitNone()));
    }
 
    @Test
@@ -166,17 +172,17 @@ public class PortalImplTest
    {
       createNavigationWithChildren();
 
-      Node node = portal.getNode(siteId, new NodePath());
+      Node node = navigation.loadNodes(Nodes.visitChildren());
       assertEquals(null, node.getName());
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("parent").isChildrenLoaded());
 
-      node = portal.getNode(siteId, new NodePath("parent"));
+      node = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
       assertEquals("parent", node.getName());
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("child").isChildrenLoaded());
 
-      node = portal.getNode(siteId, new NodePath("parent", "child"));
+      node = navigation.getNode(NodePath.path("parent", "child"), Nodes.visitChildren());
       assertEquals("child", node.getName());
       assertTrue(node.isChildrenLoaded());
    }
@@ -184,46 +190,46 @@ public class PortalImplTest
    @Test
    public void createNavigationNoChildren()
    {
-      Navigation n = new Navigation(siteId, 10);
-      portal.saveNavigation(n);
+      navigation.setPriority(10);
 
-      n = portal.getNavigation(siteId, Nodes.visitAll(), null);
+      navigation = portal.getNavigation(siteId);
 
-      assertEquals(10, n.getPriority());
-      assertEquals(siteId, n.getSiteId());
-      assertTrue(n.getChildren().isEmpty());
+      assertEquals(10, navigation.getPriority().intValue());
+      assertEquals(siteId, navigation.getSiteId());
+      assertTrue(navigation.loadNodes(Nodes.visitAll()).getChildren().isEmpty());
    }
 
    @Test
    public void createNavigationWithChildren()
    {
-      Navigation n = new Navigation(siteId, 10);
-      n.addChild(new Node("parent"));
-      n.getChild("parent").addChild(new Node("child"));
-      portal.saveNavigation(n);
+      Node node = navigation.loadNodes(Nodes.visitAll());
 
-      n = portal.getNavigation(siteId, Nodes.visitAll(), null);
+      Node parent = node.addChild("parent");
+      parent.addChild("child");
 
-      assertEquals(10, n.getPriority());
-      assertEquals(siteId, n.getSiteId());
-      assertEquals(1, n.getChildren().size());
-      assertEquals(1, n.getChild("parent").getChildren().size());
-      assertEquals(0, n.getChild("parent").getChild("child").getChildren().size());
+      navigation.saveNode(node);
+
+      navigation = portal.getNavigation(siteId);
+      node = navigation.loadNodes(Nodes.visitAll());
+
+      assertEquals(1, node.getChildren().size());
+      assertEquals(1, node.getChild("parent").getChildren().size());
+      assertEquals(0, node.getChild("parent").getChild("child").getChildren().size());
    }
 
    @Test
    public void simpleLabel()
    {
-      Navigation navigation = new Navigation(siteId, 10);
+      Node node = navigation.loadNodes(Nodes.visitAll());
 
-      Node n = new Node("parent");
+      Node n = node.addChild("parent");
       n.setLabel(new Label("simple"));
-      navigation.addChild(n);
 
-      portal.saveNavigation(navigation);
+      navigation.saveNode(node);
 
-      n = portal.getNode(siteId, n.getNodePath());
+      n = navigation.getNode(n.getNodePath(), Nodes.visitNone());
 
+      assertNotNull(n);
       assertEquals("simple", n.getLabel().getValue());
       assertFalse(n.getLabel().isLocalized());
    }
@@ -231,20 +237,19 @@ public class PortalImplTest
    @Test
    public void extendedLabel()
    {
-      Navigation navigation = new Navigation(siteId, 10);
+      Node node = navigation.loadNodes(Nodes.visitAll());
 
-      Node n = new Node("parent");
+      Node n = node.addChild("parent");
 
       Map<Locale, String> m = new HashMap<Locale, String>();
       m.put(Locale.ENGLISH, "extended");
       m.put(Locale.FRENCH, "prolongé");
       
       n.setLabel(new Label(m));
-      navigation.addChild(n);
 
-      portal.saveNavigation(navigation);
+      navigation.saveNode(node);
 
-      n = portal.getNode(siteId, n.getNodePath());
+      n = navigation.getNode(n.getNodePath(), Nodes.visitNone());
 
       assertTrue(n.getLabel().isLocalized());
       assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
@@ -256,12 +261,16 @@ public class PortalImplTest
       try
       {
          DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
+         NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
          PageService pageService = (PageService) container.getComponentInstanceOfType(PageService.class);
 
          PortalConfig config = new PortalConfig(type.getName(), name);
          config.setAccessPermissions(Util.from(Permission.everyone()));
 
          dataStorage.create(config);
+
+         NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(0));
+         navService.saveNavigation(nav);
 
          pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), "homepage"), new PageState("displayName",
                "description", false, null, null, null)));
