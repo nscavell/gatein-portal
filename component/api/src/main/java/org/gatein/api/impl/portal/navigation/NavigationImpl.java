@@ -49,8 +49,6 @@ import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.navigation.impl.NodeList;
-import org.gatein.api.portal.navigation.impl.RootNode;
 import org.gatein.api.portal.site.SiteId;
 
 public class NavigationImpl implements Navigation

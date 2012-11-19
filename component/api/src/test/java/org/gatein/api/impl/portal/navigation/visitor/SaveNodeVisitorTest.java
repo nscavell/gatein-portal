@@ -21,9 +21,9 @@
  */
 package org.gatein.api.impl.portal.navigation.visitor;
 
+import org.gatein.api.impl.portal.navigation.NodeList;
+import org.gatein.api.impl.portal.navigation.RootNode;
 import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.impl.NodeList;
-import org.gatein.api.portal.navigation.impl.RootNode;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -27,7 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.impl.NodeList;
 
 public class ListDiff
 {

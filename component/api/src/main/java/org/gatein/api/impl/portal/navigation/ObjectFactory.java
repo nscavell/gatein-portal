@@ -37,7 +37,6 @@ import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
-import org.gatein.api.portal.navigation.impl.NodeImpl;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
