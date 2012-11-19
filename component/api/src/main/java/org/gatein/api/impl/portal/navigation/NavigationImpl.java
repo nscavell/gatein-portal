@@ -27,8 +27,8 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.exoplatform.portal.mop.Described;
-import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.Described.State;
+import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
@@ -38,6 +38,7 @@ import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeModel;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.gatein.api.ApiException;
+import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.navigation.ListDiff.Diff;
 import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
@@ -56,7 +57,6 @@ public class NavigationImpl implements Navigation
    private final DescriptionService descriptionService;
    private final NavigationService navigationService;
    private final SiteId siteId;
-
    private final SiteKey siteKey;
 
    public NavigationImpl(SiteId siteId, NavigationService navigationService, DescriptionService descriptionService)
@@ -65,7 +65,7 @@ public class NavigationImpl implements Navigation
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
 
-      siteKey = Util.from(siteId);
+      this.siteKey = Util.from(siteId);
    }
 
    private Node convertNode(NodeContext<NodeContext<?>> ctx)
@@ -139,15 +139,19 @@ public class NavigationImpl implements Navigation
 
    private NavigationContext getNavigationContext()
    {
-      return navigationService.loadNavigation(siteKey);
+      NavigationContext ctx = navigationService.loadNavigation(siteKey);
+      if (ctx == null)
+      {
+         throw new SiteNotFoundException(siteId);
+      }
+      return ctx;
    }
 
    @Override
    public Node getNode(NodePath path, NodeVisitor visitor)
    {
       Node node = loadNodes(Nodes.visitNodes(path, visitor));
-      findNode(node, path);
-      return null;
+      return findNode(node, path);
    }
 
    private NodeContext<NodeContext<?>> getNodeContext(NodeVisitor visitor)

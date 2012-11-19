@@ -65,6 +65,24 @@ public class SaveNodeVisitorTest
    }
 
    @Test
+   public void childrenLoaded()
+   {
+      fail("test not implemented");
+   }
+
+   @Test
+   public void childrenNotEmpty()
+   {
+      fail("test not implemented");
+   }
+
+   @Test
+   public void notLoaded()
+   {
+      fail("test not implemented");
+   }
+
+   @Test
    public void root()
    {
       assertTrue(visitor.visit(0, null, null));

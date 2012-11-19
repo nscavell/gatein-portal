@@ -41,7 +41,7 @@ public class ListDiff
       for (int i = 0; i < current.size(); i++)
       {
          Node c = current.get(i);
-         Node o = original.get(i);
+         Node o = original.get(c.getName());
 
          if (o == null)
          {

@@ -27,9 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
-import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -46,11 +44,15 @@ import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
+import org.exoplatform.portal.mop.navigation.NavigationContext;
+import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Portal;
+import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
@@ -60,7 +62,6 @@ import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -93,9 +94,9 @@ public class NavigationImplTest
       portal = (Portal) container.getComponentInstanceOfType(Portal.class);
       assertNotNull("Portal component not found in container", portal);
 
-      navigation = portal.getNavigation(siteId);
-
       siteId = new SiteId("classic");
+
+      navigation = portal.getNavigation(siteId);
 
       RequestLifeCycle.begin(container);
       createSite(SiteType.PORTAL, "classic");
@@ -110,18 +111,10 @@ public class NavigationImplTest
       deleteSite(SiteType.PORTAL, "classic");
    }
 
-   @Test
+   @Test(expected = SiteNotFoundException.class)
    public void getNavigationInvalidSite()
-   { // TODO Is Navigation always created for a site?
-      portal.getNavigation(new SiteId("invalid"));
-      fail("Expected SiteNotFoundException");
-   }
-
-   @Test
-   public void getNavigationNoNavigation()
-   { // TODO Is Navigation always created for a site?
-      Navigation navigation = portal.getNavigation(siteId);
-      assertNull(navigation);
+   {
+      portal.getNavigation(new SiteId("invalid")).loadNodes(Nodes.visitAll());
    }
 
    @Test
@@ -179,7 +172,7 @@ public class NavigationImplTest
    {
       createNavigationWithChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.loadNodes(Nodes.visitChildren());
       assertEquals(null, node.getName());
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("parent").isChildrenLoaded());
@@ -236,6 +229,7 @@ public class NavigationImplTest
 
       n = navigation.getNode(n.getNodePath(), Nodes.visitNone());
 
+      assertNotNull(n);
       assertEquals("simple", n.getLabel().getValue());
       assertFalse(n.getLabel().isLocalized());
    }
@@ -267,12 +261,16 @@ public class NavigationImplTest
       try
       {
          DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
+         NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
          PageService pageService = (PageService) container.getComponentInstanceOfType(PageService.class);
 
          PortalConfig config = new PortalConfig(type.getName(), name);
          config.setAccessPermissions(Util.from(Permission.everyone()));
 
          dataStorage.create(config);
+
+         NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(0));
+         navService.saveNavigation(nav);
 
          pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), "homepage"), new PageState("displayName",
                "description", false, null, null, null)));
