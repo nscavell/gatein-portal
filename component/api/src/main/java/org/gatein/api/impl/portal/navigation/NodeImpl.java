@@ -22,11 +22,6 @@
 
 package org.gatein.api.impl.portal.navigation;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-
 import org.gatein.api.ApiException;
 import org.gatein.api.internal.Objects;
 import org.gatein.api.portal.Label;
@@ -36,6 +31,10 @@ import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.util.Filter;
+
+import java.net.URI;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -231,15 +230,9 @@ public class NodeImpl implements Node
    }
 
    @Override
-   public boolean addChild(Node child)
+   public Node addChild(String childName)
    {
-      return children.add(child);
-   }
-
-   @Override
-   public NodeImpl addChild(String childName)
-   {
-      NodeImpl child = new NodeImpl(childName);
+      Node child = new NodeImpl(childName);
       if (!children.add(child)) throw new ApiException("Could not add child " + childName + " to node " + this);
 
       return child;
@@ -298,21 +291,22 @@ public class NodeImpl implements Node
       return new FilteredNode(filter, this);
    }
 
+   @Override
    public void sort(Comparator<Node> comparator)
    {
-      Node[] nodes = children.toArray(new Node[children.size()]);
-      Arrays.sort(nodes, comparator);
-      children.clear();
-      for (Node n : nodes)
-      {
-         children.add(n);
-      }
+      children.sort(comparator);
    }
 
    @Override
-   public int size()
+   public Node copy()
    {
-      return children.size();
+      return new NodeImpl(this);
+   }
+
+   @Override
+   public Node copy(String newName)
+   {
+      return new NodeImpl(newName, this);
    }
 
    @Override

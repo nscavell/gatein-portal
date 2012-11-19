@@ -97,14 +97,7 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public Node getNode(NodePath path, NodeVisitor visitor)
-   {
-      Node node = loadNodes(Nodes.visitNodes(path, visitor));
-      return findNode(node, path);
-   }
-
-   @Override
-   public Node loadNodes(NodeVisitor visitor)
+   public Node getNode(NodeVisitor visitor)
    {
       NodeContext<NodeContext<?>> ctx = getNodeContext(visitor);
       return convertNode(ctx);
@@ -113,7 +106,7 @@ public class NavigationImpl implements Navigation
    @Override
    public void loadChildren(Node parent)
    {
-      Node node = loadNodes(Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren()));
+      Node node = getNode(Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren()));
 
       Node p = findNode(node, parent.getNodePath());
       ArrayList<Node> children = new ArrayList<Node>(p.getChildren());
@@ -124,13 +117,13 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public void moveNode(NodePath from, NodePath to)
+   public void moveNode(NodePath from, NodePath toParent)
    {
-      CombinedNodeVisitor visitor = new CombinedNodeVisitor(Nodes.visitNodes(from), Nodes.visitNodes(to));
+      CombinedNodeVisitor visitor = new CombinedNodeVisitor(Nodes.visitNodes(from), Nodes.visitNodes(toParent, Nodes.visitChildren()));
       NodeContext<NodeContext<?>> ctx = getNodeContext(visitor);
 
       NodeContext<NodeContext<?>> src = findNodeContext(ctx, from);
-      NodeContext<NodeContext<?>> dstParent = findNodeContext(ctx, to.parent());
+      NodeContext<NodeContext<?>> dstParent = findNodeContext(ctx, toParent);
 
       if (src == null)
       {
@@ -139,20 +132,24 @@ public class NavigationImpl implements Navigation
 
       if (dstParent == null)
       {
-         throw new ApiException("Parent '" + to.parent() + "' not found");
+         throw new ApiException("Parent '" + toParent + "' not found");
       }
       
-      if (dstParent.get(to.getLastSegment()) != null)
+      if (dstParent.get(src.getName()) != null)
       {
-         throw new ApiException("Destination '" + to + "' already exists");
+         throw new ApiException("Destination '" + toParent.append(src.getName()) + "' already exists");
       }
-      
-      dstParent.add(null, src);
+
+      dstParent.add(null, src.getName());
+      NodeContext<?> newChild = dstParent.get(src.getName());
+      newChild.setState(src.getState());
+      src.getParent().removeNode(src.getName());
+
       save(ctx);
    }
 
    @Override
-   public boolean removeNode(NodePath path)
+   public boolean deleteNode(NodePath path)
    {
       NodeContext<NodeContext<?>> ctx = getNodeContext(Nodes.visitNodes(path));
       ctx = findNodeContext(ctx, path);
@@ -219,7 +216,7 @@ public class NavigationImpl implements Navigation
          {
             @SuppressWarnings("unchecked")
             Node n = convertNode((NodeContext<NodeContext<?>>) c);
-            node.addChild(n);
+            node.getChildren().add(n);
          }
 
          ((NodeList) node.getChildren()).setLoaded(true);

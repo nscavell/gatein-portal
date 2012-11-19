@@ -36,7 +36,7 @@ import org.junit.Test;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class NodeTest
+public class NodeImplTest
 {
    //TODO: More tests
 
@@ -67,7 +67,7 @@ public class NodeTest
    public void testCopy()
    {
       Node original = new NodeImpl("foo");
-      Node copy = new NodeImpl(original);
+      Node copy = original.copy();
       assertEquals(original, copy);
    }
 
@@ -75,12 +75,12 @@ public class NodeTest
    public void testCopy_Rename()
    {
       Node original = new NodeImpl("foo");
-      original.addChild(new NodeImpl("1"));
-      original.addChild(new NodeImpl("2"));
+      original.addChild("1");
+      original.addChild("2");
 
-      Node copy = new NodeImpl("bar", original);
+      Node copy = original.copy("bar");
       assertEquals("bar", copy.getName());
-      for (int i=0; i<copy.size(); i++)
+      for (int i=0; i<copy.getChildren().size(); i++)
       {
          assertEquals(original.getChild(i), copy.getChild(i));
       }
@@ -91,32 +91,32 @@ public class NodeTest
    {
       Node parent = new NodeImpl("root");
       Node child = new NodeImpl("child");
-      parent.addChild(child);
+      parent.getChildren().add(child);
 
-      assertEquals(1, parent.size());
+      assertEquals(1, parent.getChildren().size());
       assertTrue(parent == child.getParent());
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test(expected = NullPointerException.class)
    public void testAdd_NullChild()
    {
       Node parent = new NodeImpl("parent");
-      parent.addChild((Node) null);
+      parent.getChildren().add(null);
    }
 
    @Test(expected = IllegalArgumentException.class)
    public void testAdd_NullChildName()
    {
       Node parent = new NodeImpl("parent");
-      parent.addChild((String) null);
+      parent.addChild(null);
    }
 
    @Test(expected = IllegalArgumentException.class)
    public void testAdd_SameChild()
    {
       Node parent = new NodeImpl("parent");
-      parent.addChild(new NodeImpl("child"));
-      parent.addChild(new NodeImpl("child"));
+      parent.addChild("child");
+      parent.addChild("child");
    }
 
    @Test(expected = IllegalArgumentException.class)
@@ -125,16 +125,16 @@ public class NodeTest
       Node parent = new NodeImpl("parent");
       Node parent2 = new NodeImpl("parent2");
       Node child = new NodeImpl("child");
-      parent2.addChild(child);
+      parent2.getChildren().add(child);
 
-      parent.addChild(child);
+      parent.getChildren().add(child);
    }
 
    @Test(expected = IllegalArgumentException.class)
    public void testAdd_Self()
    {
       Node node = new NodeImpl("node");
-      node.addChild(node);
+      node.getChildren().add(node);
    }
 
    @Test(expected = IllegalArgumentException.class)
@@ -142,17 +142,17 @@ public class NodeTest
    {
       Node parent = new NodeImpl("parent");
       Node child1 = new NodeImpl("child1");
-      parent.addChild(child1);
-      child1.addChild(parent);
+      parent.getChildren().add(child1);
+      child1.getChildren().add(parent);
    }
 
    @Test
    public void testSort()
    {
       Node node = new NodeImpl("parent");
-      node.addChild(new NodeImpl("3"));
-      node.addChild(new NodeImpl("2"));
-      node.addChild(new NodeImpl("1"));
+      node.addChild("3");
+      node.addChild("2");
+      node.addChild("1");
 
       node.sort(new Comparator<Node>()
       {

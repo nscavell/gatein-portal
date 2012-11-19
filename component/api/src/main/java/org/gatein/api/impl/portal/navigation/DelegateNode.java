@@ -149,12 +149,6 @@ class DelegateNode implements Node
    }
 
    @Override
-   public boolean addChild(Node child)
-   {
-      return delegate.addChild(child);
-   }
-
-   @Override
    public Node addChild(String childName)
    {
       return delegate.addChild(childName);
@@ -215,9 +209,9 @@ class DelegateNode implements Node
    }
 
    @Override
-   public int size()
+   public Node copy()
    {
-      return delegate.size();
+      return delegate.copy();
    }
 
    @Override

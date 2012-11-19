@@ -262,7 +262,7 @@ public class NodeList extends ArrayList<Node>
 
    private void checkAdd(Node node, boolean checkChild)
    {
-      if (node == null) throw new IllegalArgumentException("Node cannot be null");
+      if (node == null) throw new NullPointerException("Node cannot be null"); // This follows Collection API, throw NPE when collection does not allow null elements.
       if (!(node instanceof NodeImpl)) throw new IllegalArgumentException("Invalid implementation");
       if (node == parent) throw new IllegalArgumentException("Cannot add itself as a child.");
       if (node.getParent() != null && parent != node.getParent())

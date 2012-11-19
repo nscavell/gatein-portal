@@ -60,11 +60,11 @@ public class FilteredNodeTest
       assertFalse(filtered.hasChild("child1"));
       assertNull(filtered.getChild("child1"));
 
-      assertEquals(1, filtered.size());
+      assertEquals(1, filtered.getChildren().size());
       assertNotNull(filtered.getChild("child2"));
-      assertEquals(1, filtered.getChild("child2").size());
+      assertEquals(1, filtered.getChild("child2").getChildren().size());
       assertNotNull(filtered.getChild("child2").getChild("child2-1"));
-      assertEquals(1, filtered.getChild("child2").getChild("child2-1").size());
+      assertEquals(1, filtered.getChild("child2").getChild("child2-1").getChildren().size());
       assertNotNull("child2-1-1", filtered.getChild("child2").getChild("child2-1").getChild("child2-1-1"));
 
       assertEquals(-1, filtered.indexOf("child1"));

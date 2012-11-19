@@ -51,7 +51,7 @@ class FilteredNode extends DelegateNode
    @Override
    public Node getChild(int index)
    {
-      for (int i=index; i<delegate.size(); i++)
+      for (int i=index; i<delegate.getChildren().size(); i++)
       {
          Node child = delegate.getChild(i);
          if (filter.accept(child))
@@ -89,12 +89,6 @@ class FilteredNode extends DelegateNode
    public List<Node> getChildren()
    {
       return children;
-   }
-
-   @Override
-   public int size()
-   {
-      return getChildren().size();
    }
 
    private Node findChild(String childName)

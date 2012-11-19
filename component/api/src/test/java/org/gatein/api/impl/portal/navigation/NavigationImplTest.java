@@ -114,7 +114,7 @@ public class NavigationImplTest
    @Test(expected = SiteNotFoundException.class)
    public void getNavigationInvalidSite()
    {
-      portal.getNavigation(new SiteId("invalid")).loadNodes(Nodes.visitAll());
+      portal.getNavigation(new SiteId("invalid")).getNode(Nodes.visitAll());
    }
 
    @Test
@@ -122,12 +122,12 @@ public class NavigationImplTest
    {
       createNavigationWithChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getNode(Nodes.visitAll());
       assertNotNull(node);
       assertTrue(node.isChildrenLoaded());
       assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
 
-      node = navigation.loadNodes(Nodes.visitChildren());
+      node = navigation.getNode(Nodes.visitChildren());
       assertNotNull(node);
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("parent").isChildrenLoaded());
@@ -138,15 +138,37 @@ public class NavigationImplTest
    {
       createNavigationWithChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitChildren());
+      Node node = navigation.getNode(Nodes.visitChildren());
       assertNotNull(node);
       Node parent = node.getChild("parent");
       assertTrue(node.isChildrenLoaded());
       assertFalse(parent.isChildrenLoaded());
+      assertNull(parent.getChild("child"));
 
       navigation.loadChildren(parent);
 
       assertTrue(parent.isChildrenLoaded());
+      assertNotNull(parent.getChild("child"));
+   }
+
+   @Test
+   public void moveNode()
+   {
+      Node root = navigation.getNode(Nodes.visitNodes(NodePath.root(), Nodes.visitAll()));
+      root.addChild("foo").addChild("bar");
+      root.addChild("baz");
+
+      navigation.saveNode(root);
+
+      root = navigation.getNode(Nodes.visitNodes(NodePath.root(), Nodes.visitAll()));
+      assertNotNull(root.getChild("baz"));
+      assertNull(root.getChild("foo").getChild("bar").getChild("baz"));
+
+      navigation.moveNode(NodePath.path("baz"), NodePath.path("foo", "bar"));
+
+      root = navigation.getNode(Nodes.visitNodes(NodePath.root(), Nodes.visitAll()));
+      assertNull(root.getChild("baz"));
+      assertNotNull(root.getChild("foo").getChild("bar").getChild("baz"));
    }
 
    @Test
@@ -154,17 +176,17 @@ public class NavigationImplTest
    {
       createNavigationWithChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getNode(Nodes.visitAll());
 
       Node parent = node.getChild("parent");
 
       Node child2 = parent.addChild("child2");
       
-      assertNull(navigation.getNode(child2.getNodePath(), Nodes.visitNone()));
+      assertNull(navigation.getNode(Nodes.visitNodes(child2.getNodePath(), Nodes.visitNone())));
 
       navigation.saveNode(parent);
 
-      assertNotNull(navigation.getNode(child2.getNodePath(), Nodes.visitNone()));
+      assertNotNull(navigation.getNode(Nodes.visitNodes(child2.getNodePath(), Nodes.visitNone())));
    }
 
    @Test
@@ -172,17 +194,17 @@ public class NavigationImplTest
    {
       createNavigationWithChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitChildren());
+      Node node = navigation.getNode(Nodes.visitChildren());
       assertEquals(null, node.getName());
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("parent").isChildrenLoaded());
 
-      node = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
+      node = navigation.getNode(Nodes.visitNodes(NodePath.path("parent"), Nodes.visitChildren()));
       assertEquals("parent", node.getName());
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("child").isChildrenLoaded());
 
-      node = navigation.getNode(NodePath.path("parent", "child"), Nodes.visitChildren());
+      node = navigation.getNode(Nodes.visitNodes(NodePath.path("parent", "child"), Nodes.visitChildren()));
       assertEquals("child", node.getName());
       assertTrue(node.isChildrenLoaded());
    }
@@ -196,13 +218,13 @@ public class NavigationImplTest
 
       assertEquals(10, navigation.getPriority().intValue());
       assertEquals(siteId, navigation.getSiteId());
-      assertTrue(navigation.loadNodes(Nodes.visitAll()).getChildren().isEmpty());
+      assertTrue(navigation.getNode(Nodes.visitAll()).getChildren().isEmpty());
    }
 
    @Test
    public void createNavigationWithChildren()
    {
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getNode(Nodes.visitAll());
 
       Node parent = node.addChild("parent");
       parent.addChild("child");
@@ -210,7 +232,7 @@ public class NavigationImplTest
       navigation.saveNode(node);
 
       navigation = portal.getNavigation(siteId);
-      node = navigation.loadNodes(Nodes.visitAll());
+      node = navigation.getNode(Nodes.visitAll());
 
       assertEquals(1, node.getChildren().size());
       assertEquals(1, node.getChild("parent").getChildren().size());
@@ -220,14 +242,14 @@ public class NavigationImplTest
    @Test
    public void simpleLabel()
    {
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getNode(Nodes.visitAll());
 
       Node n = node.addChild("parent");
       n.setLabel(new Label("simple"));
 
       navigation.saveNode(node);
 
-      n = navigation.getNode(n.getNodePath(), Nodes.visitNone());
+      n = navigation.getNode(Nodes.visitNodes(n.getNodePath(), Nodes.visitNone()));
 
       assertNotNull(n);
       assertEquals("simple", n.getLabel().getValue());
@@ -237,7 +259,7 @@ public class NavigationImplTest
    @Test
    public void extendedLabel()
    {
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getNode(Nodes.visitAll());
 
       Node n = node.addChild("parent");
 
@@ -249,7 +271,7 @@ public class NavigationImplTest
 
       navigation.saveNode(node);
 
-      n = navigation.getNode(n.getNodePath(), Nodes.visitNone());
+      n = navigation.getNode(Nodes.visitNodes(n.getNodePath(), Nodes.visitNone()));
 
       assertTrue(n.getLabel().isLocalized());
       assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
