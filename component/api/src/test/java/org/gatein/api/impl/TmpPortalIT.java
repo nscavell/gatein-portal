@@ -2,13 +2,6 @@ package org.gatein.api.impl;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.UUID;
-
-import javax.naming.NamingException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-
-import junit.framework.Assert;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.config.DataStorage;
@@ -18,12 +11,7 @@ import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
-import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodeAccessor;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.SiteId;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
@@ -35,7 +23,6 @@ import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
@@ -122,101 +109,6 @@ public class TmpPortalIT
       {
          session.close();
       }
-   }
-
-   @Test
-   public void navigation()
-   {
-      Navigation navigation = portal.getNavigation(new SiteId("classic"), Nodes.visitAll(), null);
-      printNavigation(navigation);
-   }
-
-   private void printNavigation(Navigation navigation)
-   {
-      printNodeTree(navigation.getChildren(), 0);
-   }
-
-   @Test
-   public void labelTest()
-   {
-      Navigation navigation = portal.getNavigation(new SiteId("classic"), Nodes.visitAll(), null);
-      printNavigation(navigation);
-   }
-
-   @Test
-   public void withTx() throws NotSupportedException, SystemException, NamingException
-   {
-      // tx.begin();
-
-      Navigation navigation = portal.getNavigation(new SiteId("classic"), null, null);
-      System.out.println(navigation.getPriority());
-      navigation.setPriority(100);
-      portal.saveNavigation(navigation);
-
-      // session.save();
-
-      // tx.setRollbackOnly();
-
-      // session.close();
-   }
-
-   @Test
-   public void getNode()
-   {
-      Node node = portal.getNode(new SiteId("classic"), new NodePath("home", "Test2", "Test3"));
-
-      printNodeTree(node);
-
-      Assert.assertNotNull(node);
-      Assert.assertEquals("Test3", node.getName());
-
-      Assert.assertNull(node.getChildren());
-
-      node = node.getParent();
-      Assert.assertNotNull(node);
-      Assert.assertEquals("Test2", node.getName());
-
-      node = node.getParent();
-      Assert.assertNotNull(node);
-      Assert.assertEquals("home", node.getName());
-
-      node = node.getParent();
-      Assert.assertNull(node);
-   }
-
-   @Test
-   public void addChild() throws Exception
-   {
-      Node homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
-      portal.loadNodes(homeNode, null);
-
-      Node node2 = new Node(UUID.randomUUID().toString());
-      node2.setPageId(homeNode.getPageId());
-
-      homeNode.addChild(node2);
-      // portal.saveNode(homeNode);
-      portal.saveNode(node2);
-
-      homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
-      portal.loadNodes(homeNode, null);
-      printNodeTree(homeNode);
-   }
-
-   @Test
-   public void removeChild() throws Exception
-   {
-      Node homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
-      portal.loadNodes(homeNode, null);
-
-      homeNode.removeChild("Test");
-      portal.saveNode(homeNode);
-      printNodeTree(homeNode);
-
-      System.out.println("XXXXX");
-
-      homeNode = portal.getNode(new SiteId("classic"), new NodePath("home"));
-      portal.loadNodes(homeNode, null);
-      printNodeTree(homeNode);
    }
 
    private void printNodeTree(Node n)

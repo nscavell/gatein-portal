@@ -24,17 +24,12 @@ package org.gatein.api.impl;
 
 import org.gatein.api.portal.Group;
 import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.portal.site.SiteQuery;
 import org.gatein.api.portal.site.SiteType;
 import org.gatein.api.util.Filter;
 import org.gatein.api.util.Pagination;
-import org.junit.Assert;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -334,77 +329,6 @@ public class PortalTestCase extends AbstractAPITestCase
       createSite(org.exoplatform.portal.mop.SiteType.USER, "user10");
       Site dashboard = portal.getSite(new SiteId(new User("user10")));
       assertNotNull(dashboard);
-   }
-   
-   public void testGetNavigation()
-   {
-      SiteId siteId = new SiteId("classic");
-
-      try
-      {
-         portal.getNavigation(null, null, null);
-         Assert.fail("Expected NullPointerException");
-      }
-      catch (NullPointerException e)
-      {
-      }
-
-      Assert.assertNull(portal.getNavigation(siteId, null, null));
-
-      createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "classic");
-
-      portal.saveNavigation(new Navigation(siteId, 20));
-
-      Navigation navigation = portal.getNavigation(siteId, null, null);
-      Assert.assertNotNull(navigation);
-      Assert.assertEquals(20, navigation.getPriority());
-      Assert.assertTrue(navigation.getChildren().isEmpty());
-
-      // TODO Navigation with nodes, filter, visitor
-   }
-
-   public void testSaveNavigation()
-   {
-      createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "classic");
-      
-      SiteId siteId = new SiteId("classic");
-
-      Navigation navigation = new Navigation(siteId, 10);
-      portal.saveNavigation(navigation);
-      
-      navigation = portal.getNavigation(siteId, null, null);
-      Assert.assertEquals(10, navigation.getPriority());
-
-      navigation.setPriority(20);
-      portal.saveNavigation(navigation);
-
-      navigation = portal.getNavigation(siteId, null, null);
-      Assert.assertEquals(20, navigation.getPriority());
-      
-      Node parent1 = new Node("parent1");
-      parent1.setPageId(new PageId("classic", "homepage"));
-      Node child1 = new Node("child1");
-      child1.setPageId(new PageId("classic", "homepage"));
-      parent1.addChild(child1);
-
-      Node parent2 = new Node("parent2");
-      parent2.setPageId(new PageId("classic", "homepage"));
-      Node child2 = new Node("child2");
-      child2.setPageId(new PageId("classic", "homepage"));
-      parent2.addChild(child2);
-      
-      navigation.addChild(parent1);
-      navigation.addChild(parent2);
-
-      portal.saveNavigation(navigation);
-   }
-
-   public void testGetNode()
-   {
-      createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "classic");
-      Node node = portal.getNode(new SiteId("classic"), new NodePath("default"));
-      assertNotNull(node);
-      assertEquals("default", node.getName());
    }
 
    // Just remove all sites

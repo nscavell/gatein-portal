@@ -56,13 +56,13 @@ public class NodeVisitorScopeTest
       assertEquals(VisitMode.ALL_CHILDREN, visitor.enter(1, "id", "1", nodeState));
       assertNotNull(mock.name);
       assertEquals(1, mock.depth);
-      assertEquals(new NodePath("1"), mock.details.getNodePath());
+      assertEquals(NodePath.path("1"), mock.details.getNodePath());
 
       mock.instrument(false);
       assertEquals(VisitMode.NO_CHILDREN, visitor.enter(2, "id", "1-1", nodeState));
       assertNotNull(mock.name);
       assertEquals(2, mock.depth);
-      assertEquals(new NodePath("1", "1-1"), mock.details.getNodePath());
+      assertEquals(NodePath.path("1", "1-1"), mock.details.getNodePath());
       
       visitor.leave(2, "id", "1-1", nodeState);
       visitor.leave(1, "id", "1", nodeState);

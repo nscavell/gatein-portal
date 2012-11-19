@@ -29,14 +29,19 @@ import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.navigation.NodeURL;
 import org.gatein.api.impl.Util;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class NodeURLFactory
+public class URIResolver
 {
-   public URI createBaseURL(SiteId siteId)
+   private URIResolver()
+   {
+   }
+
+   public static URI resolveURI(SiteId siteId, NodePath path)
    {
       try
       {
@@ -44,7 +49,7 @@ public class NodeURLFactory
          RequestContext requestContext = RequestContext.getCurrentInstance();
          if (requestContext != null)
          {
-            NavigationResource navResource = new NavigationResource(siteKey, "");
+            NavigationResource navResource = new NavigationResource(siteKey, path.toString());
             NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
             nodeURL.setSchemeUse(true);
             return new URI(nodeURL.toString());
