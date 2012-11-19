@@ -68,6 +68,138 @@ public class NavigationImpl implements Navigation
       this.siteKey = Util.from(siteId);
    }
 
+   @Override
+   public SiteId getSiteId()
+   {
+      return siteId;
+   }
+
+   @Override
+   public Integer getPriority()
+   {
+      NavigationContext ctx = getNavigationContext();
+      return ctx != null ? ctx.getState().getPriority() : null;
+   }
+
+   @Override
+   public void setPriority(Integer priority)
+   {
+      NavigationContext ctx = getNavigationContext();
+      if (ctx == null)
+      {
+         ctx = new NavigationContext(siteKey, new NavigationState(priority));
+      }
+      else
+      {
+         ctx.setState(new NavigationState(priority));
+      }
+      navigationService.saveNavigation(ctx);
+   }
+
+   @Override
+   public Node getNode(NodePath path, NodeVisitor visitor)
+   {
+      Node node = loadNodes(Nodes.visitNodes(path, visitor));
+      return findNode(node, path);
+   }
+
+   @Override
+   public Node loadNodes(NodeVisitor visitor)
+   {
+      NodeContext<NodeContext<?>> ctx = getNodeContext(visitor);
+      return convertNode(ctx);
+   }
+
+   @Override
+   public void loadChildren(Node parent)
+   {
+      Node node = loadNodes(Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren()));
+
+      Node p = findNode(node, parent.getNodePath());
+      ArrayList<Node> children = new ArrayList<Node>(p.getChildren());
+      p.getChildren().clear();
+
+      parent.getChildren().addAll(children);
+      ((NodeList) parent.getChildren()).setLoaded(true);
+   }
+
+   @Override
+   public void moveNode(NodePath from, NodePath to)
+   {
+      CombinedNodeVisitor visitor = new CombinedNodeVisitor(Nodes.visitNodes(from), Nodes.visitNodes(to));
+      NodeContext<NodeContext<?>> ctx = getNodeContext(visitor);
+
+      NodeContext<NodeContext<?>> src = findNodeContext(ctx, from);
+      NodeContext<NodeContext<?>> dstParent = findNodeContext(ctx, to.parent());
+
+      if (src == null)
+      {
+         throw new ApiException("Node '" + from + "' not found");
+      }
+
+      if (dstParent == null)
+      {
+         throw new ApiException("Parent '" + to.parent() + "' not found");
+      }
+      
+      if (dstParent.get(to.getLastSegment()) != null)
+      {
+         throw new ApiException("Destination '" + to + "' already exists");
+      }
+      
+      dstParent.add(null, src);
+      save(ctx);
+   }
+
+   @Override
+   public boolean removeNode(NodePath path)
+   {
+      NodeContext<NodeContext<?>> ctx = getNodeContext(Nodes.visitNodes(path));
+      ctx = findNodeContext(ctx, path);
+      if (ctx == null)
+      {
+         return false;
+      }
+
+      ctx.remove();
+      save(ctx);
+      return true;
+   }
+
+   @Override
+   public void saveNode(Node node)
+   {
+      NodeContext<NodeContext<?>> rootCtx = getNodeContext(new SaveNodeVisitor(node));
+      NodeContext<NodeContext<?>> parentCtx;
+      NodeContext<NodeContext<?>> ctx;
+
+      if (node.isRoot())
+      {
+         parentCtx = null;
+         ctx = rootCtx;
+      }
+      else
+      {
+         parentCtx = findNodeContext(rootCtx, node.getParent().getNodePath());
+         ctx = parentCtx.get(node.getName());
+      }
+
+      ctx = updateNodeContext(node, ctx, parentCtx);
+      save(ctx);
+
+      saveLabel(node, ctx);
+   }
+
+   private NodeContext<NodeContext<?>> getNodeContext(NodeVisitor visitor)
+   {
+      NavigationContext ctx = getNavigationContext();
+      if (ctx == null)
+      {
+         return null;
+      }
+      return navigationService.loadNode(NodeModel.SELF_MODEL, ctx, new NodeVisitorScope(visitor), null);
+   }
+
    private Node convertNode(NodeContext<NodeContext<?>> ctx)
    {
       Node node;
@@ -147,123 +279,6 @@ public class NavigationImpl implements Navigation
       return ctx;
    }
 
-   @Override
-   public Node getNode(NodePath path, NodeVisitor visitor)
-   {
-      Node node = loadNodes(Nodes.visitNodes(path, visitor));
-      return findNode(node, path);
-   }
-
-   private NodeContext<NodeContext<?>> getNodeContext(NodeVisitor visitor)
-   {
-      NavigationContext ctx = getNavigationContext();
-      if (ctx == null)
-      {
-         return null;
-      }
-      return navigationService.loadNode(NodeModel.SELF_MODEL, ctx, new NodeVisitorScope(visitor), null);
-   }
-
-   @Override
-   public Integer getPriority()
-   {
-      NavigationContext ctx = getNavigationContext();
-      return ctx != null ? ctx.getState().getPriority() : null;
-   }
-
-   @Override
-   public SiteId getSiteId()
-   {
-      return siteId;
-   }
-
-   @Override
-   public void loadChildren(Node parent)
-   {
-      Node node = loadNodes(Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren()));
-
-      Node p = findNode(node, parent.getNodePath());
-      ArrayList<Node> children = new ArrayList<Node>(p.getChildren());
-      p.getChildren().clear();
-
-      parent.getChildren().addAll(children);
-      ((NodeList) parent.getChildren()).setLoaded(true);
-   }
-
-   @Override
-   public Node loadNodes(NodeVisitor visitor)
-   {
-      NodeContext<NodeContext<?>> ctx = getNodeContext(visitor);
-      return convertNode(ctx);
-   }
-
-   @Override
-   public void moveNode(NodePath from, NodePath to)
-   {
-      CombinedNodeVisitor visitor = new CombinedNodeVisitor(Nodes.visitNodes(from), Nodes.visitNodes(to));
-      NodeContext<NodeContext<?>> ctx = getNodeContext(visitor);
-
-      NodeContext<NodeContext<?>> src = findNodeContext(ctx, from);
-      NodeContext<NodeContext<?>> dstParent = findNodeContext(ctx, to.parent());
-
-      if (src == null)
-      {
-         throw new ApiException("Node '" + from + "' not found");
-      }
-
-      if (dstParent == null)
-      {
-         throw new ApiException("Parent '" + to.parent() + "' not found");
-      }
-      
-      if (dstParent.get(to.getLastSegment()) != null)
-      {
-         throw new ApiException("Destination '" + to + "' already exists");
-      }
-      
-      dstParent.add(null, src);
-      save(ctx);
-   }
-
-   @Override
-   public boolean removeNode(NodePath path)
-   {
-      NodeContext<NodeContext<?>> ctx = getNodeContext(Nodes.visitNodes(path));
-      ctx = findNodeContext(ctx, path);
-      if (ctx == null)
-      {
-         return false;
-      }
-
-      ctx.remove();
-      save(ctx);
-      return true;
-   }
-
-   @Override
-   public void saveNode(Node node)
-   {
-      NodeContext<NodeContext<?>> rootCtx = getNodeContext(new SaveNodeVisitor(node));
-      NodeContext<NodeContext<?>> parentCtx;
-      NodeContext<NodeContext<?>> ctx;
-
-      if (node.isRoot())
-      {
-         parentCtx = null;
-         ctx = rootCtx;
-      }
-      else
-      {
-         parentCtx = findNodeContext(rootCtx, node.getParent().getNodePath());
-         ctx = parentCtx.get(node.getName());
-      }
-
-      ctx = updateNodeContext(node, ctx, parentCtx);
-      save(ctx);
-
-      saveLabel(node, ctx);
-   }
-
    private void save(NodeContext<NodeContext<?>> nodeCtx)
    {
       try
@@ -291,21 +306,6 @@ public class NavigationImpl implements Navigation
       {
          saveLabel(c, ctx.get(c.getName()));
       }
-   }
-
-   @Override
-   public void setPriority(Integer priority)
-   {
-      NavigationContext ctx = getNavigationContext();
-      if (ctx == null)
-      {
-         ctx = new NavigationContext(siteKey, new NavigationState(priority));
-      }
-      else
-      {
-         ctx.setState(new NavigationState(priority));
-      }
-      navigationService.saveNavigation(ctx);
    }
 
    private NodeContext<NodeContext<?>> updateNodeContext(Node node, NodeContext<NodeContext<?>> ctx,
