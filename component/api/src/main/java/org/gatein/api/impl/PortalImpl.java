@@ -22,11 +22,6 @@
 
 package org.gatein.api.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.model.PortalConfig;
@@ -52,7 +47,11 @@ import org.gatein.api.util.Filter;
 import org.gatein.api.util.Pagination;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
-import org.picocontainer.Startable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
@@ -60,7 +59,7 @@ import org.picocontainer.Startable;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class PortalImpl extends DataStorageContext implements Portal, Startable
+public class PortalImpl extends DataStorageContext implements Portal
 {
    private static final Query<PortalConfig> SITES = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.PORTAL.getName(), null, PortalConfig.class);
    private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(org.exoplatform.portal.mop.SiteType.GROUP.getName(), null, PortalConfig.class);
@@ -74,16 +73,12 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
 
    private final NavigationService navigationService;
    private final DescriptionService descriptionService;
-   private final OrganizationService organizationService;
-   private final ResourceBundleManager bundleManager;
 
-   public PortalImpl(DataStorage dataStorage, NavigationService navigationService, DescriptionService descriptionService, OrganizationService organizationService, ResourceBundleManager bundleManager)
+   public PortalImpl(DataStorage dataStorage, NavigationService navigationService, DescriptionService descriptionService)
    {
       super(dataStorage);
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
-      this.organizationService = organizationService;
-      this.bundleManager = bundleManager;
    }
 
    @Override
@@ -182,34 +177,46 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
       });
    }
 
+
+    @Override
+    public Navigation getNavigation(SiteId siteId)
+    {
+        return new NavigationImpl(siteId, navigationService, descriptionService);
+    }
+
    @Override
    public Page getPage(PageId pageId)
    {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      //TODO: Implement
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public List<Page> findPages(PageQuery query)
    {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+       //TODO: Implement
+       throw new UnsupportedOperationException();
    }
 
    @Override
    public void savePage(Page page)
    {
-      //To change body of implemented methods use File | Settings | File Templates.
+       //TODO: Implement
+       throw new UnsupportedOperationException();
    }
 
    @Override
    public void removePage(PageId pageId)
    {
-      //To change body of implemented methods use File | Settings | File Templates.
+       //TODO: Implement
+       throw new UnsupportedOperationException();
    }
 
    @Override
    public boolean hasPermission(User user, Permission permission)
    {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
+       //TODO: Implement
+       throw new UnsupportedOperationException();
    }
 
    private static <T> void filter(List<T> list, Filter<T> filter)
@@ -248,48 +255,5 @@ public class PortalImpl extends DataStorageContext implements Portal, Startable
          sites.add(Util.from(internalSite));
       }
       return sites;
-   }
-
-//   public Locale getUserLocale()
-//   {
-//      //TODO: Workaround until RequestContext is sorted out in rest context
-//      RequestContext rc = RequestContext.getCurrentInstance();
-//      if (rc == null) return Locale.getDefault();
-//
-//      return rc.getLocale();
-//   }
-
-   // public ResourceBundle getNavigationResourceBundle(SiteId id)
-//   {
-//      SiteKey siteKey = Util.from(id);
-//      return bundleManager.getNavigationResourceBundle(getUserLocale().getLanguage(), siteKey.getTypeName(), siteKey.getName());
-//   }
-
-   public NavigationService getNavigationService()
-   {
-      return navigationService;
-   }
-
-   public DescriptionService getDescriptionService()
-   {
-      return descriptionService;
-   }
-
-   @Override
-   public void start()
-   {
-      //nothing
-   }
-
-   @Override
-   public void stop()
-   {
-      //nothing
-   }
-
-   @Override
-   public Navigation getNavigation(SiteId siteId)
-   {
-      return new NavigationImpl(siteId, navigationService, descriptionService);
    }
 }

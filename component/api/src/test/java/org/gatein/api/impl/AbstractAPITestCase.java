@@ -96,7 +96,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
 //      this.invoker = invoker;
       this.userLocale = Locale.ENGLISH;
 
-      this.portal = new PortalImpl(dataStorage, navService, descriptionService, orgService, bundleManager);
+      this.portal = new PortalImpl(dataStorage, navService, descriptionService);//, orgService, bundleManager);
 
       //
       begin();

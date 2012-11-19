@@ -99,7 +99,7 @@ public class TmpPortalIT
       ResourceBundleManager bundleManager = (ResourceBundleManager) container
             .getComponentInstanceOfType(ResourceBundleManager.class);
 
-      portal = new PortalImpl(dataStorage, navService, descriptionService, orgService, bundleManager);
+      portal = new PortalImpl(dataStorage, navService, descriptionService);//, orgService, bundleManager);
    }
 
    @After
