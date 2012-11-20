@@ -21,13 +21,17 @@
  */
 package org.gatein.api.impl.portal.navigation.visitor;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.gatein.api.impl.portal.navigation.NodeList;
 import org.gatein.api.impl.portal.navigation.RootNode;
-import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodePath;
+import org.gatein.api.portal.navigation.NodeVisitor.NodeDetails;
+import org.gatein.api.portal.navigation.Visibility;
+import org.gatein.api.portal.page.PageId;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class SaveNodeVisitorTest
 {
@@ -54,32 +58,36 @@ public class SaveNodeVisitorTest
    @Test
    public void notOnPath()
    {
-      assertFalse(visitor.visit(1, "2", null));
+      assertFalse(visitor.visit(1, "2", createDetails("2")));
+      assertFalse(visitor.visit(2, "1", createDetails("1/1")));
+      assertFalse(visitor.visit(2, "1-2", createDetails("1/1-2")));
+      assertFalse(visitor.visit(2, "1-1-1", createDetails("1/1-1-1")));
    }
 
    @Test
    public void onPath()
    {
-      assertTrue(visitor.visit(1, "1", null));
-      assertTrue(visitor.visit(2, "1/1", null));
+      assertTrue(visitor.visit(1, "1", createDetails("1")));
+      assertTrue(visitor.visit(2, "1-1", createDetails("1/1-1")));
    }
 
    @Test
    public void childrenLoaded()
    {
-      fail("test not implemented");
+      assertTrue(visitor.visit(3, "1-1-2", createDetails("1/1/1-1-2")));
    }
 
    @Test
    public void childrenNotEmpty()
    {
-      fail("test not implemented");
+      assertTrue(visitor.visit(3, "1-1-1", createDetails("1/1/1-1-1")));
    }
 
    @Test
    public void notLoaded()
    {
-      fail("test not implemented");
+      assertFalse(visitor.visit(3, "1-1-3", createDetails("1/1/1-1-3")));
+      assertFalse(visitor.visit(3, "1-1-4", createDetails("1/1/1-1-4")));
    }
 
    @Test
@@ -88,5 +96,34 @@ public class SaveNodeVisitorTest
       assertTrue(visitor.visit(0, null, null));
    }
 
-}
+   static NodeDetails createDetails(final String path)
+   {
+      return new NodeDetails()
+      {
+         @Override
+         public Visibility getVisibility()
+         {
+            return null;
+         }
 
+         @Override
+         public PageId getPageId()
+         {
+            return null;
+         }
+
+         @Override
+         public NodePath getNodePath()
+         {
+            return NodePath.fromString(path);
+         }
+
+         @Override
+         public String getIconName()
+         {
+            return null;
+         }
+      };
+   }
+
+}

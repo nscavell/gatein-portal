@@ -39,20 +39,39 @@ public class SaveNodeVisitor implements NodeVisitor
    @Override
    public boolean visit(int depth, String name, NodeDetails details)
    {
-      // if (depth == 0)
-      // {
-      // return true;
-      // }
-      //
-      // if (depth < path.size())
-      // {
-      // return path.getSegment(depth - 1).equals(name);
-      // }
-      // TODO Auto-generated method stub
+      if (depth == 0)
+      {
+         return true;
+      }
 
-      // If sub-path return true
-      // Else check if children expanded or children not null
+      if (depth <= path.size())
+      {
+         return path.getSegment(depth - 1).equals(name);
+      }
 
-      return true;
+      Node n = getNode(details.getNodePath());
+      if (n == null)
+      {
+         return false;
+      }
+      else
+      {
+         return n.isChildrenLoaded() || !n.getChildren().isEmpty();
+      }
+   }
+
+   private Node getNode(NodePath p)
+   {
+      Node n = node;
+      p = p.subPath(path.size());
+      for (String e : p)
+      {
+         n = n.getChild(e);
+         if (n == null)
+         {
+            return null;
+         }
+      }
+      return n;
    }
 }
