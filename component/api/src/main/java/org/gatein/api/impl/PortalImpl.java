@@ -181,7 +181,7 @@ public class PortalImpl extends DataStorageContext implements Portal
     @Override
     public Navigation getNavigation(SiteId siteId)
     {
-        return new NavigationImpl(siteId, navigationService, descriptionService);
+       return new NavigationImpl(siteId, navigationService, descriptionService);
     }
 
    @Override

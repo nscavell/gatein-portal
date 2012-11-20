@@ -215,6 +215,12 @@ class DelegateNode implements Node
    }
 
    @Override
+   public Node copy(String newName)
+   {
+      return delegate.copy(newName);
+   }
+
+   @Override
    public String toString()
    {
       return delegate.toString();
