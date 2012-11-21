@@ -36,28 +36,28 @@ import org.gatein.api.portal.page.PageId;
  */
 public class NodeVisitorScope implements Scope
 {
-   private final NodeVisitorWrapper visitor;
+   private final NodeVisitorAdapter adapter;
 
-   public NodeVisitorScope(NodeVisitor nodeVisitor)
+   public NodeVisitorScope(NodeVisitor visitor)
    {
-      visitor = new NodeVisitorWrapper(nodeVisitor);
+      this.adapter = new NodeVisitorAdapter(visitor);
    }
 
    @Override
    public Visitor get()
    {
-      return visitor;
+      return adapter;
    }
 
-   class NodeVisitorWrapper implements Visitor
+   private class NodeVisitorAdapter implements Visitor
    {
-      private final NodeVisitor nodeVisitor;
+      private final NodeVisitor visitor;
 
       private NodePath nodePath;
 
-      public NodeVisitorWrapper(NodeVisitor nodeVisitor)
+      public NodeVisitorAdapter(NodeVisitor visitor)
       {
-         this.nodeVisitor = nodeVisitor;
+         this.visitor = visitor;
       }
 
       @Override
@@ -65,7 +65,7 @@ public class NodeVisitorScope implements Scope
       {
          nodePath = depth == 0 ? NodePath.root() : nodePath.append(name);
          NodeDetails details = depth == 0 ? null : new NodeDetails(state, nodePath);
-         return nodeVisitor.visit(depth, name, details) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
+         return visitor.visit(depth, name, details) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
       }
 
       @Override
@@ -75,7 +75,7 @@ public class NodeVisitorScope implements Scope
       }
    }
 
-   class NodeDetails implements NodeVisitor.NodeDetails
+   private class NodeDetails implements NodeVisitor.NodeDetails
    {
       private NodeState nodeState;
       private NodePath nodePath;

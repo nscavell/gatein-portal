@@ -19,29 +19,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.gatein.api.impl.portal.navigation.visitor;
+package org.gatein.api.impl.portal.navigation;
 
-import org.gatein.api.portal.navigation.NodeVisitor;
+import org.exoplatform.portal.mop.navigation.NodeContext;
+import org.exoplatform.portal.mop.navigation.NodeModel;
+import org.gatein.api.portal.site.SiteId;
 
-public class CombinedNodeVisitor implements NodeVisitor
+final class ApiNodeContext implements NodeModel<ApiNodeModel>
 {
-   private NodeVisitor[] visitors;
+   private SiteId siteId;
 
-   public CombinedNodeVisitor(NodeVisitor... visitors)
+   ApiNodeContext(SiteId siteId)
    {
-      this.visitors = visitors;
+      this.siteId = siteId;
    }
 
    @Override
-   public boolean visit(int depth, String name, NodeDetails details)
+   public ApiNodeModel create(NodeContext<ApiNodeModel> context)
    {
-      for (NodeVisitor v : visitors)
-      {
-         if (v.visit(depth, name, details))
-         {
-            return true;
-         }
-      }
-      return false;
+      return new ApiNodeModel(siteId, context);
+   }
+
+   @Override
+   public NodeContext<ApiNodeModel> getContext(ApiNodeModel node)
+   {
+      return node.getContext();
    }
 }

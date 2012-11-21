@@ -113,7 +113,7 @@ public class NavigationManagementResource
       Node node = navigation.getNode(visitChildren());
       model.set("priority", navigation.getPriority());
       ModelList modelNodes = model.get("node").setEmptyList();
-      for (Node n : node.getChildren())
+      for (Node n : node)
       {
          ModelReference modelNode = modelNodes.add().asValue(ModelReference.class);
          modelNode.set("name", n.getName());

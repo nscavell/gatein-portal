@@ -1,7 +1,6 @@
 package org.gatein.api.impl;
 
 import java.io.InputStream;
-import java.util.List;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.config.DataStorage;
@@ -11,7 +10,6 @@ import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
-import org.gatein.api.portal.navigation.Node;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
@@ -28,12 +26,9 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class TmpPortalIT
 {
-
    private PortalImpl portal;
    private POMSession session;
 
-   // @Resource(mappedName = "java:jboss/UserTransaction")
-   // private UserTransaction tx;
    private PortalContainer container;
    private NavigationService navService;
 
@@ -108,28 +103,6 @@ public class TmpPortalIT
       if (session != null)
       {
          session.close();
-      }
-   }
-
-   private void printNodeTree(Node n)
-   {
-      while (n.getParent() != null)
-      {
-         n = n.getParent();
-      }
-      printNodeTree(n.getChildren(), 0);
-   }
-
-   private void printNodeTree(List<Node> nodes, int depth)
-   {
-      for (Node n : nodes)
-      {
-         for (int i = 0; i < depth; i++)
-         {
-            System.out.print("  ");
-         }
-         System.out.println(n.getName() + " " + n.getLabel());
-         printNodeTree(n.getChildren(), depth + 1);
       }
    }
 }

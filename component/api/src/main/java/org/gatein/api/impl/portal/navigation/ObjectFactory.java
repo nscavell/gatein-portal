@@ -28,12 +28,9 @@ import java.util.Map;
 
 import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.navigation.NodeState;
-import org.exoplatform.portal.mop.page.PageKey;
 import org.gatein.api.ApiException;
-import org.gatein.api.impl.Util;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Localized.Value;
-import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
@@ -45,65 +42,6 @@ public class ObjectFactory
 {
    private ObjectFactory()
    {
-   }
-
-   public static Node createNode(String name, NodeState state)
-   {
-      Node node = new NodeImpl(name);
-      node.setIconName(state.getIcon());
-      if (state.getPageRef() != null)
-      {
-         node.setPageId(Util.from(state.getPageRef()));
-      }
-      node.setVisibility(createVisibility(state));
-      return node;
-   }
-
-   public static NodeState createNodeState(Node node)
-   {
-      String label = node.getLabel() != null && !node.getLabel().isLocalized() ? node.getLabel().getValue() : null;
-      String icon = node.getIconName();
-
-      PublicationDate publicationDate = node.getVisibility().getPublicationDate();
-
-      long startPublicationTime = -1;
-      long endPublicationTime = -1;
-
-      if (publicationDate != null)
-      {
-         if (publicationDate.getStart() != null)
-         {
-            startPublicationTime = publicationDate.getStart().getTime();
-         }
-
-         if (publicationDate.getEnd() != null)
-         {
-            endPublicationTime = publicationDate.getEnd().getTime();
-         }
-      }
-
-      org.exoplatform.portal.mop.Visibility visibility = from(node.getVisibility().getFlag());
-      
-      PageKey pageKey = node.getPageId() != null ? Util.from(node.getPageId()) : null;
-
-      return new NodeState(label, icon, startPublicationTime, endPublicationTime, visibility, pageKey);
-   }
-
-   private static org.exoplatform.portal.mop.Visibility from(Flag flag)
-   {
-      switch (flag)
-      {
-         case VISIBLE:
-            return org.exoplatform.portal.mop.Visibility.DISPLAYED;
-         case HIDDEN:
-            return org.exoplatform.portal.mop.Visibility.HIDDEN;
-         case SYSTEM:
-            return org.exoplatform.portal.mop.Visibility.SYSTEM;
-         case PUBLICATION:
-            return org.exoplatform.portal.mop.Visibility.TEMPORAL;
-         default:
-            throw new ApiException("Unknown visibility flag '" + flag + "'");
-      }
    }
 
    public static Label createLabel(Map<Locale, Described.State> descriptions)
@@ -135,7 +73,7 @@ public class ObjectFactory
 
    public static Visibility createVisibility(NodeState nodeState)
    {
-      Flag flag = from(nodeState.getVisibility());
+      Flag flag = createFlag(nodeState.getVisibility());
 
       long start = nodeState.getStartPublicationTime();
       long end = nodeState.getEndPublicationTime();
@@ -157,7 +95,7 @@ public class ObjectFactory
       return new Visibility(flag, publicationDate);
    }
 
-   private static Flag from(org.exoplatform.portal.mop.Visibility visibility)
+   private static Flag createFlag(org.exoplatform.portal.mop.Visibility visibility)
    {
       switch (visibility)
       {
