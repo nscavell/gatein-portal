@@ -98,8 +98,7 @@ public class PageManagementResource
    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the given page to the portal")
    public ModelObject addPage(@MappedPath("page-name") String name, @ManagedContext ModelObject model)
    {
-      //Page page = site.createPage(name);
-      Page page = new Page(new PageId(siteId, name));
+      Page page = portal.createPage(new PageId(siteId, name));
       portal.savePage(page);
 
       populateModel(page, model);

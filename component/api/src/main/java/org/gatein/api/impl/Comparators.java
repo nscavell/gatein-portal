@@ -23,6 +23,7 @@
 package org.gatein.api.impl;
 
 import org.exoplatform.portal.config.model.PortalConfig;
+import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.site.Site;
 import org.gatein.api.util.Sorting;
 
@@ -69,6 +70,36 @@ class Comparators
                return Util.from(entity);
             }
          };
+      }
+   }
+
+   public static Comparator<Page> page(final Sorting<Page> sorting)
+   {
+      if (sorting == null)
+      {
+         return null;
+      }
+      else if (sorting.getComparator() == null)
+      {
+         return new Comparator<Page>()
+         {
+            @Override
+            public int compare(Page page, Page other)
+            {
+               if (sorting.getOrder() == Sorting.Order.descending)
+               {
+                  Page tmp = page;
+                  page = other;
+                  other = tmp;
+               }
+
+               return page.compareTo(other);
+            }
+         };
+      }
+      else
+      {
+         return sorting.getComparator();
       }
    }
 

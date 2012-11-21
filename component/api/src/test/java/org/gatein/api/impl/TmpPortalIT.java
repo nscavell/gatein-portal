@@ -6,6 +6,7 @@ import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
@@ -87,6 +88,7 @@ public class TmpPortalIT
       POMSessionManager pomSession = (POMSessionManager) container.getComponentInstanceOfType(POMSessionManager.class);
       session = pomSession.openSession();
       DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
+      PageService pageService = (PageService) container.getComponentInstanceOfType(PageService.class);
       navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
       DescriptionService descriptionService = (DescriptionService) container
             .getComponentInstanceOfType(DescriptionService.class);
@@ -94,7 +96,7 @@ public class TmpPortalIT
       ResourceBundleManager bundleManager = (ResourceBundleManager) container
             .getComponentInstanceOfType(ResourceBundleManager.class);
 
-      portal = new PortalImpl(dataStorage, navService, descriptionService);//, orgService, bundleManager);
+      portal = new PortalImpl(dataStorage, pageService, navService, descriptionService);//, orgService, bundleManager);
    }
 
    @After

@@ -22,14 +22,17 @@
 
 package org.gatein.api.impl;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.page.PageKey;
+import org.gatein.api.impl.portal.site.SiteImpl;
 import org.gatein.api.portal.Group;
 import org.gatein.api.portal.Membership;
 import org.gatein.api.portal.Permission;
@@ -37,6 +40,7 @@ import org.gatein.api.portal.User;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.portal.site.SiteType;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -49,7 +53,7 @@ public class Util
 
       SiteKey siteKey = new SiteKey(portalConfig.getType(), portalConfig.getName());
 
-      Site site = new Site(from(siteKey));
+      Site site = new SiteImpl(from(siteKey));
       site.setTitle(portalConfig.getLabel());
       if (portalConfig.getLocale() != null)
       {
@@ -84,6 +88,8 @@ public class Util
 
    public static PageId from(PageKey pageKey)
    {
+      if (pageKey == null) return null;
+
       SiteKey siteKey = pageKey.getSite();
       switch (pageKey.getSite().getType())
       {
@@ -100,11 +106,15 @@ public class Util
 
    public static PageKey from(PageId pageId)
    {
+      if (pageId == null) return null;
+
       return new PageKey(from(pageId.getSiteId()), pageId.getPageName());
    }
 
    public static SiteId from(SiteKey siteKey)
    {
+      if (siteKey == null) return null;
+
       switch (siteKey.getType())
       {
          case PORTAL:
@@ -120,6 +130,8 @@ public class Util
 
    public static SiteKey from(SiteId siteId)
    {
+      if (siteId == null) return null;
+
       switch (siteId.getType())
       {
          case SITE:
@@ -133,18 +145,42 @@ public class Util
       }
    }
 
+   public static org.exoplatform.portal.mop.SiteType from(SiteType siteType)
+   {
+      if (siteType == null) return null;
+
+      switch (siteType)
+      {
+         case SITE:
+            return org.exoplatform.portal.mop.SiteType.PORTAL;
+         case SPACE:
+            return org.exoplatform.portal.mop.SiteType.GROUP;
+         case DASHBOARD:
+            return org.exoplatform.portal.mop.SiteType.USER;
+         default:
+            throw new AssertionError();
+      }
+   }
+
    public static Permission from(String...permissions)
    {
       if (permissions == null) return null;
       if (permissions.length == 1 && permissions[0] == null) return null; // for some reason this is happening...
 
-      if (permissions.length == 1 && permissions[0].equals("Everyone"))
+      return from(Arrays.asList(permissions));
+   }
+
+   public static Permission from(List<String> permissions)
+   {
+      if (permissions == null) return null;
+
+      if (permissions.size() == 1 && permissions.get(0).equals("Everyone"))
       {
          return Permission.everyone();
       }
       else
       {
-         Set<Membership> memberships = new LinkedHashSet<Membership>(permissions.length);
+         Set<Membership> memberships = new LinkedHashSet<Membership>(permissions.size());
          for (String permission : permissions)
          {
             memberships.add(Membership.fromString(permission));

@@ -25,14 +25,20 @@ package org.gatein.api.impl;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.model.PortalConfig;
+import org.exoplatform.portal.mop.QueryResult;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.resources.ResourceBundleManager;
+import org.exoplatform.portal.mop.page.PageContext;
+import org.exoplatform.portal.mop.page.PageService;
+import org.exoplatform.portal.mop.page.PageServiceImpl;
+import org.exoplatform.portal.mop.page.PageServiceWrapper;
+import org.exoplatform.portal.mop.page.PageState;
+import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.portal.DataStorageContext;
 import org.gatein.api.impl.portal.navigation.NavigationImpl;
+import org.gatein.api.impl.portal.page.PageImpl;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.Navigation;
@@ -49,7 +55,9 @@ import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,12 +79,14 @@ public class PortalImpl extends DataStorageContext implements Portal
    //TODO: should be configurable
    public SiteId DEFAULT_SITE = new SiteId("classic");
 
+   private final PageService pageService;
    private final NavigationService navigationService;
    private final DescriptionService descriptionService;
 
-   public PortalImpl(DataStorage dataStorage, NavigationService navigationService, DescriptionService descriptionService)
+   public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService, DescriptionService descriptionService)
    {
       super(dataStorage);
+      this.pageService = pageService;
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
    }
@@ -136,7 +146,7 @@ public class PortalImpl extends DataStorageContext implements Portal
       // Manually do paging for multiple site types.
       if (query.getSiteTypes().size() > 1)
       {
-         sites = page(sites, query.getPagination());
+         sites = paginate(sites, query.getPagination());
       }
 
       return sites;
@@ -187,29 +197,91 @@ public class PortalImpl extends DataStorageContext implements Portal
    @Override
    public Page getPage(PageId pageId)
    {
-      //TODO: Implement
-      throw new UnsupportedOperationException();
+      if (pageId == null) throw new IllegalArgumentException("pageId cannot be null");
+
+      PageContext context = pageService.loadPage(Util.from(pageId));
+      return (context == null) ? null : new PageImpl(context);
+   }
+
+   @Override
+   public Page createPage(PageId pageId) throws EntityAlreadyExistsException
+   {
+      if (getPage(pageId) != null)
+      {
+         throw new EntityAlreadyExistsException("Cannot create page. Page " + pageId + " already exists.");
+      }
+
+      //TODO: Provide valid defaults for creating a page i.e. permissions, etc.
+      //TODO: Do we want to support page template ?
+      //TODO: We can also ask for more information in API during page creation.
+
+      Permission access = Permission.everyone();
+      Permission edit = Permission.any("platform", "administrators");
+      PageState pageState = new PageState(pageId.getPageName(), null, false, null, Arrays.asList(Util.from(access)), Util.from(edit)[0]);
+
+      return new PageImpl(new PageContext(Util.from(pageId), pageState));
    }
 
    @Override
    public List<Page> findPages(PageQuery query)
    {
-       //TODO: Implement
-       throw new UnsupportedOperationException();
+      Pagination pagination = query.getPagination();
+      Iterator<PageContext> iterator;
+      if (pagination == null)
+      {
+         if (query.getSiteType() == null || query.getSiteName() == null) throw new IllegalArgumentException("Pagination is required when site type or site name is null.");
+
+         SiteKey siteKey = Util.from(new SiteId(query.getSiteType(), query.getSiteName()));
+         if (pageService instanceof PageServiceImpl)
+         {
+             iterator = ((PageServiceImpl) pageService).loadPages(siteKey).iterator();
+         }
+         else if (pageService instanceof PageServiceWrapper)
+         {
+            iterator = ((PageServiceWrapper) pageService).loadPages(siteKey).iterator();
+         }
+         else
+         {
+            throw new RuntimeException("Unable to retrieve all pages for " + siteKey);
+         }
+      }
+      else
+      {
+         QueryResult<PageContext> result = pageService.findPages(
+            pagination.getOffset(), pagination.getLimit(),
+            Util.from(query.getSiteType()), query.getSiteName(), query.getPageName(), query.getPageTitle());
+
+         iterator = result.iterator();
+      }
+
+      List<Page> pages = new ArrayList<Page>();
+      while (iterator.hasNext())
+      {
+         pages.add(new PageImpl(iterator.next()));
+      }
+
+      Comparator<Page> comparator = Comparators.page(query.getSorting());
+      if (comparator != null)
+      {
+         Collections.sort(pages, comparator);
+      }
+
+      filter(pages, query.getFilter());
+
+      return pages;
    }
 
    @Override
    public void savePage(Page page)
    {
-       //TODO: Implement
-       throw new UnsupportedOperationException();
+      PageContext context = ((PageImpl) page).getPageContext();
+      pageService.savePage(context);
    }
 
    @Override
    public void removePage(PageId pageId)
    {
-       //TODO: Implement
-       throw new UnsupportedOperationException();
+       pageService.destroyPage(Util.from(pageId));
    }
 
    @Override
@@ -232,7 +304,7 @@ public class PortalImpl extends DataStorageContext implements Portal
       }
    }
 
-   private static <T> List<T> page(List<T> list, Pagination pagination)
+   private static <T> List<T> paginate(List<T> list, Pagination pagination)
    {
       if (pagination == null) return list;
       if (pagination.getOffset() >= list.size()) return Collections.emptyList();

@@ -1,5 +1,6 @@
 package org.gatein.api.impl;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import junit.framework.AssertionFailedError;
@@ -96,7 +97,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
 //      this.invoker = invoker;
       this.userLocale = Locale.ENGLISH;
 
-      this.portal = new PortalImpl(dataStorage, navService, descriptionService);//, orgService, bundleManager);
+      this.portal = new PortalImpl(dataStorage, pageService, navService, descriptionService);//, orgService, bundleManager);
 
       //
       begin();
@@ -122,6 +123,35 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
          // storage.create(new org.exoplatform.portal.config.model.Page(type.getName(), name, "homepage"));
          pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), "homepage"), new PageState("displayName",
                "description", false, null, null, null)));
+
+         //
+         return navService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
+      }
+      catch (Exception e)
+      {
+         AssertionFailedError afe = new AssertionFailedError();
+         afe.initCause(e);
+         throw afe;
+      }
+   }
+
+   protected NodeContext createSite(SiteType type, String name, String...pages)
+   {
+      try
+      {
+         PortalConfig config = new PortalConfig(type.getName(), name);
+         config.setAccessPermissions(Util.from(Permission.everyone()));
+
+         storage.create(config);
+         NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(0));
+         navService.saveNavigation(nav);
+         //
+
+         for (String page : pages)
+         {
+            pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), page), new PageState("displayName",
+               "description", false, null, Arrays.asList("Everyone"), "Everyone")));
+         }
 
          //
          return navService.loadNode(NodeModel.SELF_MODEL, nav, Scope.ALL, null);
