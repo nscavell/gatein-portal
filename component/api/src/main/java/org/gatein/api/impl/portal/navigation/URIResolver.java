@@ -56,6 +56,7 @@ public class URIResolver
       catch (URISyntaxException e)
       {
       }
+
       return null;
    }
 }

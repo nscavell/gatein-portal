@@ -64,6 +64,21 @@ public class ObjectFactory
       return descriptions;
    }
 
+   public static org.exoplatform.portal.mop.Visibility createVisibility(Flag flag)
+   {
+      switch (flag)
+      {
+         case VISIBLE:
+            return org.exoplatform.portal.mop.Visibility.DISPLAYED;
+         case HIDDEN:
+            return org.exoplatform.portal.mop.Visibility.HIDDEN;
+         case SYSTEM:
+            return org.exoplatform.portal.mop.Visibility.SYSTEM;
+         default:
+            throw new ApiException("Unknown visibility flag " + flag);
+      }
+   }
+
    public static Visibility createVisibility(NodeState nodeState)
    {
       Flag flag = createFlag(nodeState.getVisibility());

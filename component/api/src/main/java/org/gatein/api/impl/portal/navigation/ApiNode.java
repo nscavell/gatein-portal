@@ -21,7 +21,6 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -30,8 +29,6 @@ import java.util.Iterator;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.NodeState.Builder;
-import org.exoplatform.portal.mop.page.PageKey;
-import org.gatein.api.ApiException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.internal.Objects;
 import org.gatein.api.portal.Label;
@@ -46,13 +43,13 @@ import org.gatein.api.util.Filter;
 
 final class ApiNode implements Node
 {
-   private transient NodeContext<ApiNode> context;
+   private NodeContext<ApiNode> context;
 
-   private SiteId siteId;
+   private Label label;
 
    private boolean labelChanged;
 
-   private Label label;
+   private SiteId siteId;
 
    ApiNode(SiteId siteId, NodeContext<ApiNode> context)
    {
@@ -140,8 +137,7 @@ final class ApiNode implements Node
    @Override
    public PageId getPageId()
    {
-      PageKey pageRef = context.getState().getPageRef();
-      return pageRef != null ? Util.from(context.getState().getPageRef()) : null;
+      return Util.from(context.getState().getPageRef());
    }
 
    @Override
@@ -184,11 +180,6 @@ final class ApiNode implements Node
    public boolean isChildrenLoaded()
    {
       return context.isExpanded();
-   }
-
-   boolean isLabelChanged()
-   {
-      return labelChanged;
    }
 
    @Override
@@ -240,7 +231,7 @@ final class ApiNode implements Node
    @Override
    public void setIconName(String iconName)
    {
-      setState(getState().icon(iconName));
+      setState(getStateBuilder().icon(iconName));
    }
 
    @Override
@@ -250,33 +241,28 @@ final class ApiNode implements Node
       {
          if (!label.isLocalized())
          {
-            setState(getState().label(label.getValue()));
+            setState(getStateBuilder().label(label.getValue()));
             this.label = label;
          }
          else
          {
-            setState(getState().label(null));
+            setState(getStateBuilder().label(null));
             this.label = label;
          }
          labelChanged = true;
       }
    }
 
-   public void setLabelInternal(Label label)
-   {
-      this.label = label;
-   }
-
    @Override
    public void setPageId(PageId pageId)
    {
-      setState(getState().pageRef(Util.from(pageId)));
+      setState(getStateBuilder().pageRef(Util.from(pageId)));
    }
 
    @Override
    public void setVisibility(boolean visible)
    {
-      Builder b = getState().startPublicationTime(-1).endPublicationTime(-1);
+      Builder b = getStateBuilder().startPublicationTime(-1).endPublicationTime(-1);
       if (visible)
       {
          b.visibility(org.exoplatform.portal.mop.Visibility.DISPLAYED);
@@ -294,7 +280,7 @@ final class ApiNode implements Node
       long start = publicationDate.getStart() != null ? publicationDate.getStart().getTime() : -1;
       long end = publicationDate.getEnd() != null ? publicationDate.getEnd().getTime() : -1;
 
-      setState(getState().startPublicationTime(start).endPublicationTime(end)
+      setState(getStateBuilder().startPublicationTime(start).endPublicationTime(end)
             .visibility(org.exoplatform.portal.mop.Visibility.TEMPORAL));
    }
 
@@ -307,22 +293,8 @@ final class ApiNode implements Node
       }
       else
       {
-         Builder b = getState().startPublicationTime(-1).endPublicationTime(-1);
-         switch (visibility.getFlag())
-         {
-            case VISIBLE:
-               b.visibility(org.exoplatform.portal.mop.Visibility.DISPLAYED);
-               break;
-            case HIDDEN:
-               b.visibility(org.exoplatform.portal.mop.Visibility.HIDDEN);
-               break;
-            case SYSTEM:
-               b.visibility(org.exoplatform.portal.mop.Visibility.SYSTEM);
-               break;
-            default:
-               throw new ApiException("Unknown visibility flag " + visibility.getFlag());
-         }
-         setState(b);
+         setState(getStateBuilder().startPublicationTime(-1).endPublicationTime(-1)
+               .visibility(ObjectFactory.createVisibility(visibility.getFlag())));
       }
    }
 
@@ -336,6 +308,7 @@ final class ApiNode implements Node
          {
             a[c.getIndex()] = c.getNode();
          }
+
          Arrays.sort(a, comparator);
 
          for (int i = 0; i < a.length; i++)
@@ -378,37 +351,27 @@ final class ApiNode implements Node
 
    SiteId getSiteId()
    {
-      if (siteId != null)
-      {
-         return siteId;
-      }
-      else
-      {
-         ApiNode parent = context.getParentNode();
-         return parent != null ? parent.getSiteId() : null;
-      }
+      return siteId;
    }
 
-   private Builder getState()
+   boolean isLabelChanged()
+   {
+      return labelChanged;
+   }
+
+   void setLabelInternal(Label label)
+   {
+      this.label = label;
+   }
+
+   private Builder getStateBuilder()
    {
       return new NodeState.Builder(context.getState());
-   }
-
-   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
-   {
-      in.defaultReadObject();
-      // TODO Read 'context'
    }
 
    private void setState(Builder builder)
    {
       context.setState(builder.build());
-   }
-
-   private void writeObject(java.io.ObjectOutputStream out) throws IOException
-   {
-      out.defaultWriteObject();
-      // TODO Write 'context'
    }
 
    private class ApiNodeModelIterator implements Iterator<Node>

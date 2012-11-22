@@ -72,7 +72,7 @@ public class NavigationImpl implements Navigation
    @Override
    public boolean deleteNode(NodePath path)
    {
-      NodeContext<ApiNode> ctx = loadNode(Nodes.visitNodes(path));
+      NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(Nodes.visitNodes(path)));
       ctx = ctx.getNode().getDescendantContext(path);
 
       if (ctx == null)
@@ -88,7 +88,7 @@ public class NavigationImpl implements Navigation
    @Override
    public Node getNode(NodeVisitor visitor)
    {
-      NodeContext<ApiNode> ctx = loadNode(visitor);
+      NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(visitor));
       loadLabels(ctx);
       return ctx.getNode();
    }
@@ -109,20 +109,24 @@ public class NavigationImpl implements Navigation
    @Override
    public void loadChildren(Node parent)
    {
+      NodeContext<ApiNode> ctx = ((ApiNode) parent).getContext();
       NodeVisitor visitor = Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren());
-      refreshNode(parent, visitor);
+      refreshNode(ctx, new NodeVisitorScope(visitor));
+      loadLabels(ctx);
    }
 
    @Override
    public void refreshNode(Node node)
    {
-      refreshNode(node, null);
+      NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
+      refreshNode(ctx, null);
+      loadLabels(ctx);
    }
 
    @Override
    public void saveNode(Node node)
    {
-      NodeContext<ApiNode> ctx = getNodeContext(node);
+      NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
       save(ctx);
       saveLabels(ctx);
    }
@@ -132,11 +136,6 @@ public class NavigationImpl implements Navigation
    {
       navCtx.setState(new NavigationState(priority));
       save(navCtx);
-   }
-
-   private NodeContext<ApiNode> getNodeContext(Node node)
-   {
-      return ((ApiNode) node).getContext();
    }
 
    private void loadLabels(NodeContext<ApiNode> ctx)
@@ -164,11 +163,11 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private NodeContext<ApiNode> loadNode(NodeVisitor visitor)
+   private NodeContext<ApiNode> loadNode(Scope scope)
    {
       try
       {
-         return navigationService.loadNode(model, navCtx, new NodeVisitorScope(visitor), null);
+         return navigationService.loadNode(model, navCtx, scope, null);
       }
       catch (NavigationServiceException e)
       {
@@ -176,11 +175,8 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void refreshNode(Node node, NodeVisitor visitor)
+   private void refreshNode(NodeContext<ApiNode> ctx, Scope scope)
    {
-      NodeContext<ApiNode> ctx = getNodeContext(node);
-      Scope scope = visitor != null ? new NodeVisitorScope(visitor) : null;
-
       try
       {
          navigationService.rebaseNode(ctx, scope, null);
@@ -189,8 +185,6 @@ public class NavigationImpl implements Navigation
       {
          throw new ApiException("Failed to refresh node", e);
       }
-
-      loadLabels(ctx);
    }
 
    private void save(NodeContext<ApiNode> ctx)

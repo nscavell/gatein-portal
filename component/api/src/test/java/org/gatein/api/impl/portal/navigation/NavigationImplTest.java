@@ -313,4 +313,5 @@ public class NavigationImplTest
       assertEquals("simple", n.getLabel().getValue());
       assertFalse(n.getLabel().isLocalized());
    }
+
 }

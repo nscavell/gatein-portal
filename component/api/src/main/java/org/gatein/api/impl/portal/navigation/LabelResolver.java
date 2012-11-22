@@ -38,16 +38,18 @@ public class LabelResolver
       Label label = node.getLabel();
       if (label != null && label.isLocalized())
       {
-         Locale locale = PortalRequest.getInstance().getLocale();
-         return label.getValue(locale);
+         PortalRequest request = PortalRequest.getInstance();
+         if (request != null)
+         {
+            Locale locale = request.getLocale();
+            return label.getValue(locale);
+         }
       }
       else if (label != null)
       {
          return label.getValue();
       }
-      else
-      {
-         return node.getName();
-      }
+
+      return node.getName();
    }
 }
