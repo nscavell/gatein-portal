@@ -29,8 +29,6 @@ import org.exoplatform.web.application.RequestContext;
 import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.navigation.NodeURL;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -41,15 +39,15 @@ public class URIResolver
    {
    }
 
-   public static URI resolveURI(SiteId siteId, NodePath path)
+   public static URI resolveURI(ApiNode node)
    {
       try
       {
-         SiteKey siteKey = Util.from(siteId);
+         SiteKey siteKey = Util.from(node.getSiteId());
          RequestContext requestContext = RequestContext.getCurrentInstance();
          if (requestContext != null)
          {
-            NavigationResource navResource = new NavigationResource(siteKey, path.toString());
+            NavigationResource navResource = new NavigationResource(siteKey, node.getNodePath().toString());
             NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
             nodeURL.setSchemeUse(true);
             return new URI(nodeURL.toString());

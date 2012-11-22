@@ -46,19 +46,12 @@ public class ObjectFactory
 
    public static Label createLabel(Map<Locale, Described.State> descriptions)
    {
-      if (descriptions != null && !descriptions.isEmpty())
+      Map<Locale, String> m = new HashMap<Locale, String>();
+      for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
       {
-         Map<Locale, String> m = new HashMap<Locale, String>();
-         for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
-         {
-            m.put(entry.getKey(), entry.getValue().getName());
-         }
-         return new Label(m);
+         m.put(entry.getKey(), entry.getValue().getName());
       }
-      else
-      {
-         return null;
-      }
+      return new Label(m);
    }
 
    public static Map<Locale, Described.State> createDescriptions(Label label)

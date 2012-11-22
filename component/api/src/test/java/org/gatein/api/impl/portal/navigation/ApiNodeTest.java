@@ -23,7 +23,6 @@ package org.gatein.api.impl.portal.navigation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -31,8 +30,6 @@ import java.util.Date;
 
 import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
 import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
@@ -41,9 +38,9 @@ import org.gatein.api.portal.site.SiteId;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ApiNodeModelTest
+public class ApiNodeTest
 {
-   private ApiNodeModel root;
+   private ApiNode root;
 
    @Test
    public void addChild()
@@ -71,9 +68,9 @@ public class ApiNodeModelTest
       root.addChild("child");
    }
 
-   private ApiNodeModel createRoot(boolean expanded)
+   private ApiNode createRoot(boolean expanded)
    {
-      return NodeContextAccessor.createRootNodeContext(new ApiNodeContext(new SiteId("classic")), expanded).getNode();
+      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(new SiteId("classic")), expanded).getNode();
    }
 
    @Test(expected = NullPointerException.class)

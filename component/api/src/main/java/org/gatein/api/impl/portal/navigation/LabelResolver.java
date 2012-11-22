@@ -21,28 +21,33 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeModel;
-import org.gatein.api.portal.site.SiteId;
+import java.util.Locale;
 
-final class ApiNodeContext implements NodeModel<ApiNodeModel>
+import org.gatein.api.PortalRequest;
+import org.gatein.api.portal.Label;
+import org.gatein.api.portal.navigation.Node;
+
+public class LabelResolver
 {
-   private SiteId siteId;
-
-   ApiNodeContext(SiteId siteId)
+   private LabelResolver()
    {
-      this.siteId = siteId;
    }
 
-   @Override
-   public ApiNodeModel create(NodeContext<ApiNodeModel> context)
+   public static String resolveLabel(Node node)
    {
-      return new ApiNodeModel(siteId, context);
-   }
-
-   @Override
-   public NodeContext<ApiNodeModel> getContext(ApiNodeModel node)
-   {
-      return node.getContext();
+      Label label = node.getLabel();
+      if (label != null && label.isLocalized())
+      {
+         Locale locale = PortalRequest.getInstance().getLocale();
+         return label.getValue(locale);
+      }
+      else if (label != null)
+      {
+         return label.getValue();
+      }
+      else
+      {
+         return node.getName();
+      }
    }
 }

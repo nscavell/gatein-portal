@@ -58,7 +58,6 @@ import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.After;
@@ -133,15 +132,14 @@ public class NavigationImplTest
       portal = (Portal) container.getComponentInstanceOfType(Portal.class);
       assertNotNull("Portal component not found in container", portal);
 
-      siteId = new SiteId("classic");
-
-      navigation = portal.getNavigation(siteId);
-
       RequestLifeCycle.begin(container);
       createSite(SiteType.PORTAL, "classic");
       RequestLifeCycle.end();
 
       RequestLifeCycle.begin(container);
+
+      siteId = new SiteId("classic");
+      navigation = portal.getNavigation(siteId);
    }
 
    @Test
@@ -231,8 +229,9 @@ public class NavigationImplTest
 
       navigation.saveNode(node);
 
-      n = navigation.getNode(Nodes.visitNodes(n.getNodePath(), Nodes.visitNone()));
+      n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
 
+      assertNotNull(n.getLabel());
       assertTrue(n.getLabel().isLocalized());
       assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
       assertEquals("prolongé", n.getLabel().getValue(Locale.FRENCH));
@@ -304,11 +303,13 @@ public class NavigationImplTest
       Node n = node.addChild("parent");
       n.setLabel(new Label("simple"));
 
-      navigation.saveNode(node);
+      navigation.saveNode(n);
 
-      n = navigation.getNode(Nodes.visitNodes(n.getNodePath(), Nodes.visitNone()));
+      assertEquals("simple", n.getLabel().getValue());
 
-      assertNotNull(n);
+      n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
+
+      assertNotNull(n.getLabel());
       assertEquals("simple", n.getLabel().getValue());
       assertFalse(n.getLabel().isLocalized());
    }

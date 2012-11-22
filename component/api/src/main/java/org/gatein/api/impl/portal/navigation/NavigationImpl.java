@@ -33,6 +33,7 @@ import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.navigation.NavigationServiceException;
 import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeContext;
+import org.exoplatform.portal.mop.navigation.Scope;
 import org.gatein.api.ApiException;
 import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
@@ -48,10 +49,11 @@ import org.gatein.api.portal.site.SiteId;
 public class NavigationImpl implements Navigation
 {
    private final DescriptionService descriptionService;
+   private final ApiNodeModel model;
+
+   private NavigationContext navCtx;
+
    private final NavigationService navigationService;
-
-   private final ApiNodeContext model;
-
    private final SiteId siteId;
    private final SiteKey siteKey;
 
@@ -62,14 +64,17 @@ public class NavigationImpl implements Navigation
       this.descriptionService = descriptionService;
 
       this.siteKey = Util.from(siteId);
-      this.model = new ApiNodeContext(siteId);
+      this.model = new ApiNodeModel(siteId);
+
+      updateNavigationContext();
    }
 
    @Override
    public boolean deleteNode(NodePath path)
    {
-      NodeContext<ApiNodeModel> ctx = getNodeContext(Nodes.visitNodes(path));
+      NodeContext<ApiNode> ctx = loadNode(Nodes.visitNodes(path));
       ctx = ctx.getNode().getDescendantContext(path);
+
       if (ctx == null)
       {
          return false;
@@ -83,15 +88,16 @@ public class NavigationImpl implements Navigation
    @Override
    public Node getNode(NodeVisitor visitor)
    {
-      // TODO Load labels
-      return getNodeContext(visitor).getNode();
+      NodeContext<ApiNode> ctx = loadNode(visitor);
+      loadLabels(ctx);
+      return ctx.getNode();
    }
 
    @Override
    public Integer getPriority()
    {
-      NavigationContext ctx = getNavigationContext();
-      return ctx != null ? ctx.getState().getPriority() : null;
+      updateNavigationContext();
+      return navCtx.getState().getPriority();
    }
 
    @Override
@@ -103,80 +109,91 @@ public class NavigationImpl implements Navigation
    @Override
    public void loadChildren(Node parent)
    {
-      try
-      {
-         NodeVisitor visitor = Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren());
-         navigationService.rebaseNode(getNodeContext(parent), new NodeVisitorScope(visitor), null);
-      }
-      catch (NavigationServiceException e)
-      {
-         throw new ApiException("Failed to load children", e);
-      }
+      NodeVisitor visitor = Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren());
+      refreshNode(parent, visitor);
+   }
+
+   @Override
+   public void refreshNode(Node node)
+   {
+      refreshNode(node, null);
    }
 
    @Override
    public void saveNode(Node node)
    {
-      save(getNodeContext(node));
-
-      // TODO Update label
-      // saveLabel(node, ctx);
+      NodeContext<ApiNode> ctx = getNodeContext(node);
+      save(ctx);
+      saveLabels(ctx);
    }
 
    @Override
    public void setPriority(Integer priority)
    {
-      NavigationContext ctx = getNavigationContext();
-      if (ctx == null)
-      {
-         ctx = new NavigationContext(siteKey, new NavigationState(priority));
-      }
-      else
-      {
-         ctx.setState(new NavigationState(priority));
-      }
-      navigationService.saveNavigation(ctx);
+      navCtx.setState(new NavigationState(priority));
+      save(navCtx);
    }
 
-   private Label getLabel(NodeContext<ApiNodeModel> ctx)
+   private NodeContext<ApiNode> getNodeContext(Node node)
    {
-      if (ctx.getState().getLabel() != null)
+      return ((ApiNode) node).getContext();
+   }
+
+   private void loadLabels(NodeContext<ApiNode> ctx)
+   {
+      String simple = ctx.getState().getLabel();
+      if (simple != null)
       {
-         return new Label(ctx.getState().getLabel());
+         ctx.getNode().setLabelInternal(new Label(simple));
       }
       else
       {
          Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
-         return ObjectFactory.createLabel(descriptions);
+         if (descriptions != null)
+         {
+            ctx.getNode().setLabelInternal(ObjectFactory.createLabel(descriptions));
+         }
       }
-   }
 
-   private NavigationContext getNavigationContext()
-   {
-      NavigationContext ctx = navigationService.loadNavigation(siteKey);
-      if (ctx == null)
+      if (ctx.isExpanded())
       {
-         throw new SiteNotFoundException(siteId);
+         for (NodeContext<ApiNode> c = ctx.getFirst(); c != null; c = c.getNext())
+         {
+            loadLabels(c);
+         }
       }
-      return ctx;
    }
 
-   private NodeContext<ApiNodeModel> getNodeContext(Node node)
+   private NodeContext<ApiNode> loadNode(NodeVisitor visitor)
    {
-      return ((ApiNodeModel) node).getContext();
-   }
-
-   private NodeContext<ApiNodeModel> getNodeContext(NodeVisitor visitor)
-   {
-      NavigationContext ctx = getNavigationContext();
-      if (ctx == null)
+      try
       {
-         return null;
+         return navigationService.loadNode(model, navCtx, new NodeVisitorScope(visitor), null);
       }
-      return navigationService.loadNode(model, ctx, new NodeVisitorScope(visitor), null);
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to load node", e);
+      }
    }
 
-   private void save(NodeContext<ApiNodeModel> ctx)
+   private void refreshNode(Node node, NodeVisitor visitor)
+   {
+      NodeContext<ApiNode> ctx = getNodeContext(node);
+      Scope scope = visitor != null ? new NodeVisitorScope(visitor) : null;
+
+      try
+      {
+         navigationService.rebaseNode(ctx, scope, null);
+      }
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to refresh node", e);
+      }
+
+      loadLabels(ctx);
+   }
+
+   private void save(NodeContext<ApiNode> ctx)
    {
       try
       {
@@ -188,20 +205,58 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void saveLabel(Node node, NodeContext<ApiNodeModel> ctx)
+   private void save(NavigationContext ctx)
    {
-      if (node.getLabel() != null && node.getLabel().isLocalized())
+      try
       {
-         if (!node.getLabel().equals(getLabel(ctx)))
+         navigationService.saveNavigation(ctx);
+      }
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to save navigation", e);
+      }
+   }
+
+   private void saveLabels(NodeContext<ApiNode> ctx)
+   {
+      ApiNode node = ctx.getNode();
+      if (node.isLabelChanged())
+      {
+         if (!node.getLabel().isLocalized())
+         {
+            Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
+            if (descriptions != null)
+            {
+               descriptionService.setDescriptions(ctx.getId(), null);
+            }
+         }
+         else
          {
             Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getLabel());
             descriptionService.setDescriptions(ctx.getId(), descriptions);
          }
       }
 
-      for (Node c : node)
+      for (NodeContext<ApiNode> c = ctx.getFirst(); c != null; c = c.getNext())
       {
-         saveLabel(c, ctx.get(c.getName()));
+         saveLabels(c);
+      }
+   }
+
+   private void updateNavigationContext()
+   {
+      try
+      {
+         navCtx = navigationService.loadNavigation(siteKey);
+      }
+      catch (NavigationServiceException e)
+      {
+         throw new ApiException("Failed to load navigation", e);
+      }
+
+      if (navCtx == null)
+      {
+         throw new SiteNotFoundException(siteId);
       }
    }
 }
