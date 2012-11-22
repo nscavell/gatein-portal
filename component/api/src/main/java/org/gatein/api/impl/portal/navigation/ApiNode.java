@@ -23,6 +23,7 @@ package org.gatein.api.impl.portal.navigation;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
@@ -211,18 +212,22 @@ final class ApiNode implements Node
    @Override
    public void moveTo(int index)
    {
-      context.getParent().add(index, context);
+      NodeContext<ApiNode> parent = context.getParent();
+      context.remove();
+      parent.add(index, context);
    }
 
    @Override
    public void moveTo(int index, Node parent)
    {
+      context.remove();
       ((ApiNode) parent).context.add(index, context);
    }
 
    @Override
    public void moveTo(Node parent)
    {
+      context.remove();
       ((ApiNode) parent).context.add(null, context);
    }
 
@@ -324,7 +329,25 @@ final class ApiNode implements Node
    @Override
    public void sort(Comparator<Node> comparator)
    {
-      // TODO Auto-generated method stub
+      if (context.isExpanded())
+      {
+         ApiNode[] a = new ApiNode[context.getNodeSize()];
+         for (NodeContext<ApiNode> c = context.getFirst(); c != null; c = c.getNext())
+         {
+            a[c.getIndex()] = c.getNode();
+         }
+         Arrays.sort(a, comparator);
+
+         for (int i = 0; i < a.length; i++)
+         {
+            ApiNode n = a[i];
+            NodeContext<ApiNode> c = n.getContext();
+            if (c.getIndex() != i)
+            {
+               c.getNode().moveTo(i);
+            }
+         }
+      }
    }
 
    @Override

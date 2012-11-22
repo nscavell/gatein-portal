@@ -26,6 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Comparator;
 import java.util.Date;
 
 import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
@@ -40,6 +41,13 @@ import org.junit.Test;
 
 public class ApiNodeTest
 {
+   static void assertVisibility(boolean expectedVisible, Flag expectedFlag, PublicationDate expectedDate, Node actualNode)
+   {
+      assertEquals(expectedVisible, actualNode.isVisible());
+      assertEquals(expectedFlag, actualNode.getVisibility().getFlag());
+      assertEquals(expectedDate, actualNode.getVisibility().getPublicationDate());
+   }
+
    private ApiNode root;
 
    @Test
@@ -68,15 +76,16 @@ public class ApiNodeTest
       root.addChild("child");
    }
 
-   private ApiNode createRoot(boolean expanded)
-   {
-      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(new SiteId("classic")), expanded).getNode();
-   }
-
    @Test(expected = NullPointerException.class)
    public void addChild_NullName()
    {
       root.addChild(null);
+   }
+
+   @Before
+   public void before() throws Exception
+   {
+      root = createRoot(true);
    }
 
    @Test
@@ -89,10 +98,100 @@ public class ApiNodeTest
    }
 
    @Test
+   public void isRoot()
+   {
+      assertTrue(root.isRoot());
+      assertFalse(root.addChild("child").isRoot());
+   }
+
+   @Test
+   public void moveTo()
+   {
+      root.addChild("0");
+      root.addChild("1");
+      root.addChild("2");
+
+      root.getChild(0).moveTo(2);
+      assertEquals("0", root.getChild(2).getName());
+
+      root.getChild(2).moveTo(0);
+      assertEquals("0", root.getChild(0).getName());
+
+      root.getChild(0).moveTo(1);
+      assertEquals("0", root.getChild(1).getName());
+
+      root.getChild(1).moveTo(0);
+      assertEquals("0", root.getChild(0).getName());
+   }
+
+   @Test
+   public void moveTo_Parent()
+   {
+      Node parent0 = root.addChild("parent0");
+      Node child = parent0.addChild("0");
+
+      Node parent1 = root.addChild("parent1");
+
+      child.moveTo(parent1);
+
+      assertEquals(0, parent0.getChildCount());
+      assertEquals(1, parent1.getChildCount());
+   }
+   
+   @Test
+   public void moveTo_ParentAtIndex()
+   {
+      Node parent0 = root.addChild("parent0");
+      Node child = parent0.addChild("1");
+
+      Node parent1 = root.addChild("parent1");
+      parent1.addChild("0");
+      parent1.addChild("2");
+
+      child.moveTo(1, parent1);
+
+      assertEquals(0, parent0.getChildCount());
+      assertEquals(3, parent1.getChildCount());
+      assertEquals("1", parent1.getChild(1).getName());
+   }
+
+   @Test
    public void name()
    {
       Node c = root.addChild("child");
       assertEquals("child", c.getName());
+   }
+
+   @Test
+   public void pageId()
+   {
+      Node c = root.addChild("child");
+      assertNull(c.getPageId());
+
+      c.setPageId(new PageId("classic", "page"));
+      assertEquals(new PageId("classic", "page"), c.getPageId());
+   }
+
+   @Test
+   public void sort()
+   {
+      root.addChild("2");
+      root.addChild("1");
+      root.addChild("0");
+
+      root.sort(new Comparator<Node>()
+      {
+         @Override
+         public int compare(Node o1, Node o2)
+         {
+            return o1.getName().compareTo(o2.getName());
+         }
+      });
+
+      assertEquals(3, root.getChildCount());
+      assertEquals("0", root.getChild(0).getName());
+      assertEquals("1", root.getChild(1).getName());
+      assertEquals("2", root.getChild(2).getName());
    }
 
    @Test
@@ -112,54 +211,8 @@ public class ApiNodeTest
       assertVisibility(true, Flag.SYSTEM, null, c);
    }
 
-   @Test
-   public void pageId()
+   private ApiNode createRoot(boolean expanded)
    {
-      Node c = root.addChild("child");
-      assertNull(c.getPageId());
-
-      c.setPageId(new PageId("classic", "page"));
-      assertEquals(new PageId("classic", "page"), c.getPageId());
-   }
-
-   @Test
-   public void isRoot()
-   {
-      assertTrue(root.isRoot());
-      assertFalse(root.addChild("child").isRoot());
-   }
-   
-
-//   @Test
-//   public void moveNode()
-//   {
-//      Node root = navigation.getNode(Nodes.visitNodes(NodePath.root(), Nodes.visitAll()));
-//      root.addChild("foo").addChild("bar");
-//      root.addChild("baz");
-//
-//      navigation.saveNode(root);
-//
-//      root = navigation.getNode(Nodes.visitNodes(NodePath.root(), Nodes.visitAll()));
-//      assertNotNull(root.getChild("baz"));
-//      assertNull(root.getChild("foo").getChild("bar").getChild("baz"));
-//
-//      navigation.moveNode(NodePath.path("baz"), NodePath.path("foo", "bar"));
-//
-//      root = navigation.getNode(Nodes.visitNodes(NodePath.root(), Nodes.visitAll()));
-//      assertNull(root.getChild("baz"));
-//      assertNotNull(root.getChild("foo").getChild("bar").getChild("baz"));
-//   }
-
-   static void assertVisibility(boolean expectedVisible, Flag expectedFlag, PublicationDate expectedDate, Node actualNode)
-   {
-      assertEquals(expectedVisible, actualNode.isVisible());
-      assertEquals(expectedFlag, actualNode.getVisibility().getFlag());
-      assertEquals(expectedDate, actualNode.getVisibility().getPublicationDate());
-   }
-
-   @Before
-   public void before() throws Exception
-   {
-      root = createRoot(true);
+      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(new SiteId("classic")), expanded).getNode();
    }
 }
