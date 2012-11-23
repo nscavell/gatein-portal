@@ -58,6 +58,7 @@ import org.gatein.api.portal.Label;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.After;
@@ -173,6 +174,17 @@ public class NavigationImplTest
    }
 
    @Test
+   public void deleteNode() throws InterruptedException
+   {
+      createNavigationChildren();
+
+      assertTrue(navigation.deleteNode(NodePath.path("parent", "child")));
+
+      Node node = navigation.getNode(Nodes.visitAll());
+      assertEquals(0, node.getChild("parent").getChildCount());
+   }
+
+   @Test
    public void getChild()
    {
       createNavigationChildren();
@@ -255,6 +267,22 @@ public class NavigationImplTest
    }
 
    @Test
+   public void refreshNode()
+   {
+      createNavigationChildren();
+
+      Node nodeA = navigation.getNode(Nodes.visitAll());
+      Node nodeB = navigation.getNode(Nodes.visitAll());
+
+      nodeA.addChild("childA");
+      navigation.saveNode(nodeA);
+
+      assertNull(nodeB.getChild("childA"));
+      navigation.refreshNode(nodeB);
+      assertNotNull(nodeB.getChild("childA"));
+   }
+
+   @Test
    public void saveNode() throws InterruptedException
    {
       createNavigationChildren();
@@ -270,6 +298,26 @@ public class NavigationImplTest
       navigation.saveNode(parent);
 
       assertNotNull(navigation.getNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
+   }
+
+   @Test
+   public void saveNode_Merge()
+   {
+      createNavigationChildren();
+
+      Node nodeA = navigation.getNode(Nodes.visitAll());
+      Node nodeB = navigation.getNode(Nodes.visitAll());
+
+      nodeA.addChild("childA");
+      navigation.saveNode(nodeA);
+
+      nodeB.addChild("childB");
+      navigation.saveNode(nodeB);
+
+      Node nodeC = navigation.getNode(Nodes.visitAll());
+
+      assertNotNull(nodeC.getChild("childA"));
+      assertNotNull(nodeC.getChild("childB"));
    }
 
    void createSite(SiteType type, String name)

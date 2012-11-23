@@ -72,15 +72,19 @@ public class NavigationImpl implements Navigation
    @Override
    public boolean deleteNode(NodePath path)
    {
-      NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(Nodes.visitNodes(path)));
-      ctx = ctx.getNode().getDescendantContext(path);
-
-      if (ctx == null)
+      if (path.equals(NodePath.root()))
       {
          return false;
       }
 
-      ctx.remove();
+      NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(Nodes.visitNodes(path)));
+      ctx = ctx.getNode().getDescendantContext(path.parent());
+
+      if (ctx == null || !ctx.removeNode(path.getLastSegment()))
+      {
+         return false;
+      }
+
       save(ctx);
       return true;
    }
