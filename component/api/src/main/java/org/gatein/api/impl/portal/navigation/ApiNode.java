@@ -41,6 +41,9 @@ import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
 
+/**
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ */
 class ApiNode implements Node
 {
    protected final NodeContext<ApiNode> context;

@@ -44,13 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * TODO:
- * 
- * - filter
- * 
- * - getResolvedURI (probably needs to be tested as a functional test)
- * 
- * - getResolvedLabel (probably needs to be tested as a functional test)
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class ApiNodeTest
 {

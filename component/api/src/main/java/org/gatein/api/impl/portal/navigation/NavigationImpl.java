@@ -37,7 +37,6 @@ import org.exoplatform.portal.mop.navigation.Scope;
 import org.gatein.api.ApiException;
 import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
-import org.gatein.api.impl.portal.navigation.scope.NodeVisitorScope;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
@@ -46,6 +45,9 @@ import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
 
+/**
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ */
 public class NavigationImpl implements Navigation
 {
    private final DescriptionService descriptionService;

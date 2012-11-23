@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.gatein.api.impl.portal.navigation.scope;
+package org.gatein.api.impl.portal.navigation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -32,9 +32,11 @@ import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope.Visitor;
 import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.exoplatform.portal.mop.page.PageKey;
+import org.gatein.api.impl.portal.navigation.NodeVisitorScope;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.junit.Test;
+
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */

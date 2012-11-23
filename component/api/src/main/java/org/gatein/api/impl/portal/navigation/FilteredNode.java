@@ -32,6 +32,9 @@ import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
 
+/**
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ */
 public class FilteredNode extends ApiNode
 {
    private final FilteredNodeMap map;

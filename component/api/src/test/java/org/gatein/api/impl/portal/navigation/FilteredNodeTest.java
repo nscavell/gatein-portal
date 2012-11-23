@@ -33,6 +33,9 @@ import org.gatein.api.util.Filter;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ */
 public class FilteredNodeTest
 {
    private Filter<Node> filter;

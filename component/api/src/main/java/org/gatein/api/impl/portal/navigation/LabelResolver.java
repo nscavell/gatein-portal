@@ -27,6 +27,9 @@ import org.gatein.api.PortalRequest;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Node;
 
+/**
+ * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ */
 public class LabelResolver
 {
    private LabelResolver()
