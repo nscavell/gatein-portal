@@ -41,20 +41,26 @@ import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
 
-final class ApiNode implements Node
+class ApiNode implements Node
 {
-   private NodeContext<ApiNode> context;
+   protected final NodeContext<ApiNode> context;
 
    private Label label;
 
    private boolean labelChanged;
 
-   private SiteId siteId;
+   private final SiteId siteId;
 
    ApiNode(SiteId siteId, NodeContext<ApiNode> context)
    {
       this.siteId = siteId;
       this.context = context;
+   }
+
+   @Override
+   public Node addChild(int index, String childName)
+   {
+      return context.add(index, childName).getNode();
    }
 
    @Override
@@ -64,16 +70,9 @@ final class ApiNode implements Node
    }
 
    @Override
-   public void filter(Filter<Node> filter)
+   public Node filter(Filter<Node> filter)
    {
-      context.setHidden(!filter.accept(this));
-      if (context.isExpanded())
-      {
-         for (NodeContext<ApiNode> node = context.getFirst(); node != null; node = node.getNext())
-         {
-            node.getNode().filter(filter);
-         }
-      }
+      return new FilteredNode(siteId, context, filter);
    }
 
    @Override
@@ -116,7 +115,7 @@ final class ApiNode implements Node
    @Override
    public String getName()
    {
-      return context.getName();
+      return isRoot() ? null : context.getName();
    }
 
    @Override
@@ -125,7 +124,7 @@ final class ApiNode implements Node
       String name = getName();
       ApiNode parent = context.getParentNode();
 
-      NodePath path = (name == null) ? NodePath.root() : NodePath.path(name);
+      NodePath path = isRoot() ? NodePath.root() : NodePath.path(name);
       if (parent != null)
       {
          path = parent.getNodePath().append(path);
@@ -203,6 +202,8 @@ final class ApiNode implements Node
    @Override
    public void moveTo(int index)
    {
+      checkRoot();
+
       NodeContext<ApiNode> parent = context.getParent();
       context.remove();
       parent.add(index, context);
@@ -211,6 +212,8 @@ final class ApiNode implements Node
    @Override
    public void moveTo(int index, Node parent)
    {
+      checkRoot();
+
       context.remove();
       ((ApiNode) parent).context.add(index, context);
    }
@@ -218,6 +221,8 @@ final class ApiNode implements Node
    @Override
    public void moveTo(Node parent)
    {
+      checkRoot();
+
       context.remove();
       ((ApiNode) parent).context.add(null, context);
    }
@@ -231,12 +236,16 @@ final class ApiNode implements Node
    @Override
    public void setIconName(String iconName)
    {
+      checkRoot();
+
       setState(getStateBuilder().icon(iconName));
    }
 
    @Override
    public void setLabel(Label label)
    {
+      checkRoot();
+
       if (!label.equals(this.label))
       {
          if (!label.isLocalized())
@@ -256,12 +265,16 @@ final class ApiNode implements Node
    @Override
    public void setPageId(PageId pageId)
    {
+      checkRoot();
+
       setState(getStateBuilder().pageRef(Util.from(pageId)));
    }
 
    @Override
    public void setVisibility(boolean visible)
    {
+      checkRoot();
+
       Builder b = getStateBuilder().startPublicationTime(-1).endPublicationTime(-1);
       if (visible)
       {
@@ -277,6 +290,8 @@ final class ApiNode implements Node
    @Override
    public void setVisibility(PublicationDate publicationDate)
    {
+      checkRoot();
+
       long start = publicationDate.getStart() != null ? publicationDate.getStart().getTime() : -1;
       long end = publicationDate.getEnd() != null ? publicationDate.getEnd().getTime() : -1;
 
@@ -287,6 +302,8 @@ final class ApiNode implements Node
    @Override
    public void setVisibility(Visibility visibility)
    {
+      checkRoot();
+
       if (visibility.getFlag() == Flag.PUBLICATION)
       {
          setVisibility(visibility.getPublicationDate());
@@ -362,6 +379,14 @@ final class ApiNode implements Node
    void setLabelInternal(Label label)
    {
       this.label = label;
+   }
+
+   private void checkRoot()
+   {
+      if (isRoot())
+      {
+         throw new UnsupportedOperationException("Operation not supported on root node");
+      }
    }
 
    private Builder getStateBuilder()

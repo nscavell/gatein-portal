@@ -172,6 +172,106 @@ public class NavigationImplTest
       assertEquals(0, navigation.getNode(Nodes.visitAll()).getChildCount());
    }
 
+   @Test
+   public void getChild()
+   {
+      createNavigationChildren();
+
+      Node node = navigation.getNode(Nodes.visitAll());
+      assertNotNull(node);
+      assertTrue(node.isChildrenLoaded());
+      assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
+
+      node = navigation.getNode(Nodes.visitChildren());
+      assertNotNull(node);
+      assertTrue(node.isChildrenLoaded());
+      assertFalse(node.getChild("parent").isChildrenLoaded());
+   }
+
+   @Test(expected = SiteNotFoundException.class)
+   public void getNavigation_InvalidSite()
+   {
+      portal.getNavigation(new SiteId("invalid")).getNode(Nodes.visitAll());
+   }
+
+   @Test
+   public void label_extended()
+   {
+      Node node = navigation.getNode(Nodes.visitAll());
+
+      Node n = node.addChild("parent");
+
+      Map<Locale, String> m = new HashMap<Locale, String>();
+      m.put(Locale.ENGLISH, "extended");
+      m.put(Locale.FRENCH, "prolongé");
+      
+      n.setLabel(new Label(m));
+
+      navigation.saveNode(node);
+
+      n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
+
+      assertNotNull(n.getLabel());
+      assertTrue(n.getLabel().isLocalized());
+      assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
+      assertEquals("prolongé", n.getLabel().getValue(Locale.FRENCH));
+   }
+
+   @Test
+   public void label_Simple()
+   {
+      Node node = navigation.getNode(Nodes.visitAll());
+
+      Node n = node.addChild("parent");
+      n.setLabel(new Label("simple"));
+
+      navigation.saveNode(n);
+
+      assertEquals("simple", n.getLabel().getValue());
+
+      n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
+
+      assertNotNull(n.getLabel());
+      assertEquals("simple", n.getLabel().getValue());
+      assertFalse(n.getLabel().isLocalized());
+   }
+
+   @Test
+   public void loadChildren()
+   {
+      createNavigationChildren();
+
+      Node node = navigation.getNode(Nodes.visitChildren());
+      assertNotNull(node);
+      Node parent = node.getChild("parent");
+      assertTrue(node.isChildrenLoaded());
+      assertFalse(parent.isChildrenLoaded());
+      assertNull(parent.getChild("child"));
+
+      navigation.loadChildren(parent);
+
+      assertTrue(parent.isChildrenLoaded());
+      assertNotNull(parent.getChild("child"));
+   }
+
+   @Test
+   public void saveNode() throws InterruptedException
+   {
+      createNavigationChildren();
+
+      Node node = navigation.getNode(Nodes.visitAll());
+
+      Node parent = node.getChild("parent");
+
+      parent.addChild("child2");
+      
+      assertNull(navigation.getNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
+
+      navigation.saveNode(parent);
+
+      assertNotNull(navigation.getNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
+   }
+
    void createSite(SiteType type, String name)
    {
       try
@@ -212,106 +312,6 @@ public class NavigationImplTest
          afe.initCause(e);
          throw afe;
       }
-   }
-
-   @Test
-   public void extendedLabel()
-   {
-      Node node = navigation.getNode(Nodes.visitAll());
-
-      Node n = node.addChild("parent");
-
-      Map<Locale, String> m = new HashMap<Locale, String>();
-      m.put(Locale.ENGLISH, "extended");
-      m.put(Locale.FRENCH, "prolongé");
-      
-      n.setLabel(new Label(m));
-
-      navigation.saveNode(node);
-
-      n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
-
-      assertNotNull(n.getLabel());
-      assertTrue(n.getLabel().isLocalized());
-      assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
-      assertEquals("prolongé", n.getLabel().getValue(Locale.FRENCH));
-   }
-
-   @Test
-   public void getChild()
-   {
-      createNavigationChildren();
-
-      Node node = navigation.getNode(Nodes.visitAll());
-      assertNotNull(node);
-      assertTrue(node.isChildrenLoaded());
-      assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
-
-      node = navigation.getNode(Nodes.visitChildren());
-      assertNotNull(node);
-      assertTrue(node.isChildrenLoaded());
-      assertFalse(node.getChild("parent").isChildrenLoaded());
-   }
-
-   @Test(expected = SiteNotFoundException.class)
-   public void getNavigationInvalidSite()
-   {
-      portal.getNavigation(new SiteId("invalid")).getNode(Nodes.visitAll());
-   }
-
-   @Test
-   public void loadNodes()
-   {
-      createNavigationChildren();
-
-      Node node = navigation.getNode(Nodes.visitChildren());
-      assertNotNull(node);
-      Node parent = node.getChild("parent");
-      assertTrue(node.isChildrenLoaded());
-      assertFalse(parent.isChildrenLoaded());
-      assertNull(parent.getChild("child"));
-
-      navigation.loadChildren(parent);
-
-      assertTrue(parent.isChildrenLoaded());
-      assertNotNull(parent.getChild("child"));
-   }
-
-   @Test
-   public void saveNode() throws InterruptedException
-   {
-      createNavigationChildren();
-
-      Node node = navigation.getNode(Nodes.visitAll());
-
-      Node parent = node.getChild("parent");
-
-      parent.addChild("child2");
-      
-      assertNull(navigation.getNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
-
-      navigation.saveNode(parent);
-
-      assertNotNull(navigation.getNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
-   }
-
-   @Test
-   public void simpleLabel()
-   {
-      Node node = navigation.getNode(Nodes.visitAll());
-
-      Node n = node.addChild("parent");
-      n.setLabel(new Label("simple"));
-
-      navigation.saveNode(n);
-
-      assertEquals("simple", n.getLabel().getValue());
-
-      n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
-
-      assertNotNull(n.getLabel());
-      assertEquals("simple", n.getLabel().getValue());
-      assertFalse(n.getLabel().isLocalized());
    }
 
 }

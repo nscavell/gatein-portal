@@ -23,22 +23,18 @@ package org.gatein.api.impl.portal.navigation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Locale;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
 import org.gatein.api.portal.Label;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
@@ -47,16 +43,40 @@ import org.gatein.api.portal.site.SiteId;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * TODO:
+ * 
+ * - filter
+ * 
+ * - getResolvedURI (probably needs to be tested as a functional test)
+ * 
+ * - getResolvedLabel (probably needs to be tested as a functional test)
+ */
 public class ApiNodeTest
 {
-   static void assertVisibility(boolean expectedVisible, Flag expectedFlag, PublicationDate expectedDate, Node actualNode)
+   public static void assertIterator(Iterator<Node> itr, String... expected)
+   {
+      for (String e : expected)
+      {
+         assertTrue(itr.hasNext());
+         assertEquals(e, itr.next().getName());
+      }
+      assertFalse(itr.hasNext());
+   }
+
+   public static void assertVisibility(boolean expectedVisible, Flag expectedFlag, PublicationDate expectedDate, Node actualNode)
    {
       assertEquals(expectedVisible, actualNode.isVisible());
       assertEquals(expectedFlag, actualNode.getVisibility().getFlag());
       assertEquals(expectedDate, actualNode.getVisibility().getPublicationDate());
    }
 
-   private ApiNode root;
+   public static ApiNode createRoot(boolean expanded)
+   {
+      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(new SiteId("classic")), expanded).getNode();
+   }
+
+   ApiNode root;
 
    @Test
    public void addChild()
@@ -97,6 +117,27 @@ public class ApiNodeTest
    }
 
    @Test
+   public void getDescendant()
+   {
+      root.addChild("child0").addChild("child0-0");
+      root.addChild("child1");
+
+      assertTrue(root.getDescendant(NodePath.root()).isRoot());
+      assertEquals("child0", root.getDescendant(NodePath.path("child0")).getName());
+      assertEquals("child0-0", root.getDescendant(NodePath.path("child0", "child0-0")).getName());
+      assertNull(root.getDescendant(NodePath.path("child1", "child0-0")));
+   }
+
+   @Test
+   public void getNodePath()
+   {
+      root.addChild("child0").addChild("child0-0");
+
+      assertEquals("/child0", root.getChild("child0").getNodePath().toString());
+      assertEquals("/child0/child0-0", root.getChild("child0").getChild("child0-0").getNodePath().toString());
+   }
+
+   @Test
    public void iconName()
    {
       Node c = root.addChild("child");
@@ -113,6 +154,43 @@ public class ApiNodeTest
    }
 
    @Test
+   public void iterator()
+   {
+      root.addChild("child0");
+      root.addChild("child1");
+      root.addChild("child2");
+
+      assertIterator(root.iterator(), "child0", "child1", "child2");
+   }
+
+   @Test(expected = NoSuchElementException.class)
+   public void iterator_NoSuchElement()
+   {
+      root.iterator().next();
+   }
+
+   @Test
+   public void iterator_Remove()
+   {
+      root.addChild("child0");
+      root.addChild("child1");
+      root.addChild("child2");
+
+      Iterator<Node> itr = root.iterator();
+      itr.next();
+      itr.next();
+      itr.remove();
+
+      assertIterator(root.iterator(), "child0", "child2");
+   }
+
+   @Test(expected = IllegalStateException.class)
+   public void iterator_RemoveIllegalState()
+   {
+      root.iterator().remove();
+   }
+
+   @Test
    public void moveTo()
    {
       root.addChild("0");
@@ -120,16 +198,16 @@ public class ApiNodeTest
       root.addChild("2");
 
       root.getChild(0).moveTo(2);
-      assertEquals("0", root.getChild(2).getName());
+      assertIterator(root.iterator(), "1", "2", "0");
 
       root.getChild(2).moveTo(0);
-      assertEquals("0", root.getChild(0).getName());
+      assertIterator(root.iterator(), "0", "1", "2");
 
       root.getChild(0).moveTo(1);
-      assertEquals("0", root.getChild(1).getName());
+      assertIterator(root.iterator(), "1", "0", "2");
 
       root.getChild(1).moveTo(0);
-      assertEquals("0", root.getChild(0).getName());
+      assertIterator(root.iterator(), "0", "1", "2");
    }
 
    @Test
@@ -145,7 +223,7 @@ public class ApiNodeTest
       assertEquals(0, parent0.getChildCount());
       assertEquals(1, parent1.getChildCount());
    }
-   
+
    @Test
    public void moveTo_ParentAtIndex()
    {
@@ -181,6 +259,84 @@ public class ApiNodeTest
    }
 
    @Test
+   public void root_getName()
+   {
+      assertNull(root.getName());
+   }
+
+   @Test
+   public void root_getNodePath()
+   {
+      assertEquals("/", root.getNodePath().toString());
+   }
+
+   @Test
+   public void root_getParent()
+   {
+      assertNull(root.getParent());
+   }
+
+   @Test
+   public void root_isRoot()
+   {
+      assertTrue(root.isRoot());
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_moveTo()
+   {
+      root.moveTo(0);
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_moveToParent()
+   {
+      root.moveTo(createRoot(true));
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_moveToParentIndex()
+   {
+      root.moveTo(0, createRoot(true));
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setIconName()
+   {
+      root.setIconName("iconName");
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setLabel()
+   {
+      root.setLabel(new Label("label"));
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setPageId()
+   {
+      root.setPageId(new PageId("siteName", "pageName"));
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setVisibility()
+   {
+      root.setVisibility(true);
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setVisibilityPublicationDate()
+   {
+      root.setVisibility(PublicationDate.startingOn(new Date()));
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setVisibilityVisibility()
+   {
+      root.setVisibility(new Visibility());
+   }
+
+   @Test
    public void sort()
    {
       root.addChild("2");
@@ -207,7 +363,7 @@ public class ApiNodeTest
    {
       Node c = root.addChild("child");
       assertVisibility(true, Flag.VISIBLE, null, c);
-      
+
       c.setVisibility(false);
       assertVisibility(false, Flag.HIDDEN, null, c);
 
@@ -217,10 +373,5 @@ public class ApiNodeTest
 
       c.setVisibility(new Visibility(Flag.SYSTEM));
       assertVisibility(true, Flag.SYSTEM, null, c);
-   }
-
-   private ApiNode createRoot(boolean expanded)
-   {
-      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(new SiteId("classic")), expanded).getNode();
    }
 }
