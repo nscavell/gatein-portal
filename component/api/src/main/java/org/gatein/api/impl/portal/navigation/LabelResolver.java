@@ -42,7 +42,11 @@ public class LabelResolver
          if (request != null)
          {
             Locale locale = request.getLocale();
-            return label.getValue(locale);
+            String value = label.getValue(locale);
+            if (value != null)
+            {
+               return value;
+            }
          }
       }
       else if (label != null)

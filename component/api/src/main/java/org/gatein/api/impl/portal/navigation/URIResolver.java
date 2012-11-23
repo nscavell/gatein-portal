@@ -47,7 +47,7 @@ public class URIResolver
          RequestContext requestContext = RequestContext.getCurrentInstance();
          if (requestContext != null)
          {
-            NavigationResource navResource = new NavigationResource(siteKey, node.getNodePath().toString());
+            NavigationResource navResource = new NavigationResource(siteKey, node.getNodePath().toString().substring(1));
             NodeURL nodeURL = requestContext.createURL(NodeURL.TYPE, navResource);
             nodeURL.setSchemeUse(true);
             return new URI(nodeURL.toString());
