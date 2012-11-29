@@ -142,7 +142,7 @@ public class PortalImpl extends DataStorageContext implements Portal
                throw new AssertionError();
          }
 
-         sites.addAll(fromList(internalSites, navigationService, query.hasHiddenSites()));
+         sites.addAll(fromList(internalSites, navigationService, query.isIncludeEmptySites()));
       }
 
       filter(sites, query.getFilter());
