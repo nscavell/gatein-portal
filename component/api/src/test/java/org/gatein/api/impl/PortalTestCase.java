@@ -71,7 +71,7 @@ public class PortalTestCase extends AbstractAPITestCase
       portal.saveSite(new SiteImpl("f"));
       portal.saveSite(new SiteImpl("b"));
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().build());
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withHiddenSites(true).build());
       assertEquals(4, sites.size());
       assertEquals("z", sites.get(0).getId().getName());
       assertEquals("a", sites.get(1).getId().getName());
@@ -88,7 +88,7 @@ public class PortalTestCase extends AbstractAPITestCase
       portal.saveSite(new SiteImpl("d"));
       portal.saveSite(new SiteImpl("b"));
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSorting().ascending().build());
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSorting().ascending().build());
 
       assertEquals(4, sites.size());
       assertEquals("a", sites.get(0).getId().getName());
@@ -106,7 +106,7 @@ public class PortalTestCase extends AbstractAPITestCase
       portal.saveSite(new SiteImpl("d"));
       portal.saveSite(new SiteImpl("b"));
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSorting().descending().build());
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSorting().descending().build());
 
       assertEquals(4, sites.size());
       assertEquals("d", sites.get(0).getId().getName());
@@ -135,7 +135,7 @@ public class PortalTestCase extends AbstractAPITestCase
       site.setDisplayName("Ford");
       portal.saveSite(site);
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSorting().withComparator(new Comparator<Site>()
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSorting().withComparator(new Comparator<Site>()
       {
          @Override
          public int compare(Site o1, Site o2)
@@ -160,7 +160,7 @@ public class PortalTestCase extends AbstractAPITestCase
          createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "site" + (i + 1));
       }
 
-      SiteQuery query = new SiteQuery.Builder().withPagination(0, 5).build();
+      SiteQuery query = new SiteQuery.Builder().withHiddenSites(true).withPagination(0, 5).build();
       List<Site> sites = portal.findSites(query);
       assertEquals(5, sites.size());
       // check bounds
@@ -207,7 +207,7 @@ public class PortalTestCase extends AbstractAPITestCase
       createSite(org.exoplatform.portal.mop.SiteType.USER, "john");
       createSite(org.exoplatform.portal.mop.SiteType.USER, "mary");
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withAllSiteTypes().build());
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withAllSiteTypes().build());
       assertEquals(10, sites.size());
 
       // Range
@@ -238,29 +238,29 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals(3, portal.findSites(query).size());
 
       // By type
-      assertEquals(4, portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build()).size());
-      assertEquals(3, portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).build()).size());
-      assertEquals(3, portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).build()).size());
+      assertEquals(4, portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.SITE).build()).size());
+      assertEquals(3, portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.SPACE).build()).size());
+      assertEquals(3, portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.DASHBOARD).build()).size());
 
       // By type and range
-      assertEquals(2, portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).withPagination(0, 2).build())
+      assertEquals(2, portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.SITE).withPagination(0, 2).build())
             .size());
-      assertEquals(2, portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).withPagination(0, 2).build())
+      assertEquals(2, portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.SPACE).withPagination(0, 2).build())
             .size());
-      assertEquals(2, portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).withPagination(0, 2).build())
+      assertEquals(2, portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.DASHBOARD).withPagination(0, 2).build())
             .size());
 
       assertEquals(2,
-            portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).withPagination(0, 2).withNextPage().build())
+            portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.SITE).withPagination(0, 2).withNextPage().build())
                   .size());
       assertEquals(
             1,
-            portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).withPagination(0, 2).withNextPage().build())
+            portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.SPACE).withPagination(0, 2).withNextPage().build())
                   .size());
       assertEquals(
             1,
             portal.findSites(
-                  new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).withPagination(0, 2).withNextPage().build())
+                  new SiteQuery.Builder().withHiddenSites(true).withSiteTypes(SiteType.DASHBOARD).withPagination(0, 2).withNextPage().build())
                   .size());
    }
 
@@ -273,7 +273,7 @@ public class PortalTestCase extends AbstractAPITestCase
       portal.saveSite(new SiteImpl("d"));
       portal.saveSite(new SiteImpl("b"));
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withFilter(new Filter<Site>()
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withFilter(new Filter<Site>()
       {
          @Override
          public boolean accept(Site site)
@@ -527,7 +527,7 @@ public class PortalTestCase extends AbstractAPITestCase
    // Just remove all sites
    void cleanup()
    {
-      for (Site site : portal.findSites(new SiteQuery.Builder().withAllSiteTypes().build()))
+      for (Site site : portal.findSites(new SiteQuery.Builder().withHiddenSites(true).withAllSiteTypes().build()))
       {
          portal.removeSite(site.getId());
       }
