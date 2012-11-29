@@ -21,19 +21,19 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
+import org.exoplatform.portal.mop.Described;
+import org.exoplatform.portal.mop.navigation.NodeState;
+import org.gatein.api.ApiException;
+import org.gatein.api.portal.Localized.Value;
+import org.gatein.api.portal.LocalizedString;
+import org.gatein.api.portal.navigation.PublicationDate;
+import org.gatein.api.portal.navigation.Visibility;
+import org.gatein.api.portal.navigation.Visibility.Flag;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-
-import org.exoplatform.portal.mop.Described;
-import org.exoplatform.portal.mop.navigation.NodeState;
-import org.gatein.api.ApiException;
-import org.gatein.api.portal.Label;
-import org.gatein.api.portal.Localized.Value;
-import org.gatein.api.portal.navigation.PublicationDate;
-import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.navigation.Visibility.Flag;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -44,20 +44,24 @@ public class ObjectFactory
    {
    }
 
-   public static Label createLabel(Map<Locale, Described.State> descriptions)
+   public static LocalizedString createLocalizedString(Map<Locale, Described.State> descriptions)
    {
       Map<Locale, String> m = new HashMap<Locale, String>();
       for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
       {
-         m.put(entry.getKey(), entry.getValue().getName());
+         // For some reason (UI issue possibly) an english locale can be set with no value.
+         if (entry.getValue().getName() != null)
+         {
+            m.put(entry.getKey(), entry.getValue().getName());
+         }
       }
-      return new Label(m);
+      return new LocalizedString(m);
    }
 
-   public static Map<Locale, Described.State> createDescriptions(Label label)
+   public static Map<Locale, Described.State> createDescriptions(LocalizedString string)
    {
       Map<Locale, Described.State> descriptions = new HashMap<Locale, Described.State>();
-      for (Value<String> v : label.getLocalizedValues())
+      for (Value<String> v : string.getLocalizedValues())
       {
          descriptions.put(v.getLocale(), new Described.State(v.getValue(), null));
       }

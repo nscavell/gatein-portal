@@ -21,9 +21,6 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import java.util.Locale;
-import java.util.Map;
-
 import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.Described.State;
 import org.exoplatform.portal.mop.SiteKey;
@@ -32,38 +29,50 @@ import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.navigation.NavigationServiceException;
 import org.exoplatform.portal.mop.navigation.NavigationState;
+import org.exoplatform.portal.mop.navigation.NodeChangeListener;
 import org.exoplatform.portal.mop.navigation.NodeContext;
+import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
+import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.ApiException;
+import org.gatein.api.PortalRequest;
 import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.Label;
+import org.gatein.api.impl.portal.AbstractI18NResolver;
+import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.navigation.Nodes;
+import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteId;
+
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class NavigationImpl implements Navigation
 {
+   private final NavigationService navigationService;
    private final DescriptionService descriptionService;
+   private final ResourceBundleManager bundleManager;
+
+   private final SiteId siteId;
+   private final SiteKey siteKey;
    private final ApiNodeModel model;
 
    private NavigationContext navCtx;
+   private AbstractI18NResolver i18nResolver;
 
-   private final NavigationService navigationService;
-   private final SiteId siteId;
-   private final SiteKey siteKey;
-
-   public NavigationImpl(SiteId siteId, NavigationService navigationService, DescriptionService descriptionService)
+   public NavigationImpl(SiteId siteId, NavigationService navigationService, DescriptionService descriptionService, ResourceBundleManager bundleManager)
    {
       this.siteId = siteId;
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
+      this.bundleManager = bundleManager;
 
       this.siteKey = Util.from(siteId);
       this.model = new ApiNodeModel(siteId);
@@ -87,7 +96,7 @@ public class NavigationImpl implements Navigation
          return false;
       }
 
-      save(ctx);
+      save(ctx, null);
       return true;
    }
 
@@ -95,8 +104,7 @@ public class NavigationImpl implements Navigation
    public Node getNode(NodeVisitor visitor)
    {
       NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(visitor));
-      loadLabels(ctx);
-      return ctx.getNode();
+      return (ctx == null) ? null : ctx.getNode();
    }
 
    @Override
@@ -117,24 +125,22 @@ public class NavigationImpl implements Navigation
    {
       NodeContext<ApiNode> ctx = ((ApiNode) parent).getContext();
       NodeVisitor visitor = Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren());
-      refreshNode(ctx, new NodeVisitorScope(visitor));
-      loadLabels(ctx);
+      refreshNode(ctx, new NodeVisitorScope(visitor), null);
    }
 
    @Override
    public void refreshNode(Node node)
    {
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
-      refreshNode(ctx, null);
-      loadLabels(ctx);
+      refreshNode(ctx, null, null);
    }
 
    @Override
    public void saveNode(Node node)
    {
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
-      save(ctx);
-      saveLabels(ctx);
+      save(ctx, null);
+      saveDisplayNames(ctx);
    }
 
    @Override
@@ -144,29 +150,35 @@ public class NavigationImpl implements Navigation
       save(navCtx);
    }
 
-   private void loadLabels(NodeContext<ApiNode> ctx)
+   void loadDisplayName(NodeContext<ApiNode> ctx)
    {
       String simple = ctx.getState().getLabel();
       if (simple != null)
       {
-         ctx.getNode().setLabelInternal(new Label(simple));
+         ctx.getNode().setDisplayNameInternal(new LocalizedString(simple));
       }
       else
       {
          Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
          if (descriptions != null)
          {
-            ctx.getNode().setLabelInternal(ObjectFactory.createLabel(descriptions));
+            ctx.getNode().setDisplayNameInternal(ObjectFactory.createLocalizedString(descriptions));
          }
+      }
+   }
+
+   String resolve(NodeContext<ApiNode> ctx)
+   {
+      if (i18nResolver == null)
+      {
+         //TODO: This is not optimal, we should cache the locale somewhere in ApiNode possibly
+         Site site = PortalRequest.getInstance().getPortal().getSite(siteId);
+         if (site == null) throw new ApiException("Could not resolve display name because site " + siteId + " could not be found.");
+
+         i18nResolver = new Navigation18NResolver(descriptionService, bundleManager, site.getLocale(), siteId);
       }
 
-      if (ctx.isExpanded())
-      {
-         for (NodeContext<ApiNode> c = ctx.getFirst(); c != null; c = c.getNext())
-         {
-            loadLabels(c);
-         }
-      }
+      return i18nResolver.resolveName(ctx.getNode().getDisplayName(), ctx.getId(), ctx.getName());
    }
 
    private NodeContext<ApiNode> loadNode(Scope scope)
@@ -181,11 +193,11 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void refreshNode(NodeContext<ApiNode> ctx, Scope scope)
+   private void refreshNode(NodeContext<ApiNode> ctx, Scope scope, NodeChangeListener<NodeContext<ApiNode>> listener)
    {
       try
       {
-         navigationService.rebaseNode(ctx, scope, null);
+         navigationService.rebaseNode(ctx, scope, listener);
       }
       catch (NavigationServiceException e)
       {
@@ -193,11 +205,11 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void save(NodeContext<ApiNode> ctx)
+   private void save(NodeContext<ApiNode> ctx, NodeChangeListener<NodeContext<ApiNode>> listener)
    {
       try
       {
-         navigationService.saveNode(ctx, null);
+         navigationService.saveNode(ctx, listener);
       }
       catch (NavigationServiceException e)
       {
@@ -217,12 +229,12 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void saveLabels(NodeContext<ApiNode> ctx)
+   private void saveDisplayNames(NodeContext<ApiNode> ctx)
    {
       ApiNode node = ctx.getNode();
-      if (node.isLabelChanged())
+      if (node.isDisplayNameChanged())
       {
-         if (!node.getLabel().isLocalized())
+         if (!node.getDisplayName().isLocalized())
          {
             Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
             if (descriptions != null)
@@ -232,14 +244,14 @@ public class NavigationImpl implements Navigation
          }
          else
          {
-            Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getLabel());
+            Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getDisplayName());
             descriptionService.setDescriptions(ctx.getId(), descriptions);
          }
       }
 
       for (NodeContext<ApiNode> c = ctx.getFirst(); c != null; c = c.getNext())
       {
-         saveLabels(c);
+         saveDisplayNames(c);
       }
    }
 

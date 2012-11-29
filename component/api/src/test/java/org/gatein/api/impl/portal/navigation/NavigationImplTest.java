@@ -22,18 +22,7 @@
 
 package org.gatein.api.impl.portal.navigation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
 import junit.framework.AssertionFailedError;
-
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
@@ -53,9 +42,11 @@ import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Portal;
 import org.gatein.api.SiteNotFoundException;
+import org.gatein.api.impl.TestPortalRequest;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.Label;
+import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.Permission;
+import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
@@ -65,6 +56,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -127,6 +124,7 @@ public class NavigationImplTest
    public void after()
    {
       deleteSite(SiteType.PORTAL, "classic");
+      TestPortalRequest.clearInstance();
    }
 
    @Before
@@ -144,6 +142,8 @@ public class NavigationImplTest
 
       siteId = new SiteId("classic");
       navigation = portal.getNavigation(siteId);
+
+      TestPortalRequest.setInstance(new User("john"), siteId, NodePath.root(), Locale.ENGLISH, portal);
    }
 
    @Test
@@ -210,7 +210,7 @@ public class NavigationImplTest
    }
 
    @Test
-   public void label_extended()
+   public void displayName_extended()
    {
       Node node = navigation.getNode(Nodes.visitAll());
 
@@ -220,35 +220,35 @@ public class NavigationImplTest
       m.put(Locale.ENGLISH, "extended");
       m.put(Locale.FRENCH, "prolongé");
       
-      n.setLabel(new Label(m));
+      n.setDisplayName(new LocalizedString(m));
 
       navigation.saveNode(node);
 
       n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
 
-      assertNotNull(n.getLabel());
-      assertTrue(n.getLabel().isLocalized());
-      assertEquals("extended", n.getLabel().getValue(Locale.ENGLISH));
-      assertEquals("prolongé", n.getLabel().getValue(Locale.FRENCH));
+      assertNotNull(n.getDisplayName());
+      assertTrue(n.getDisplayName().isLocalized());
+      assertEquals("extended", n.getDisplayName().getValue(Locale.ENGLISH));
+      assertEquals("prolongé", n.getDisplayName().getValue(Locale.FRENCH));
    }
 
    @Test
-   public void label_Simple()
+   public void displayName_simple()
    {
       Node node = navigation.getNode(Nodes.visitAll());
 
       Node n = node.addChild("parent");
-      n.setLabel(new Label("simple"));
+      n.setDisplayName("simple");
 
       navigation.saveNode(n);
 
-      assertEquals("simple", n.getLabel().getValue());
+      assertEquals("simple", n.getDisplayName().getValue());
 
       n = navigation.getNode(Nodes.visitChildren()).getChild("parent");
 
-      assertNotNull(n.getLabel());
-      assertEquals("simple", n.getLabel().getValue());
-      assertFalse(n.getLabel().isLocalized());
+      assertNotNull(n.getDisplayName());
+      assertEquals("simple", n.getDisplayName().getValue());
+      assertFalse(n.getDisplayName().isLocalized());
    }
 
    @Test

@@ -30,6 +30,9 @@ import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.Portal;
 import org.gatein.api.portal.Permission;
+import org.gatein.api.portal.User;
+import org.gatein.api.portal.navigation.NodePath;
+import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:julien.viet@exoplatform.com">Julien Viet</a>
@@ -97,7 +100,9 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
 //      this.invoker = invoker;
       this.userLocale = Locale.ENGLISH;
 
-      this.portal = new PortalImpl(dataStorage, pageService, navService, descriptionService);//, orgService, bundleManager);
+      this.portal = new PortalImpl(dataStorage, pageService, navService, descriptionService, bundleManager);//, orgService, bundleManager);
+
+      TestPortalRequest.setInstance(new User("test"), new SiteId("classic"), NodePath.root(), userLocale, portal);
 
       //
       begin();
@@ -106,6 +111,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
    @Override
    protected void tearDown() throws Exception
    {
+      TestPortalRequest.clearInstance();
       end(false);
    }
 

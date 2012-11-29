@@ -21,17 +21,14 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.NodeState.Builder;
+import org.gatein.api.Portal;
+import org.gatein.api.PortalRequest;
 import org.gatein.api.impl.Util;
 import org.gatein.api.internal.Objects;
-import org.gatein.api.portal.Label;
+import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
@@ -40,17 +37,26 @@ import org.gatein.api.portal.navigation.Visibility.Flag;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
+import org.gatein.common.logging.Logger;
+import org.gatein.common.logging.LoggerFactory;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Iterator;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 class ApiNode implements Node
 {
+   private static transient final Logger log = LoggerFactory.getLogger(ApiNode.class);
+
    protected final NodeContext<ApiNode> context;
 
-   private Label label;
-
-   private boolean labelChanged;
+   private LocalizedString displayName;
+   private String resolvedDisplayName;
+   private boolean displayNameChanged;
 
    private final SiteId siteId;
 
@@ -110,9 +116,29 @@ class ApiNode implements Node
    }
 
    @Override
-   public Label getLabel()
+   public LocalizedString getDisplayName()
    {
-      return label;
+      if (displayName == null)
+      {
+         String simple = context.getState().getLabel();
+         if (simple != null)
+         {
+            displayName = new LocalizedString(simple);
+         }
+         else
+         {
+            NavigationImpl navigation = getNavigationImpl();
+            if (navigation != null)
+            {
+               navigation.loadDisplayName(context);
+            }
+            else
+            {
+               log.warn("Could not retrieve navigation from API; hence, localized values of displayName cannot be retrieved for node " + getName());
+            }
+         }
+      }
+      return displayName;
    }
 
    @Override
@@ -149,9 +175,14 @@ class ApiNode implements Node
    }
 
    @Override
-   public String getResolvedLabel()
+   public String resolveDisplayName()
    {
-      return LabelResolver.resolveLabel(this);
+      if (resolvedDisplayName == null)
+      {
+         resolvedDisplayName = getNavigationImpl().resolve(context);
+      }
+
+      return resolvedDisplayName;
    }
 
    @Override
@@ -245,23 +276,30 @@ class ApiNode implements Node
    }
 
    @Override
-   public void setLabel(Label label)
+   public void setDisplayName(String displayName)
+   {
+      setDisplayName(new LocalizedString(displayName));
+   }
+
+   @Override
+   public void setDisplayName(LocalizedString displayName)
    {
       checkRoot();
+      if (displayName == null && this.displayName == null) return;
 
-      if (!label.equals(this.label))
+      if (displayName != null || !this.displayName.equals(displayName))
       {
-         if (!label.isLocalized())
+         if (displayName != null && !displayName.isLocalized())
          {
-            setState(getStateBuilder().label(label.getValue()));
-            this.label = label;
+            setState(getStateBuilder().label(displayName.getValue()));
          }
          else
          {
             setState(getStateBuilder().label(null));
-            this.label = label;
          }
-         labelChanged = true;
+         this.displayName = displayName;
+         this.resolvedDisplayName = null;
+         displayNameChanged = true;
       }
    }
 
@@ -346,7 +384,7 @@ class ApiNode implements Node
    @Override
    public String toString()
    {
-      return Objects.toStringBuilder(getClass()).add("name", getName()).add("path", getNodePath()).add("label", getLabel())
+      return Objects.toStringBuilder(getClass()).add("name", getName()).add("path", getNodePath()).add("displayName", getDisplayName())
             .add("visibility", getVisibility()).add("iconName", getIconName()).add("pageId", getPageId()).toString();
    }
 
@@ -374,14 +412,27 @@ class ApiNode implements Node
       return siteId;
    }
 
-   boolean isLabelChanged()
+   boolean isDisplayNameChanged()
    {
-      return labelChanged;
+      return displayNameChanged;
    }
 
-   void setLabelInternal(Label label)
+   void setDisplayNameInternal(LocalizedString displayName)
    {
-      this.label = label;
+      this.displayName = displayName;
+      this.resolvedDisplayName = null;
+   }
+
+   private NavigationImpl getNavigationImpl()
+   {
+      PortalRequest request = PortalRequest.getInstance();
+      Portal portal = (request == null) ? null : request.getPortal();
+      if (portal != null) // Load
+      {
+         return (NavigationImpl) portal.getNavigation(siteId);
+      }
+
+      return null;
    }
 
    private void checkRoot()

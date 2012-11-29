@@ -28,12 +28,14 @@ import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.QueryResult;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
+import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageServiceImpl;
 import org.exoplatform.portal.mop.page.PageServiceWrapper;
 import org.exoplatform.portal.mop.page.PageState;
+import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.portal.DataStorageContext;
@@ -82,13 +84,15 @@ public class PortalImpl extends DataStorageContext implements Portal
    private final PageService pageService;
    private final NavigationService navigationService;
    private final DescriptionService descriptionService;
+   private final ResourceBundleManager bundleManager;
 
-   public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService, DescriptionService descriptionService)
+   public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService, DescriptionService descriptionService, ResourceBundleManager bundleManager)
    {
       super(dataStorage);
       this.pageService = pageService;
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
+      this.bundleManager = bundleManager;
    }
 
    @Override
@@ -138,7 +142,7 @@ public class PortalImpl extends DataStorageContext implements Portal
                throw new AssertionError();
          }
 
-         sites.addAll(fromList(internalSites));
+         sites.addAll(fromList(internalSites, navigationService, query.hasHiddenSites()));
       }
 
       filter(sites, query.getFilter());
@@ -191,7 +195,7 @@ public class PortalImpl extends DataStorageContext implements Portal
     @Override
     public Navigation getNavigation(SiteId siteId)
     {
-       return new NavigationImpl(siteId, navigationService, descriptionService);
+       return new NavigationImpl(siteId, navigationService, descriptionService, bundleManager);
     }
 
    @Override
@@ -249,7 +253,7 @@ public class PortalImpl extends DataStorageContext implements Portal
       {
          QueryResult<PageContext> result = pageService.findPages(
             pagination.getOffset(), pagination.getLimit(),
-            Util.from(query.getSiteType()), query.getSiteName(), query.getPageName(), query.getPageTitle());
+            Util.from(query.getSiteType()), query.getSiteName(), query.getPageName(), query.getDisplayName());
 
          iterator = result.iterator();
       }
@@ -319,12 +323,21 @@ public class PortalImpl extends DataStorageContext implements Portal
       }
    }
 
-   private static List<Site> fromList(List<PortalConfig> internalSites)
+   private static List<Site> fromList(List<PortalConfig> internalSites, NavigationService service, boolean includeAllSites)
    {
       List<Site> sites = new ArrayList<Site>(internalSites.size());
       for (PortalConfig internalSite : internalSites)
       {
-         sites.add(Util.from(internalSite));
+         NavigationContext ctx = null;
+         if (!includeAllSites)
+         {
+            ctx = service.loadNavigation(new SiteKey(internalSite.getType(), internalSite.getName()));
+         }
+
+         if (includeAllSites || ctx != null)
+         {
+            sites.add(Util.from(internalSite));
+         }
       }
       return sites;
    }

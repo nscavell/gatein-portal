@@ -23,8 +23,6 @@
 package org.gatein.api.management.portal;
 
 import org.gatein.api.Portal;
-import org.gatein.api.portal.Label;
-import org.gatein.api.portal.Localized;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
@@ -42,7 +40,6 @@ import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
 
 import static org.gatein.api.portal.navigation.Nodes.*;
-import static org.gatein.api.portal.navigation.NodePath.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -125,31 +122,7 @@ public class NavigationManagementResource
    private void populateModel(Node node, ModelObject model)
    {
       model.set("name", node.getName());
-      Label label = node.getLabel();
-      ModelList modelLabel = model.get("label", ModelList.class);
-      if (label.isLocalized())
-      {
-         for (Localized.Value<String> value : label.getLocalizedValues())
-         {
-            String localeString = value.getLocale().getLanguage();
-            if (localeString == null)
-            {
-               throw new RuntimeException("Language was null for locale " + value.getLocale());
-            }
-            String country = value.getLocale().getCountry();
-            if (country != null && country.length() > 0)
-            {
-               localeString += "-" + country.toLowerCase();
-            }
-
-            modelLabel.add().asValue(ModelObject.class)
-               .set("value", value.getValue()).set("lang", localeString);
-         }
-      }
-      else
-      {
-         modelLabel.add().asValue(ModelObject.class).set("value", label.getValue());
-      }
+      ModelUtils.populate(node.getDisplayName(), "displayName", model);
    }
 
    private Node getNode(NodePath path, boolean require)

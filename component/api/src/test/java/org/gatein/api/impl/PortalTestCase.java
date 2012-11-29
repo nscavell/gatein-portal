@@ -25,6 +25,7 @@ package org.gatein.api.impl;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.impl.portal.site.SiteImpl;
 import org.gatein.api.portal.Group;
+import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.page.PageId;
@@ -119,19 +120,19 @@ public class PortalTestCase extends AbstractAPITestCase
       cleanup();
 
       Site site = new SiteImpl("b");
-      site.setTitle("Toyota");
+      site.setDisplayName("Toyota");
       portal.saveSite(site);
 
       site = new SiteImpl("a");
-      site.setTitle("Chevy");
+      site.setDisplayName("Chevy");
       portal.saveSite(site);
 
       site = new SiteImpl("c");
-      site.setTitle("Volvo");
+      site.setDisplayName("Volvo");
       portal.saveSite(site);
 
       site = new SiteImpl("d");
-      site.setTitle("Ford");
+      site.setDisplayName("Ford");
       portal.saveSite(site);
 
       List<Site> sites = portal.findSites(new SiteQuery.Builder().withSorting().withComparator(new Comparator<Site>()
@@ -139,7 +140,7 @@ public class PortalTestCase extends AbstractAPITestCase
          @Override
          public int compare(Site o1, Site o2)
          {
-            return o1.getTitle().compareTo(o2.getTitle());
+            return o1.resolveDisplayName().compareTo(o2.resolveDisplayName());
          }
       }).build());
 
@@ -289,6 +290,14 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals("b", site.getId().getName());
    }
 
+   public void testSiteQuery_NonHidden()
+   {
+      portal.saveSite(new SiteImpl("test-site"));
+
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
+      assertTrue(sites.isEmpty());
+   }
+
    public void testAddSite()
    {
       portal.saveSite(new SiteImpl("newsite"));
@@ -411,18 +420,18 @@ public class PortalTestCase extends AbstractAPITestCase
 
       createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page3", "page1", "page5", "page2", "page4");
       Page page = portal.getPage(new PageId("find-pages", "page1"));
-      page.setTitle("FooTitle");
+      page.setDisplayName("FooTitle");
       portal.savePage(page);
 
       page = portal.getPage(new PageId("find-pages", "page4"));
-      page.setTitle("FooTitle");
+      page.setDisplayName("FooTitle");
       portal.savePage(page);
 
-      List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withPageTitle("FooTitle").build());
+      List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withDisplayName("FooTitle").build());
       assertEquals(2, pages.size());
       for (Page p : pages)
       {
-         assertEquals("FooTitle", p.getTitle());
+         assertEquals("FooTitle", p.getDisplayName().getValue());
       }
    }
 

@@ -44,6 +44,8 @@ import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.model.ModelString;
 import org.gatein.management.api.operation.OperationNames;
 
+import static org.gatein.api.management.portal.ModelUtils.*;
+
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
@@ -121,25 +123,9 @@ public class PageManagementResource
    private void populateModel(Page page, ModelObject model)
    {
       model.set("name", page.getName());
-      model.set("title", page.getTitle());
-      populateModel(page.getEditPermission(), "edit-permissions", model);
-      populateModel(page.getAccessPermission(), "access-permissions", model);
-   }
-
-   private void populateModel(Permission permission, String fieldName, ModelObject model)
-   {
-      if (permission != null)
-      {
-         ModelList list = model.get(fieldName).asValue(ModelList.class);
-         if (permission.getMemberships().isEmpty())
-         {
-            list.add().asValue(ModelString.class).set("Everyone");
-         }
-
-         for (Membership membership : permission.getMemberships())
-         {
-            list.add().asValue(ModelString.class).set(membership.toString());
-         }
-      }
+      populate(page.getDisplayName(), "displayName", model);
+      populate(page.getDescription(), "description", model);
+      populate(page.getEditPermission(), "edit-permissions", model);
+      populate(page.getAccessPermission(), "access-permissions", model);
    }
 }

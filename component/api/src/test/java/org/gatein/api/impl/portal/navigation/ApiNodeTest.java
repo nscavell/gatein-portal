@@ -21,18 +21,8 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
-import org.gatein.api.portal.Label;
+import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
@@ -42,6 +32,13 @@ import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+import static org.junit.Assert.*;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -301,9 +298,9 @@ public class ApiNodeTest
    }
 
    @Test(expected = UnsupportedOperationException.class)
-   public void root_setLabel()
+   public void root_setDisplayName()
    {
-      root.setLabel(new Label("label"));
+      root.setDisplayName("label");
    }
 
    @Test(expected = UnsupportedOperationException.class)

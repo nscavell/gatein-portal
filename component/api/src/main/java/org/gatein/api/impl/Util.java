@@ -54,7 +54,14 @@ public class Util
       SiteKey siteKey = new SiteKey(portalConfig.getType(), portalConfig.getName());
 
       Site site = new SiteImpl(from(siteKey));
-      site.setTitle(portalConfig.getLabel());
+      if (portalConfig.getLabel() != null)
+      {
+         site.setDisplayName(portalConfig.getLabel());
+      }
+      if (portalConfig.getDescription() != null)
+      {
+         site.setDescription(portalConfig.getDescription());
+      }
       if (portalConfig.getLocale() != null)
       {
          site.setLocale(new Locale(portalConfig.getLocale()));
@@ -71,7 +78,14 @@ public class Util
 
       SiteKey siteKey = from(site.getId());
       PortalConfig portalConfig = new PortalConfig(siteKey.getTypeName(), siteKey.getName());
-      portalConfig.setLabel(site.getTitle());
+      if (site.getDisplayName() != null)
+      {
+         portalConfig.setLabel(site.getDisplayName().getValue());
+      }
+      if (site.getDescription() != null)
+      {
+         portalConfig.setDescription(site.getDescription().getValue());
+      }
       if (site.getLocale() != null)
       {
          portalConfig.setLocale(site.getLocale().getLanguage());

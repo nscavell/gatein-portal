@@ -63,8 +63,9 @@ public class NodeVisitorScope implements Scope
       public VisitMode enter(int depth, String id, String name, NodeState state)
       {
          nodePath = depth == 0 ? NodePath.root() : nodePath.append(name);
+         String nodeName = depth == 0 ? null : name;
          NodeDetails details = depth == 0 ? null : new NodeDetails(state, nodePath);
-         return visitor.visit(depth, name, details) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
+         return visitor.visit(depth, nodeName, details) ? VisitMode.ALL_CHILDREN : VisitMode.NO_CHILDREN;
       }
 
       @Override

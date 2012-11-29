@@ -232,13 +232,12 @@ public class GateInApiManagementResource
       {
          ModelReference pageRef = pagesList.add().asValue(ModelReference.class);
          pageRef.set("name", page.getName());
-         pageRef.set("title", page.getTitle());
          pageRef.set(address.append("pages").append(page.getName()));
       }
 
       // Navigation
       Navigation navigation = portal.getNavigation(id);
-      Node node = navigation.getNode(Nodes.visitNone());
+      Node node = navigation.getNode(Nodes.visitChildren());
       ModelList navList = siteModel.get("navigation", ModelList.class);
       for (Node child : node)
       {

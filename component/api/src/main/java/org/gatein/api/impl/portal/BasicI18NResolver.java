@@ -19,44 +19,44 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.gatein.api.impl.portal.navigation;
 
-import java.util.Locale;
+package org.gatein.api.impl.portal;
 
 import org.gatein.api.PortalRequest;
-import org.gatein.api.portal.Label;
-import org.gatein.api.portal.navigation.Node;
+
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
- * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class LabelResolver
+public class BasicI18NResolver extends AbstractI18NResolver
 {
-   private LabelResolver()
+   private final Locale portalLocale;
+   private final ResourceBundle resourceBundle;
+
+   public BasicI18NResolver(Locale portalLocale, ResourceBundle resourceBundle)
    {
+      super(null);
+      this.portalLocale = portalLocale;
+      this.resourceBundle = resourceBundle;
    }
 
-   public static String resolveLabel(Node node)
+   @Override
+   public ResourceBundle getResourceBundle()
    {
-      Label label = node.getLabel();
-      if (label != null && label.isLocalized())
-      {
-         PortalRequest request = PortalRequest.getInstance();
-         if (request != null)
-         {
-            Locale locale = request.getLocale();
-            String value = label.getValue(locale);
-            if (value != null)
-            {
-               return value;
-            }
-         }
-      }
-      else if (label != null)
-      {
-         return label.getValue();
-      }
+      return resourceBundle;
+   }
 
-      return node.getName();
+   @Override
+   public Locale getUserLocale()
+   {
+      return PortalRequest.getInstance().getLocale();
+   }
+
+   @Override
+   public Locale getPortalLocale()
+   {
+      return portalLocale;
    }
 }
