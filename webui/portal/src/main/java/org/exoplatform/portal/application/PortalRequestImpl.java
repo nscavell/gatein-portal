@@ -50,7 +50,7 @@ public class PortalRequestImpl extends PortalRequest
 
       this.user = (userId == null) ? User.anonymous() : new User(userId);
       this.siteId = Util.from(context.getSiteKey());
-      this.nodePath = NodePath.path(context.getNodePath());
+      this.nodePath = NodePath.fromString(context.getNodePath());
       this.portal = getPortalApi(context);
    }
 
