@@ -39,14 +39,14 @@ public class FilteredNode extends ApiNode
 {
    private final FilteredNodeMap map;
 
-   public FilteredNode(SiteId siteId, NodeContext<ApiNode> context, Filter<Node> filter)
+   public FilteredNode(NavigationImpl navigation, NodeContext<ApiNode> context, Filter<Node> filter)
    {
-      this(siteId, context, new FilteredNodeMap(filter));
+      this(navigation, context, new FilteredNodeMap(filter));
    }
 
-   public FilteredNode(SiteId siteId, NodeContext<ApiNode> context, FilteredNodeMap map)
+   public FilteredNode(NavigationImpl navigation, NodeContext<ApiNode> context, FilteredNodeMap map)
    {
-      super(siteId, context);
+      super(navigation, context);
       this.map = map;
    }
 
@@ -254,7 +254,7 @@ public class FilteredNode extends ApiNode
          FilteredNode filteredNode = filteredMap.get(apiNode);
          if (filteredNode == null)
          {
-            filteredNode = new FilteredNode(apiNode.getSiteId(), apiNode.context, this);
+            filteredNode = new FilteredNode(apiNode.navigation, apiNode.context, this);
             filteredMap.put(apiNode, filteredNode);
          }
          return filteredNode;

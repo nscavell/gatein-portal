@@ -21,6 +21,7 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
+import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.NodeState.Builder;
@@ -40,19 +41,21 @@ import org.gatein.api.util.Filter;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 class ApiNode implements Node
 {
-   private static transient final Logger log = LoggerFactory.getLogger(ApiNode.class);
-
-   protected final NodeContext<ApiNode> context;
+   transient NodeContext<ApiNode> context;
+   transient NavigationImpl navigation;
 
    private LocalizedString displayName;
    private String resolvedDisplayName;
@@ -60,9 +63,10 @@ class ApiNode implements Node
 
    private final SiteId siteId;
 
-   ApiNode(SiteId siteId, NodeContext<ApiNode> context)
+   ApiNode(NavigationImpl navigation, NodeContext<ApiNode> context)
    {
-      this.siteId = siteId;
+      this.navigation = navigation;
+      this.siteId = navigation.getSiteId();
       this.context = context;
    }
 
@@ -81,7 +85,7 @@ class ApiNode implements Node
    @Override
    public Node filter(Filter<Node> filter)
    {
-      return new FilteredNode(siteId, context, filter);
+      return new FilteredNode(navigation, context, filter);
    }
 
    @Override
@@ -127,15 +131,8 @@ class ApiNode implements Node
          }
          else
          {
-            NavigationImpl navigation = getNavigationImpl();
-            if (navigation != null)
-            {
-               navigation.loadDisplayName(context);
-            }
-            else
-            {
-               log.warn("Could not retrieve navigation from API; hence, localized values of displayName cannot be retrieved for node " + getName());
-            }
+            Map<Locale, Described.State> descriptions = navigation.loadDescriptions(context.getId());
+            displayName = ObjectFactory.createLocalizedString(descriptions);
          }
       }
       return displayName;
@@ -179,7 +176,7 @@ class ApiNode implements Node
    {
       if (resolvedDisplayName == null)
       {
-         resolvedDisplayName = getNavigationImpl().resolve(context);
+         resolvedDisplayName = navigation.resolve(context);
       }
 
       return resolvedDisplayName;
@@ -384,7 +381,7 @@ class ApiNode implements Node
    @Override
    public String toString()
    {
-      return Objects.toStringBuilder(getClass()).add("name", getName()).add("path", getNodePath()).add("displayName", getDisplayName())
+      return Objects.toStringBuilder(getClass()).add("name", getName()).add("path", getNodePath())
             .add("visibility", getVisibility()).add("iconName", getIconName()).add("pageId", getPageId()).toString();
    }
 
@@ -423,16 +420,22 @@ class ApiNode implements Node
       this.resolvedDisplayName = null;
    }
 
-   private NavigationImpl getNavigationImpl()
+   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
    {
+      in.defaultReadObject();
       PortalRequest request = PortalRequest.getInstance();
       Portal portal = (request == null) ? null : request.getPortal();
-      if (portal != null) // Load
+      if (portal != null)
       {
-         return (NavigationImpl) portal.getNavigation(siteId);
+         navigation = (NavigationImpl) portal.getNavigation(siteId);
+         if (navigation == null) throw new IOException("Could not retrieve navigation for site " + siteId);
+      }
+      else
+      {
+         throw new IOException("Could not retrieve portal API during deserialization.");
       }
 
-      return null;
+      //TODO: Sync up context, need children relationship so we care deserialize the tree
    }
 
    private void checkRoot()

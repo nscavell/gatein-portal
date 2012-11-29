@@ -39,14 +39,14 @@ import java.util.ResourceBundle;
 public class Navigation18NResolver extends AbstractI18NResolver
 {
    private final ResourceBundleManager bundleManager;
-   private final Locale portalLocale;
+   private final Locale siteLocale;
    private final SiteId siteId;
 
-   public Navigation18NResolver(DescriptionService service, ResourceBundleManager bundleManager, Locale portalLocale, SiteId siteId)
+   public Navigation18NResolver(DescriptionService service, ResourceBundleManager bundleManager, Locale siteLocale, SiteId siteId)
    {
       super(service);
       this.bundleManager = bundleManager;
-      this.portalLocale = portalLocale;
+      this.siteLocale = siteLocale;
       this.siteId = siteId;
    }
 
@@ -66,8 +66,8 @@ public class Navigation18NResolver extends AbstractI18NResolver
    }
 
    @Override
-   public Locale getPortalLocale()
+   public Locale getSiteLocale()
    {
-      return portalLocale;
+      return siteLocale;
    }
 }

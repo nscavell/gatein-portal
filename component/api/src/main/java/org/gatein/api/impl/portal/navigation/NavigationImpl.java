@@ -31,7 +31,6 @@ import org.exoplatform.portal.mop.navigation.NavigationServiceException;
 import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeChangeListener;
 import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.ApiException;
@@ -39,7 +38,6 @@ import org.gatein.api.PortalRequest;
 import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.AbstractI18NResolver;
-import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
@@ -75,9 +73,20 @@ public class NavigationImpl implements Navigation
       this.bundleManager = bundleManager;
 
       this.siteKey = Util.from(siteId);
-      this.model = new ApiNodeModel(siteId);
+      this.model = new ApiNodeModel(this);
 
       updateNavigationContext();
+   }
+
+   // Used for unit testing
+   NavigationImpl(SiteId siteId)
+   {
+      this.siteId = siteId;
+      this.navigationService = null;
+      this.descriptionService = null;
+      this.bundleManager = null;
+      this.siteKey = null;
+      this.model = null;
    }
 
    @Override
@@ -150,29 +159,27 @@ public class NavigationImpl implements Navigation
       save(navCtx);
    }
 
-   void loadDisplayName(NodeContext<ApiNode> ctx)
+   Map<Locale, Described.State> loadDescriptions(String id)
    {
-      String simple = ctx.getState().getLabel();
-      if (simple != null)
-      {
-         ctx.getNode().setDisplayNameInternal(new LocalizedString(simple));
-      }
-      else
-      {
-         Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
-         if (descriptions != null)
-         {
-            ctx.getNode().setDisplayNameInternal(ObjectFactory.createLocalizedString(descriptions));
-         }
-      }
+      return descriptionService.getDescriptions(id);
    }
 
    String resolve(NodeContext<ApiNode> ctx)
    {
       if (i18nResolver == null)
       {
-         //TODO: This is not optimal, we should cache the locale somewhere in ApiNode possibly
-         Site site = PortalRequest.getInstance().getPortal().getSite(siteId);
+         //TODO: Allow PortalRequest implementations to cache things like current node and site; hence, making the following logic make sense
+         PortalRequest request = PortalRequest.getInstance();
+         Site site;
+         if (request.getSiteId().equals(siteId))
+         {
+            site = request.getSite();
+         }
+         else // look it up
+         {
+            site = request.getPortal().getSite(siteId);
+         }
+
          if (site == null) throw new ApiException("Could not resolve display name because site " + siteId + " could not be found.");
 
          i18nResolver = new Navigation18NResolver(descriptionService, bundleManager, site.getLocale(), siteId);

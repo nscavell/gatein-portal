@@ -22,7 +22,6 @@
 package org.gatein.api.impl.portal.navigation;
 
 import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
-import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
@@ -64,7 +63,9 @@ public class ApiNodeTest
 
    public static ApiNode createRoot(boolean expanded)
    {
-      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(new SiteId("classic")), expanded).getNode();
+      NavigationImpl navigation = new NavigationImpl(new SiteId("classic"));
+
+      return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(navigation), expanded).getNode();
    }
 
    ApiNode root;

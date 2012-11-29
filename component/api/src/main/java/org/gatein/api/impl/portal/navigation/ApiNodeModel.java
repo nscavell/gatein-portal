@@ -30,17 +30,17 @@ import org.gatein.api.portal.site.SiteId;
  */
 final class ApiNodeModel implements NodeModel<ApiNode>
 {
-   private SiteId siteId;
+   private final NavigationImpl navigation;
 
-   ApiNodeModel(SiteId siteId)
+   ApiNodeModel(NavigationImpl navigation)
    {
-      this.siteId = siteId;
+      this.navigation = navigation;
    }
 
    @Override
    public ApiNode create(NodeContext<ApiNode> context)
    {
-      return new ApiNode(siteId, context);
+      return new ApiNode(navigation, context);
    }
 
    @Override

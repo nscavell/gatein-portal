@@ -38,7 +38,7 @@ public abstract class AbstractI18NResolver
 
    public abstract Locale getUserLocale();
 
-   public abstract Locale getPortalLocale();
+   public abstract Locale getSiteLocale();
 
    private final DescriptionService service;
 
@@ -78,8 +78,8 @@ public abstract class AbstractI18NResolver
       else if (descriptionId != null)
       {
          Locale userLocale = getUserLocale();
-         Locale portalLocale = getPortalLocale();
-         Described.State described = service.resolveDescription(descriptionId, portalLocale, userLocale);
+         Locale siteLocale = getSiteLocale();
+         Described.State described = service.resolveDescription(descriptionId, siteLocale, userLocale);
          if (described != null)
          {
             resolved = (nameFlag) ? described.getName() : described.getDescription();

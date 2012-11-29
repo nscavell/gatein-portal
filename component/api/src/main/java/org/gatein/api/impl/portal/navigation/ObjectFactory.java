@@ -46,6 +46,8 @@ public class ObjectFactory
 
    public static LocalizedString createLocalizedString(Map<Locale, Described.State> descriptions)
    {
+      if (descriptions == null) return null;
+
       Map<Locale, String> m = new HashMap<Locale, String>();
       for (Map.Entry<Locale, Described.State> entry : descriptions.entrySet())
       {

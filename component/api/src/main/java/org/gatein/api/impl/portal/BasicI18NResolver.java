@@ -55,7 +55,7 @@ public class BasicI18NResolver extends AbstractI18NResolver
    }
 
    @Override
-   public Locale getPortalLocale()
+   public Locale getSiteLocale()
    {
       return portalLocale;
    }
