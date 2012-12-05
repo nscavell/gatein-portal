@@ -35,7 +35,6 @@ import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.ApiException;
 import org.gatein.api.PortalRequest;
-import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.AbstractI18NResolver;
 import org.gatein.api.portal.navigation.Navigation;
@@ -45,6 +44,7 @@ import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.portal.site.SiteNotFoundException;
 
 import java.util.Locale;
 import java.util.Map;
@@ -91,7 +91,7 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public boolean deleteNode(NodePath path)
+   public boolean removeNode(NodePath path)
    {
       Node parent = getNode(path.parent(), Nodes.visitChildren());
       if (parent == null || !parent.removeChild(path.getLastSegment()))

@@ -114,10 +114,10 @@ public class ApiNodeTest
       root.addChild("child0").addChild("child0-0");
       root.addChild("child1");
 
-      assertTrue(root.getDescendant(NodePath.root()).isRoot());
-      assertEquals("child0", root.getDescendant(NodePath.path("child0")).getName());
-      assertEquals("child0-0", root.getDescendant(NodePath.path("child0", "child0-0")).getName());
-      assertNull(root.getDescendant(NodePath.path("child1", "child0-0")));
+      assertTrue(root.getNode(NodePath.root()).isRoot());
+      assertEquals("child0", root.getNode(NodePath.path("child0")).getName());
+      assertEquals("child0-0", root.getNode(NodePath.path("child0", "child0-0")).getName());
+      assertNull(root.getNode(NodePath.path("child1", "child0-0")));
    }
 
    @Test

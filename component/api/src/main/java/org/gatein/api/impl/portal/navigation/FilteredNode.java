@@ -99,7 +99,7 @@ public class FilteredNode extends ApiNode
    }
 
    @Override
-   public Node getDescendant(NodePath nodePath)
+   public Node getNode(NodePath nodePath)
    {
       Node n = this;
       for (String e : nodePath)

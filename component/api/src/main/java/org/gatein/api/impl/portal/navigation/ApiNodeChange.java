@@ -61,12 +61,12 @@ abstract class ApiNodeChange implements Serializable
 
    protected static ApiNode getNode(ApiNode root, NodePath path)
    {
-      ApiNode node = (ApiNode) root.getDescendant(path);
+      ApiNode node = (ApiNode) root.getNode(path);
       if (node == null)
       {
          NodeVisitor visitor = Nodes.visitNodes(path);
          root.navigation.refreshNode(root, visitor);
-         node = (ApiNode) root.getDescendant(path);
+         node = (ApiNode) root.getNode(path);
       }
 
       return node;

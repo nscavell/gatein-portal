@@ -41,7 +41,6 @@ import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Portal;
-import org.gatein.api.SiteNotFoundException;
 import org.gatein.api.impl.TestPortalRequest;
 import org.gatein.api.impl.Util;
 import org.gatein.api.portal.LocalizedString;
@@ -52,6 +51,7 @@ import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.portal.site.SiteNotFoundException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -61,7 +61,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OptionalDataException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -182,11 +181,11 @@ public class NavigationImplTest
    }
 
    @Test
-   public void deleteNode() throws InterruptedException
+   public void removeNode() throws InterruptedException
    {
       createNavigationChildren();
 
-      assertTrue(navigation.deleteNode(NodePath.path("parent", "child")));
+      assertTrue(navigation.removeNode(NodePath.path("parent", "child")));
 
       Node node = navigation.loadNodes(Nodes.visitAll());
       assertEquals(0, node.getChild("parent").getChildCount());
@@ -444,8 +443,8 @@ public class NavigationImplTest
       // deserialize parent
       ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
       Node rootNode = (Node) in.readObject();
-      assertNotNull(rootNode.getDescendant("parent", "foo", "bar"));
-      assertNotNull(rootNode.getDescendant("parent", "child", "another-child"));
+      assertNotNull(rootNode.getNode("parent", "foo", "bar"));
+      assertNotNull(rootNode.getNode("parent", "child", "another-child"));
    }
 
    //TODO: Add more serialization tests like moving/removing nodes, displayName, etc

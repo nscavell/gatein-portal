@@ -177,7 +177,7 @@ public class PortalImpl extends DataStorageContext implements Portal
    }
 
    @Override
-   public void removeSite(SiteId siteId)
+   public boolean removeSite(SiteId siteId)
    {
       SiteKey siteKey = Util.from(siteId);
 
@@ -189,6 +189,8 @@ public class PortalImpl extends DataStorageContext implements Portal
             dataStorage.remove(data);
          }
       });
+
+      return true;
    }
 
 
@@ -283,9 +285,9 @@ public class PortalImpl extends DataStorageContext implements Portal
    }
 
    @Override
-   public void removePage(PageId pageId)
+   public boolean removePage(PageId pageId)
    {
-       pageService.destroyPage(Util.from(pageId));
+       return pageService.destroyPage(Util.from(pageId));
    }
 
    @Override

@@ -113,13 +113,13 @@ class ApiNode implements Node
    }
 
    @Override
-   public Node getDescendant(String... nodePath)
+   public Node getNode(String... nodePath)
    {
-      return getDescendant(NodePath.path(nodePath));
+      return getNode(NodePath.path(nodePath));
    }
 
    @Override
-   public Node getDescendant(NodePath nodePath)
+   public Node getNode(NodePath nodePath)
    {
       Node node = this;
       for (String name : nodePath)
@@ -283,6 +283,14 @@ class ApiNode implements Node
    }
 
    @Override
+   public void setName(String name) throws IllegalArgumentException
+   {
+      if (name == null) throw new IllegalArgumentException("name cannot be null");
+
+      context.setName(name);
+   }
+
+   @Override
    public void setIconName(String iconName)
    {
       checkRoot();
@@ -300,6 +308,7 @@ class ApiNode implements Node
    public void setDisplayName(LocalizedString displayName)
    {
       checkRoot();
+
       if (displayName == null && this.displayName == null) return;
 
       if (displayName != null || !this.displayName.equals(displayName))
@@ -331,7 +340,7 @@ class ApiNode implements Node
    {
       checkRoot();
 
-      Builder b = getStateBuilder().startPublicationTime(-1).endPublicationTime(-1);
+      Builder b = getStateBuilder();
       if (visible)
       {
          b.visibility(org.exoplatform.portal.mop.Visibility.DISPLAYED);
@@ -348,6 +357,8 @@ class ApiNode implements Node
    {
       checkRoot();
 
+      if (publicationDate == null) throw new IllegalArgumentException("publicationDate cannot be null");
+
       long start = publicationDate.getStart() != null ? publicationDate.getStart().getTime() : -1;
       long end = publicationDate.getEnd() != null ? publicationDate.getEnd().getTime() : -1;
 
@@ -359,6 +370,8 @@ class ApiNode implements Node
    public void setVisibility(Visibility visibility)
    {
       checkRoot();
+
+      if (visibility == null) throw new IllegalArgumentException("visibility cannot be null");
 
       if (visibility.getFlag() == Flag.PUBLICATION)
       {
