@@ -92,27 +92,35 @@ public class NavigationImpl implements Navigation
    @Override
    public boolean deleteNode(NodePath path)
    {
-      if (path.equals(NodePath.root()))
+      Node parent = getNode(path.parent(), Nodes.visitChildren());
+      if (parent == null || !parent.removeChild(path.getLastSegment()))
       {
          return false;
       }
 
-      NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(Nodes.visitNodes(path)));
-      ctx = ctx.getNode().getDescendantContext(path.parent());
-
-      if (ctx == null || !ctx.removeNode(path.getLastSegment()))
-      {
-         return false;
-      }
-
-      save(ctx, null);
+      saveNode(parent);
       return true;
    }
 
    @Override
-   public Node getNode(NodeVisitor visitor)
+   public Node getNode(String... nodePath)
    {
-      NodeContext<ApiNode> ctx = loadNode(new NodeVisitorScope(visitor));
+      return getNode(NodePath.path(nodePath));
+   }
+
+   @Override
+   public Node getNode(NodePath nodePath)
+   {
+      return getNode(nodePath, Nodes.visitNone());
+   }
+
+   @Override
+   public Node getNode(NodePath nodePath, NodeVisitor visitor)
+   {
+      if (nodePath == null) throw new IllegalArgumentException("path cannot be null");
+      if (visitor == null) throw new IllegalArgumentException("visitor cannot be null");
+
+      NodeContext<ApiNode> ctx = getNodeContext(nodePath, visitor);
       return (ctx == null) ? null : ctx.getNode();
    }
 
@@ -130,25 +138,37 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
+   public Node loadNodes(NodeVisitor visitor)
+   {
+      NodeContext<ApiNode> ctx = loadNodeContext(visitor);
+      return (ctx == null) ? null : ctx.getNode();
+   }
+
+   @Override
    public void loadChildren(Node parent)
    {
       NodeContext<ApiNode> ctx = ((ApiNode) parent).getContext();
-      NodeVisitor visitor = Nodes.visitNodes(parent.getNodePath(), Nodes.visitChildren());
-      refreshNode(ctx, new NodeVisitorScope(visitor), null);
+      rebaseNodeContext(ctx, new NodeVisitorScope(Nodes.visitChildren()), null);
    }
 
    @Override
    public void refreshNode(Node node)
    {
+      refreshNode(node, Nodes.visitNone());
+   }
+
+   @Override
+   public void refreshNode(Node node, NodeVisitor visitor)
+   {
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
-      refreshNode(ctx, null, null);
+      rebaseNodeContext(ctx, new NodeVisitorScope(visitor), null);
    }
 
    @Override
    public void saveNode(Node node)
    {
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
-      save(ctx, null);
+      saveNodeContext(ctx, null);
       saveDisplayNames(ctx);
    }
 
@@ -188,11 +208,28 @@ public class NavigationImpl implements Navigation
       return i18nResolver.resolveName(ctx.getNode().getDisplayName(), ctx.getId(), ctx.getName());
    }
 
-   private NodeContext<ApiNode> loadNode(Scope scope)
+   NodeContext<ApiNode> getNodeContext(NodePath nodePath, NodeVisitor visitor)
+   {
+      NodeContext<ApiNode> ctx = loadNodeContext(Nodes.visitNodes(nodePath, visitor));
+      for (String name : nodePath)
+      {
+         ctx = ctx.get(name);
+         if (ctx == null) return null;
+      }
+
+      return ctx;
+   }
+
+   private NodeContext<ApiNode> loadNodeContext(NodeVisitor visitor)
+   {
+      return loadNodeContext(new NodeVisitorScope(visitor), null);
+   }
+
+   private NodeContext<ApiNode> loadNodeContext(Scope scope, NodeChangeListener<NodeContext<ApiNode>> listener)
    {
       try
       {
-         return navigationService.loadNode(model, navCtx, scope, null);
+         return navigationService.loadNode(model, navCtx, scope, listener);
       }
       catch (NavigationServiceException e)
       {
@@ -200,7 +237,7 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void refreshNode(NodeContext<ApiNode> ctx, Scope scope, NodeChangeListener<NodeContext<ApiNode>> listener)
+   void rebaseNodeContext(NodeContext<ApiNode> ctx, Scope scope, NodeChangeListener<NodeContext<ApiNode>> listener)
    {
       try
       {
@@ -212,7 +249,7 @@ public class NavigationImpl implements Navigation
       }
    }
 
-   private void save(NodeContext<ApiNode> ctx, NodeChangeListener<NodeContext<ApiNode>> listener)
+   private void saveNodeContext(NodeContext<ApiNode> ctx, NodeChangeListener<NodeContext<ApiNode>> listener)
    {
       try
       {
@@ -239,7 +276,7 @@ public class NavigationImpl implements Navigation
    private void saveDisplayNames(NodeContext<ApiNode> ctx)
    {
       ApiNode node = ctx.getNode();
-      if (node.isDisplayNameChanged())
+      if (node != null && node.isDisplayNameChanged())
       {
          if (!node.getDisplayName().isLocalized())
          {

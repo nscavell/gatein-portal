@@ -23,7 +23,9 @@ import org.exoplatform.portal.tree.list.ListTree;
 
 import java.util.AbstractCollection;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -132,6 +134,16 @@ public final class NodeContext<N> extends ListTree<NodeContext<N>>
    public boolean hasChanges()
    {
       return tree.hasChanges();
+   }
+
+   /**
+    * Returns an unmodifiable list of uncommitted changes applied to this node context.
+    *
+    * @return the list of uncommitted changes
+    */
+   public List<NodeChange<NodeContext<N>>> getChanges()
+   {
+      return Collections.unmodifiableList(tree.getChanges());
    }
 
    /**

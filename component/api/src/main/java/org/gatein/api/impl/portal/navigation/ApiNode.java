@@ -22,6 +22,7 @@
 package org.gatein.api.impl.portal.navigation;
 
 import org.exoplatform.portal.mop.Described;
+import org.exoplatform.portal.mop.navigation.NodeChange;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.NodeState.Builder;
@@ -32,20 +33,22 @@ import org.gatein.api.internal.Objects;
 import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
+import org.gatein.api.portal.navigation.NodeVisitor;
+import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
 import org.gatein.api.portal.navigation.Visibility.Flag;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -107,10 +110,22 @@ class ApiNode implements Node
    }
 
    @Override
+   public Node getDescendant(String... nodePath)
+   {
+      return getDescendant(NodePath.path(nodePath));
+   }
+
+   @Override
    public Node getDescendant(NodePath nodePath)
    {
-      NodeContext<ApiNode> c = getDescendantContext(nodePath);
-      return c != null ? c.getNode() : null;
+      Node node = this;
+      for (String name : nodePath)
+      {
+         node = node.getChild(name);
+         if (node == null) return  null;
+      }
+
+      return node;
    }
 
    @Override
@@ -390,20 +405,6 @@ class ApiNode implements Node
       return context;
    }
 
-   NodeContext<ApiNode> getDescendantContext(NodePath nodePath)
-   {
-      NodeContext<ApiNode> c = context;
-      for (String e : nodePath)
-      {
-         c = c.get(e);
-         if (c == null)
-         {
-            return null;
-         }
-      }
-      return c;
-   }
-
    SiteId getSiteId()
    {
       return siteId;
@@ -423,6 +424,13 @@ class ApiNode implements Node
    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException
    {
       in.defaultReadObject();
+
+      // deserialize serialization only fields
+      NodePath nodePath = (NodePath) in.readObject();
+      ApiNode parent = (ApiNode) in.readObject();
+      boolean expanded = in.readBoolean();
+      boolean hasChanges = in.readBoolean();
+
       PortalRequest request = PortalRequest.getInstance();
       Portal portal = (request == null) ? null : request.getPortal();
       if (portal != null)
@@ -435,7 +443,81 @@ class ApiNode implements Node
          throw new IOException("Could not retrieve portal API during deserialization.");
       }
 
-      //TODO: Sync up context, need children relationship so we care deserialize the tree
+      if (parent != null)
+      {
+         context = parent.context.get(nodePath.getLastSegment());
+         if (expanded)
+         {
+            navigation.rebaseNodeContext(context, new NodeVisitorScope(Nodes.visitChildren()), null);
+         }
+      }
+      else
+      {
+         NodeVisitor visitor = (expanded) ? Nodes.visitChildren() : Nodes.visitNone();
+         context = navigation.getNodeContext(nodePath, visitor);
+      }
+
+      if (hasChanges && parent == null) // re-apply changes from root node
+      {
+         @SuppressWarnings("unchecked")
+         List<ApiNodeChange> changes = (List<ApiNodeChange>) in.readObject();
+         for (ApiNodeChange change : changes)
+         {
+            change.apply(this);
+         }
+      }
+   }
+
+   private void writeObject(java.io.ObjectOutputStream out) throws IOException
+   {
+      out.defaultWriteObject();
+
+      // write serialization only fields
+      out.writeObject(getNodePath());
+      ApiNode parent = (context.getParent() != null) ? context.getParent().getNode() : null;
+      out.writeObject(parent);
+      out.writeBoolean(context.isExpanded());
+
+      // serialize uncommitted changes
+      boolean hasChanges = context.hasChanges();
+      out.writeBoolean(hasChanges);
+      if (hasChanges && parent == null) // ensures we only do this once since the changes are for the entire tree
+      {
+         List<ApiNodeChange> changes = new ArrayList<ApiNodeChange>();
+         for (NodeChange<NodeContext<ApiNode>> change : context.getChanges())
+         {
+            if (change instanceof NodeChange.Created)
+            {
+               NodeChange.Created<NodeContext<ApiNode>> created = (NodeChange.Created<NodeContext<ApiNode>>) change;
+               changes.add(new ApiNodeChange.Created(created));
+            }
+            else if (change instanceof NodeChange.Destroyed)
+            {
+               NodeChange.Destroyed<NodeContext<ApiNode>> destroyed = (NodeChange.Destroyed<NodeContext<ApiNode>>) change;
+               changes.add(new ApiNodeChange.Destroyed(destroyed));
+            }
+            else if (change instanceof NodeChange.Moved)
+            {
+               NodeChange.Moved<NodeContext<ApiNode>> moved = (NodeChange.Moved<NodeContext<ApiNode>>) change;
+               changes.add(new ApiNodeChange.Moved(moved));
+            }
+            else if (change instanceof NodeChange.Renamed)
+            {
+               NodeChange.Renamed<NodeContext<ApiNode>> renamed = (NodeChange.Renamed<NodeContext<ApiNode>>) change;
+               changes.add(new ApiNodeChange.Renamed(renamed));
+            }
+            else if (change instanceof NodeChange.Updated)
+            {
+               NodeChange.Updated<NodeContext<ApiNode>> updated = (NodeChange.Updated<NodeContext<ApiNode>>) change;
+               changes.add(new ApiNodeChange.Updated(updated));
+            }
+            else
+            {
+               throw new IOException("Cannot serialize: Non-compatible node change object " + change);
+            }
+         }
+         out.writeObject(changes);
+      }
    }
 
    private void checkRoot()

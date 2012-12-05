@@ -35,20 +35,20 @@ import org.gatein.api.portal.page.PageId;
  */
 public class NodeVisitorScope implements Scope
 {
-   private final NodeVisitorAdapter adapter;
+   private final NodeVisitor visitor;
 
    public NodeVisitorScope(NodeVisitor visitor)
    {
-      this.adapter = new NodeVisitorAdapter(visitor);
+      this.visitor = visitor;
    }
 
    @Override
    public Visitor get()
    {
-      return adapter;
+      return new NodeVisitorAdapter(visitor);
    }
 
-   private class NodeVisitorAdapter implements Visitor
+   private static class NodeVisitorAdapter implements Visitor
    {
       private final NodeVisitor visitor;
 
@@ -75,7 +75,7 @@ public class NodeVisitorScope implements Scope
       }
    }
 
-   private class NodeDetails implements NodeVisitor.NodeDetails
+   private static class NodeDetails implements NodeVisitor.NodeDetails
    {
       private NodeState nodeState;
       private NodePath nodePath;

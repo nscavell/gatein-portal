@@ -88,7 +88,7 @@ public class NavigationPortlet extends GenericPortlet
       Navigation navigation = PortalRequest.getInstance().getPortal().getNavigation(site.getId());
       if (navigation != null)
       {
-         for (Node node : navigation.getNode(Nodes.visitAll()))
+         for (Node node : navigation.loadNodes(Nodes.visitAll()))
          {
             outputNode(node, writer);
          }

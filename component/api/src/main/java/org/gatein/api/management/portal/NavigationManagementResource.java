@@ -66,7 +66,7 @@ public class NavigationManagementResource
    @Managed("{path: .*}")
    public ModelObject getNode(@MappedPath("path") String path, @ManagedContext ModelObject model)
    {
-      Node node = navigation.getNode(Nodes.visitNodes(NodePath.fromString(path), visitNone()));
+      Node node = navigation.getNode(NodePath.fromString(path), visitNone());
 
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
 
@@ -80,7 +80,7 @@ public class NavigationManagementResource
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the navigation node")
    public void removeNode(@MappedPath("path") String path, @ManagedContext ModelObject model)
    {
-      Node node = navigation.getNode(Nodes.visitNodes(NodePath.fromString(path), visitNone()));
+      Node node = navigation.getNode(NodePath.fromString(path), visitNone());
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
 
       Node parent = node.getParent();
@@ -94,7 +94,7 @@ public class NavigationManagementResource
                               @ManagedContext ModelObject model)
    {
       NodePath nodePath = NodePath.fromString(path);
-      Node parent = navigation.getNode(Nodes.visitNodes(NodePath.fromString(path), visitNone()));
+      Node parent = navigation.getNode(NodePath.fromString(path), Nodes.visitNone());
 
       Node node = parent.addChild(nodePath.getLastSegment());
 
@@ -107,7 +107,7 @@ public class NavigationManagementResource
 
    private void populateModel(ModelObject model, PathAddress address)
    {
-      Node node = navigation.getNode(visitChildren());
+      Node node = navigation.loadNodes(visitChildren());
       model.set("priority", navigation.getPriority());
       ModelList modelNodes = model.get("node").setEmptyList();
       for (Node n : node)
@@ -127,7 +127,7 @@ public class NavigationManagementResource
 
    private Node getNode(NodePath path, boolean require)
    {
-      Node node = navigation.getNode(Nodes.visitNodes(path, visitNone()));
+      Node node = navigation.getNode(path);
       if (node == null && require) throw new ResourceNotFoundException("Node not found for path " + path);
 
       return node;
