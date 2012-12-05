@@ -424,6 +424,30 @@ public class NavigationImplTest
       assertTrue(parentNode.getParent() == childNode.getParent().getParent());
    }
 
+   @Test
+   public void serialization_multipath() throws Exception
+   {
+      createNavigationChildren();
+      Node root = navigation.loadNodes(Nodes.visitAll());
+      Node parent = root.getChild("parent");
+      Node foo = parent.addChild("foo");
+      foo.addChild("bar");
+      Node child = parent.getChild("child");
+      child.addChild("another-child");
+
+      navigation.saveNode(root);
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream out = new ObjectOutputStream(baos);
+      out.writeObject(root);
+
+      // deserialize parent
+      ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+      Node rootNode = (Node) in.readObject();
+      assertNotNull(rootNode.getDescendant("parent", "foo", "bar"));
+      assertNotNull(rootNode.getDescendant("parent", "child", "another-child"));
+   }
+
    //TODO: Add more serialization tests like moving/removing nodes, displayName, etc
 
    void createSite(SiteType type, String name)

@@ -51,6 +51,7 @@ import java.util.Map;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class NavigationImpl implements Navigation
 {

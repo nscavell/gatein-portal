@@ -43,6 +43,8 @@ import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +56,7 @@ import java.util.Map;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
+ * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 class ApiNode implements Node
 {
@@ -429,7 +432,6 @@ class ApiNode implements Node
       NodePath nodePath = (NodePath) in.readObject();
       ApiNode parent = (ApiNode) in.readObject();
       boolean expanded = in.readBoolean();
-      boolean hasChanges = in.readBoolean();
 
       PortalRequest request = PortalRequest.getInstance();
       Portal portal = (request == null) ? null : request.getPortal();
@@ -457,6 +459,14 @@ class ApiNode implements Node
          context = navigation.getNodeContext(nodePath, visitor);
       }
 
+      if (expanded && parent == null)
+      {
+         MultiPathNodeVisitor visitor = new MultiPathNodeVisitor();
+         readTree(visitor, in);
+         navigation.rebaseNodeContext(context, new NodeVisitorScope(visitor), null);
+      }
+
+      boolean hasChanges = in.readBoolean();
       if (hasChanges && parent == null) // re-apply changes from root node
       {
          @SuppressWarnings("unchecked")
@@ -476,7 +486,13 @@ class ApiNode implements Node
       out.writeObject(getNodePath());
       ApiNode parent = (context.getParent() != null) ? context.getParent().getNode() : null;
       out.writeObject(parent);
-      out.writeBoolean(context.isExpanded());
+
+      boolean expanded = context.isExpanded();
+      out.writeBoolean(expanded);
+      if (expanded && parent == null) // rebuild tree (using node paths)
+      {
+         writeTree(this, out);
+      }
 
       // serialize uncommitted changes
       boolean hasChanges = context.hasChanges();
@@ -517,6 +533,34 @@ class ApiNode implements Node
             }
          }
          out.writeObject(changes);
+      }
+   }
+
+   private void readTree(MultiPathNodeVisitor visitor, ObjectInputStream in) throws IOException, ClassNotFoundException
+   {
+      NodePath path = (NodePath) in.readObject();
+      visitor.add(path);
+      int count = in.readInt();
+      for (int i=0; i<count; i++)
+      {
+         readTree(visitor, in);
+      }
+   }
+
+   private void writeTree(Node node, ObjectOutputStream out) throws IOException
+   {
+      out.writeObject(node.getNodePath());
+      if (node.isChildrenLoaded())
+      {
+         out.writeInt(node.getChildCount());
+         for (Node child : node)
+         {
+            writeTree(child, out);
+         }
+      }
+      else
+      {
+         out.writeInt(0);
       }
    }
 
