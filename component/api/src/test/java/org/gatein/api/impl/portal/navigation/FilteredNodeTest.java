@@ -138,9 +138,9 @@ public class FilteredNodeTest
       root.getChild("child0").addChild("child0-0");
       root.getChild("child1").addChild("child1-0");
 
-      assertNotNull(filtered.getDescendant(NodePath.path("child0", "child0-0")));
-      assertNull(filtered.getDescendant(NodePath.path("child1")));
-      assertNull(filtered.getDescendant(NodePath.path("child1", "child0-0")));
+      assertNotNull(filtered.getNode(NodePath.path("child0", "child0-0")));
+      assertNull(filtered.getNode(NodePath.path("child1")));
+      assertNull(filtered.getNode(NodePath.path("child1", "child0-0")));
    }
 
    @Test
