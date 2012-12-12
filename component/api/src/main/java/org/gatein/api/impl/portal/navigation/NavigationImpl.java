@@ -35,6 +35,7 @@ import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.ApiException;
 import org.gatein.api.PortalRequest;
+import org.gatein.api.impl.Parameters;
 import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.AbstractI18NResolver;
 import org.gatein.api.portal.navigation.Navigation;
@@ -68,7 +69,7 @@ public class NavigationImpl implements Navigation
 
    public NavigationImpl(SiteId siteId, NavigationService navigationService, DescriptionService descriptionService, ResourceBundleManager bundleManager)
    {
-      this.siteId = siteId;
+      this.siteId = Parameters.requireNonNull(siteId, "siteId");
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
       this.bundleManager = bundleManager;
@@ -93,6 +94,8 @@ public class NavigationImpl implements Navigation
    @Override
    public boolean removeNode(NodePath path)
    {
+      Parameters.requireNonNull(path, "path");
+
       Node parent = getNode(path.parent(), Nodes.visitChildren());
       if (parent == null || !parent.removeChild(path.getLastSegment()))
       {
@@ -118,8 +121,8 @@ public class NavigationImpl implements Navigation
    @Override
    public Node getNode(NodePath nodePath, NodeVisitor visitor)
    {
-      if (nodePath == null) throw new IllegalArgumentException("path cannot be null");
-      if (visitor == null) throw new IllegalArgumentException("visitor cannot be null");
+      Parameters.requireNonNull(nodePath, "nodePath");
+      Parameters.requireNonNull(visitor, "visitor");
 
       NodeContext<ApiNode> ctx = getNodeContext(nodePath, visitor);
       return (ctx == null) ? null : ctx.getNode();
@@ -148,6 +151,8 @@ public class NavigationImpl implements Navigation
    @Override
    public void loadChildren(Node parent)
    {
+      Parameters.requireNonNull(parent, "parent");
+
       NodeContext<ApiNode> ctx = ((ApiNode) parent).getContext();
       rebaseNodeContext(ctx, new NodeVisitorScope(Nodes.visitChildren()), null);
    }
@@ -161,6 +166,9 @@ public class NavigationImpl implements Navigation
    @Override
    public void refreshNode(Node node, NodeVisitor visitor)
    {
+      Parameters.requireNonNull(node, "node");
+      Parameters.requireNonNull(visitor, "visitor");
+
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
       rebaseNodeContext(ctx, new NodeVisitorScope(visitor), null);
    }
@@ -168,6 +176,8 @@ public class NavigationImpl implements Navigation
    @Override
    public void saveNode(Node node)
    {
+      Parameters.requireNonNull(node, "node");
+
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
       saveNodeContext(ctx, null);
       saveDisplayNames(ctx);

@@ -22,6 +22,7 @@
 package org.gatein.api.impl.portal.navigation;
 
 import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
+import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
@@ -82,21 +83,26 @@ public class ApiNodeTest
       root.addChild("child").addChild("child");
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test(expected = EntityAlreadyExistsException.class)
    public void addChild_Existing()
    {
       root.addChild("child");
       root.addChild("child");
    }
 
-   @Test(expected = IllegalStateException.class)
-   public void addChild_NotExpanded()
+   @Test(expected = IndexOutOfBoundsException.class)
+   public void addChild_IndexOutOfBoundsException()
    {
-      root = createRoot(false);
-      root.addChild("child");
+      root.addChild(1, "0");
    }
 
-   @Test(expected = NullPointerException.class)
+   @Test(expected = IllegalStateException.class)
+   public void addChild_NotLoaded()
+   {
+      createRoot(false).addChild("child");
+   }
+
+   @Test(expected = IllegalArgumentException.class)
    public void addChild_NullName()
    {
       root.addChild(null);
@@ -106,6 +112,24 @@ public class ApiNodeTest
    public void before() throws Exception
    {
       root = createRoot(true);
+   }
+
+   @Test(expected = IllegalStateException.class)
+   public void getChild_NotLoaded()
+   {
+      createRoot(false).getChild("0");
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void getChild_NullName()
+   {
+      root.getChild(null);
+   }
+
+   @Test(expected = IllegalStateException.class)
+   public void getChildCount_NotLoaded()
+   {
+      createRoot(false).getChildCount();
    }
 
    @Test
@@ -120,6 +144,12 @@ public class ApiNodeTest
       assertNull(root.getNode(NodePath.path("child1", "child0-0")));
    }
 
+   @Test(expected = IllegalStateException.class)
+   public void getNode_NotLoaded()
+   {
+      createRoot(false).getNode(NodePath.path("0"));
+   }
+
    @Test
    public void getNodePath()
    {
@@ -129,6 +159,12 @@ public class ApiNodeTest
       assertEquals("/child0/child0-0", root.getChild("child0").getChild("child0-0").getNodePath().toString());
    }
 
+   @Test(expected = IllegalStateException.class)
+   public void hasChild_NotLoaded()
+   {
+      createRoot(false).hasChild("0");
+   }
+
    @Test
    public void iconName()
    {
@@ -136,6 +172,12 @@ public class ApiNodeTest
       assertNull(c.getIconName());
       c.setIconName("iconName");
       assertEquals("iconName", c.getIconName());
+   }
+
+   @Test(expected = IllegalStateException.class)
+   public void indexOf_NotLoaded()
+   {
+      createRoot(false).indexOf("0");
    }
 
    @Test
@@ -202,6 +244,25 @@ public class ApiNodeTest
       assertIterator(root.iterator(), "0", "1", "2");
    }
 
+   @Test(expected = IllegalArgumentException.class)
+   public void moveTo_Child()
+   {
+      Node parent0 = root.addChild("parent0");
+      Node child = parent0.addChild("0");
+      Node child2 = child.addChild("0-0");
+
+      child.moveTo(child2);
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void moveTo_DifferentBranch()
+   {
+      Node parent0 = root.addChild("parent0");
+      Node child = parent0.addChild("0");
+
+      child.moveTo(createRoot(true));
+   }
+
    @Test
    public void moveTo_Parent()
    {
@@ -250,6 +311,12 @@ public class ApiNodeTest
       assertEquals(new PageId("classic", "page"), c.getPageId());
    }
 
+   @Test(expected = IllegalStateException.class)
+   public void removeChild_NotLoaded()
+   {
+      createRoot(false).removeChild("0");
+   }
+
    @Test
    public void root_getName()
    {
@@ -293,15 +360,15 @@ public class ApiNodeTest
    }
 
    @Test(expected = UnsupportedOperationException.class)
-   public void root_setIconName()
-   {
-      root.setIconName("iconName");
-   }
-
-   @Test(expected = UnsupportedOperationException.class)
    public void root_setDisplayName()
    {
       root.setDisplayName("label");
+   }
+
+   @Test(expected = UnsupportedOperationException.class)
+   public void root_setIconName()
+   {
+      root.setIconName("iconName");
    }
 
    @Test(expected = UnsupportedOperationException.class)
@@ -329,6 +396,37 @@ public class ApiNodeTest
    }
 
    @Test
+   public void setIconName_NullIconName()
+   {
+      root.addChild("0").setIconName(null);
+   }
+   
+   @Test
+   public void setIconName_NullPageId()
+   {
+      root.addChild("0").setPageId(null);
+   }
+   
+   @Test(expected = IllegalArgumentException.class)
+   public void setName_NullName()
+   {
+      root.addChild("0").setName(null);
+   }
+   
+   @Test(expected = IllegalArgumentException.class)
+   public void setVisibility_NullPublicationDate()
+   {
+      root.addChild("0").setVisibility((Visibility) null);
+   }
+   
+   @Test(expected = IllegalArgumentException.class)
+   public void setVisibility_NullVisibility()
+   {
+      root.addChild("0").setVisibility((Visibility) null);
+
+   }
+
+   @Test
    public void sort()
    {
       root.addChild("2");
@@ -348,6 +446,18 @@ public class ApiNodeTest
       assertEquals("0", root.getChild(0).getName());
       assertEquals("1", root.getChild(1).getName());
       assertEquals("2", root.getChild(2).getName());
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void sort_NullComparator()
+   {
+      root.sort(null);
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void filter_NullFilter()
+   {
+      root.filter(null);
    }
 
    @Test

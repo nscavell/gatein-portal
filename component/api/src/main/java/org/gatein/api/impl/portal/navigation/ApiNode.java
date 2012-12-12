@@ -26,12 +26,15 @@ import org.exoplatform.portal.mop.navigation.NodeChange;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.NodeState.Builder;
+import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
+import org.gatein.api.impl.Parameters;
 import org.gatein.api.impl.Util;
 import org.gatein.api.internal.Objects;
 import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeNotFoundException;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.navigation.Nodes;
@@ -58,7 +61,7 @@ import java.util.Map;
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class ApiNode implements Node
+public class ApiNode implements Node
 {
    transient NodeContext<ApiNode> context;
    transient NavigationImpl navigation;
@@ -79,36 +82,57 @@ class ApiNode implements Node
    @Override
    public Node addChild(int index, String childName)
    {
+      checkChildrenLoaded();
+
       return context.add(index, childName).getNode();
    }
 
    @Override
    public Node addChild(String childName)
    {
+      Parameters.requireNonNull(childName, "childName");
+
+      checkChildrenLoaded();
+
+      if (hasChild(childName))
+      {
+         throw new EntityAlreadyExistsException("child " + childName + " already exists");
+      }
+
       return context.add(null, childName).getNode();
    }
 
    @Override
    public Node filter(Filter<Node> filter)
    {
+      Parameters.requireNonNull(filter, "filter");
+
       return new FilteredNode(navigation, context, filter);
    }
 
    @Override
    public Node getChild(int index)
    {
+      checkChildrenLoaded();
+
       return context.isExpanded() ? context.getNode(index) : null;
    }
 
    @Override
    public Node getChild(String childName)
    {
+      Parameters.requireNonNull(childName, "childName");
+
+      checkChildrenLoaded();
+
       return context.isExpanded() ? context.getNode(childName) : null;
    }
 
    @Override
    public int getChildCount()
    {
+      checkChildrenLoaded();
+
       return context.getNodeSize();
    }
 
@@ -121,6 +145,8 @@ class ApiNode implements Node
    @Override
    public Node getNode(NodePath nodePath)
    {
+      checkChildrenLoaded();
+
       Node node = this;
       for (String name : nodePath)
       {
@@ -201,7 +227,7 @@ class ApiNode implements Node
    }
 
    @Override
-   public URI getResolvedURI()
+   public URI resolveURI()
    {
       return URIResolver.resolveURI(this);
    }
@@ -251,7 +277,7 @@ class ApiNode implements Node
    @Override
    public void moveTo(int index)
    {
-      checkRoot();
+      checkNonRoot();
 
       NodeContext<ApiNode> parent = context.getParent();
       context.remove();
@@ -261,31 +287,58 @@ class ApiNode implements Node
    @Override
    public void moveTo(int index, Node parent)
    {
-      checkRoot();
+      moveTo(new Integer(index), parent);
+   }
+
+   @Override
+   public void moveTo(Node parent)
+   {
+      moveTo(null, parent);
+   }
+
+   private void moveTo(Integer index, Node parent)
+   {
+      checkNonRoot();
+
+      ((ApiNode) parent).checkChildrenLoaded();
+
+      if (this.getNodePath().isParent(parent.getNodePath()))
+      {
+         throw new IllegalArgumentException("Can't move node to a child node of itself");
+      }
+
+      Node root = this;
+      while (root.getParent() != null)
+      {
+         root = root.getParent();
+      }
+
+      if (root.getNode(parent.getNodePath()) != parent)
+      {
+         throw new IllegalArgumentException("Can't move node to a different branch");
+      }
 
       context.remove();
       ((ApiNode) parent).context.add(index, context);
    }
 
    @Override
-   public void moveTo(Node parent)
-   {
-      checkRoot();
-
-      context.remove();
-      ((ApiNode) parent).context.add(null, context);
-   }
-
-   @Override
    public boolean removeChild(String childName)
    {
+      checkChildrenLoaded();
+
+      if (!hasChild(childName))
+      {
+         throw new NodeNotFoundException(siteId, getNodePath().append(childName));
+      }
+
       return context.removeNode(childName);
    }
 
    @Override
    public void setName(String name) throws IllegalArgumentException
    {
-      if (name == null) throw new IllegalArgumentException("name cannot be null");
+      Parameters.requireNonNull(name, "name");
 
       context.setName(name);
    }
@@ -293,7 +346,7 @@ class ApiNode implements Node
    @Override
    public void setIconName(String iconName)
    {
-      checkRoot();
+      checkNonRoot();
 
       setState(getStateBuilder().icon(iconName));
    }
@@ -307,7 +360,7 @@ class ApiNode implements Node
    @Override
    public void setDisplayName(LocalizedString displayName)
    {
-      checkRoot();
+      checkNonRoot();
 
       if (displayName == null && this.displayName == null) return;
 
@@ -330,7 +383,7 @@ class ApiNode implements Node
    @Override
    public void setPageId(PageId pageId)
    {
-      checkRoot();
+      checkNonRoot();
 
       setState(getStateBuilder().pageRef(Util.from(pageId)));
    }
@@ -338,7 +391,7 @@ class ApiNode implements Node
    @Override
    public void setVisibility(boolean visible)
    {
-      checkRoot();
+      checkNonRoot();
 
       Builder b = getStateBuilder();
       if (visible)
@@ -355,9 +408,9 @@ class ApiNode implements Node
    @Override
    public void setVisibility(PublicationDate publicationDate)
    {
-      checkRoot();
+      checkNonRoot();
 
-      if (publicationDate == null) throw new IllegalArgumentException("publicationDate cannot be null");
+      Parameters.requireNonNull(publicationDate, "publicationDate");
 
       long start = publicationDate.getStart() != null ? publicationDate.getStart().getTime() : -1;
       long end = publicationDate.getEnd() != null ? publicationDate.getEnd().getTime() : -1;
@@ -369,9 +422,9 @@ class ApiNode implements Node
    @Override
    public void setVisibility(Visibility visibility)
    {
-      checkRoot();
+      checkNonRoot();
 
-      if (visibility == null) throw new IllegalArgumentException("visibility cannot be null");
+      Parameters.requireNonNull(visibility, "visibility");
 
       if (visibility.getFlag() == Flag.PUBLICATION)
       {
@@ -387,6 +440,8 @@ class ApiNode implements Node
    @Override
    public void sort(Comparator<Node> comparator)
    {
+      Parameters.requireNonNull(comparator, "comparator");
+
       if (context.isExpanded())
       {
          ApiNode[] a = new ApiNode[context.getNodeSize()];
@@ -577,11 +632,19 @@ class ApiNode implements Node
       }
    }
 
-   private void checkRoot()
+   private void checkNonRoot()
    {
       if (isRoot())
       {
          throw new UnsupportedOperationException("Operation not supported on root node");
+      }
+   }
+
+   private void checkChildrenLoaded()
+   {
+      if (!context.isExpanded())
+      {
+         throw new IllegalStateException("Children are not loaded");
       }
    }
 

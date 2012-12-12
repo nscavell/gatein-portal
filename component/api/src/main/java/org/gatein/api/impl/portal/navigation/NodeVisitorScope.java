@@ -39,6 +39,11 @@ public class NodeVisitorScope implements Scope
 
    public NodeVisitorScope(NodeVisitor visitor)
    {
+      if (visitor == null)
+      {
+         throw new IllegalArgumentException("visitor cannot be null");
+      }
+
       this.visitor = visitor;
    }
 

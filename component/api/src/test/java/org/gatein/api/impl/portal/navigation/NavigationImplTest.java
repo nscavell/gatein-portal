@@ -48,6 +48,7 @@ import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.Navigation;
 import org.gatein.api.portal.navigation.Node;
+import org.gatein.api.portal.navigation.NodeNotFoundException;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.site.SiteId;
@@ -181,7 +182,15 @@ public class NavigationImplTest
    }
 
    @Test
-   public void removeNode() throws InterruptedException
+   public void setPriority_Null()
+   {
+      navigation.setPriority(null);
+
+      assertNull(portal.getNavigation(siteId).getPriority());
+   }
+
+   @Test
+   public void removeNode()
    {
       createNavigationChildren();
 
@@ -189,6 +198,18 @@ public class NavigationImplTest
 
       Node node = navigation.loadNodes(Nodes.visitAll());
       assertEquals(0, node.getChild("parent").getChildCount());
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void removeNode_NullNode()
+   {
+      navigation.removeNode(null);
+   }
+
+   @Test(expected = NodeNotFoundException.class)
+   public void removeNode_NodeNotFound()
+   {
+      navigation.removeNode(NodePath.path("nosuch"));
    }
 
    @Test
@@ -232,6 +253,24 @@ public class NavigationImplTest
       assertNotNull(node.getChild("child"));
    }
 
+   @Test(expected = IllegalArgumentException.class)
+   public void getNode_EmptyPath()
+   {
+      navigation.getNode(new String[0]);
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void getNode_NullNodePath()
+   {
+      navigation.getNode((NodePath) null);
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void getNode_NullVisitor()
+   {
+      navigation.getNode(NodePath.path("parent"), null);
+   }
+
    @Test
    public void getNode_Invalid_Path()
    {
@@ -245,6 +284,12 @@ public class NavigationImplTest
    public void getNavigation_InvalidSite()
    {
       portal.getNavigation(new SiteId("invalid")).loadNodes(Nodes.visitAll());
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void getNavigation_NullSiteId()
+   {
+      portal.getNavigation(null);
    }
 
    @Test
@@ -289,6 +334,12 @@ public class NavigationImplTest
       assertFalse(n.getDisplayName().isLocalized());
    }
 
+   @Test(expected = IllegalArgumentException.class)
+   public void loadNodes_NullVisitor()
+   {
+      navigation.loadNodes(null);
+   }
+
    @Test
    public void loadChildren()
    {
@@ -307,6 +358,12 @@ public class NavigationImplTest
       assertNotNull(parent.getChild("child"));
    }
 
+   @Test(expected = IllegalArgumentException.class)
+   public void loadChildren_NullParent()
+   {
+      navigation.loadChildren(null);
+   }
+
    @Test
    public void refreshNode()
    {
@@ -321,6 +378,18 @@ public class NavigationImplTest
       assertNull(nodeB.getChild("childA"));
       navigation.refreshNode(nodeB);
       assertNotNull(nodeB.getChild("childA"));
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void refreshNode_NullNode()
+   {
+      navigation.refreshNode(null);
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void refreshNode_NullVisitor()
+   {
+      navigation.refreshNode(navigation.getNode(NodePath.path("parent"), null));
    }
 
    @Test
@@ -377,6 +446,12 @@ public class NavigationImplTest
 
       assertNotNull(nodeC.getChild("childA"));
       assertNotNull(nodeC.getChild("childB"));
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void saveNode_NullNode()
+   {
+      navigation.saveNode(null);
    }
 
    @Test
@@ -462,7 +537,7 @@ public class NavigationImplTest
 
          dataStorage.create(config);
 
-         NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(0));
+         NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(null));
          navService.saveNavigation(nav);
 
          pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), "homepage"), new PageState("displayName",
