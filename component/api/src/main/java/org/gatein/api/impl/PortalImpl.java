@@ -269,7 +269,7 @@ public class PortalImpl extends DataStorageContext implements Portal
       {
          QueryResult<PageContext> result = pageService.findPages(
             pagination.getOffset(), pagination.getLimit(),
-            Util.from(query.getSiteType()), query.getSiteName(), query.getPageName(), query.getDisplayName());
+            Util.from(query.getSiteType()), query.getSiteName(), null, query.getDisplayName());
 
          iterator = result.iterator();
       }
@@ -280,6 +280,7 @@ public class PortalImpl extends DataStorageContext implements Portal
          pages.add(new PageImpl(iterator.next()));
       }
 
+      //TODO: PageQuery should not support sorting, or at least not when paging is being used.
       Comparator<Page> comparator = Comparators.page(query.getSorting());
       if (comparator != null)
       {

@@ -25,7 +25,6 @@ package org.gatein.api.impl;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.impl.portal.site.SiteImpl;
 import org.gatein.api.portal.Group;
-import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.page.PageId;
@@ -400,18 +399,6 @@ public class PortalTestCase extends AbstractAPITestCase
       List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build());
       assertNotNull(pages);
       assertEquals(5, pages.size());
-   }
-
-   public void ignore_testFindPages_ByName()
-   {
-      cleanup();
-
-      createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page3", "page1", "page5", "page2", "page4");
-
-      List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withPageName("page2").build());
-      assertNotNull(pages);
-      assertEquals(1, pages.size());
-      assertEquals("page2", pages.get(0).getName());
    }
 
    public void testFindPages_ByTitle()
