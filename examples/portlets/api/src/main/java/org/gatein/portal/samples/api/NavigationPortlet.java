@@ -105,7 +105,7 @@ public class NavigationPortlet extends GenericPortlet
       int size = node.getChildCount();
       boolean isLeaf = size == 0;
       writer.println("<li>"
-         + (isLeaf ? "<a style='font-weight: bold; text-decoration: underline; color: #336666;' href='" + node.getResolvedURI() + "'>" : "")
+         + (isLeaf ? "<a style='font-weight: bold; text-decoration: underline; color: #336666;' href='" + node.resolveURI() + "'>" : "")
          + node.resolveDisplayName()
          + (isLeaf ? "</a>" : "")
          + "</li>");
