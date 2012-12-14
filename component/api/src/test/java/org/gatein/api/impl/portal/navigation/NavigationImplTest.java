@@ -358,6 +358,24 @@ public class NavigationImplTest
       assertNotNull(parent.getChild("child"));
    }
 
+   @Test
+   public void loadChildren_ParentNodeStateChanged()
+   {
+      createNavigationChildren();
+
+      Node node1 = navigation.loadNodes(Nodes.visitChildren());
+      Node parent1 = node1.getChild("parent");
+
+      Node node2 = navigation.loadNodes(Nodes.visitChildren());
+      Node parent2 = node2.getChild("parent");
+      parent2.setIconName("new");
+      navigation.saveNode(parent2);
+
+      navigation.loadChildren(parent1);
+
+      assertNull(parent1.getIconName());
+   }
+
    @Test(expected = IllegalArgumentException.class)
    public void loadChildren_NullParent()
    {
