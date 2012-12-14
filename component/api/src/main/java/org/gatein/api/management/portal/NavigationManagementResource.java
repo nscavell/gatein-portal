@@ -36,6 +36,7 @@ import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
+import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
 
@@ -47,30 +48,34 @@ import static org.gatein.api.portal.navigation.Nodes.*;
 @Managed
 public class NavigationManagementResource
 {
-   private Navigation navigation;
+   private final Navigation navigation;
+   private final ModelProvider modelProvider;
 
-   public NavigationManagementResource(Portal portal, SiteId siteId)
+   public NavigationManagementResource(Portal portal, ModelProvider modelProvider, SiteId siteId)
    {
       this.navigation = portal.getNavigation(siteId);
+      this.modelProvider = modelProvider;
    }
 
    @Managed
-   public ModelObject getNavigation(@ManagedContext ModelObject model, @ManagedContext PathAddress address)
+   public ModelObject getNavigation(@ManagedContext PathAddress address)
    {
       // Populate the model
+      ModelObject model = modelProvider.newModel(ModelObject.class);
       populateModel(model, address);
 
       return model;
    }
 
    @Managed("{path: .*}")
-   public ModelObject getNode(@MappedPath("path") String path, @ManagedContext ModelObject model)
+   public ModelObject getNode(@MappedPath("path") String path)
    {
       Node node = navigation.getNode(NodePath.fromString(path), visitNone());
 
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
 
       // Populate the model
+      ModelObject model = modelProvider.newModel(ModelObject.class);
       populateModel(node, model);
 
       return model;
@@ -78,7 +83,7 @@ public class NavigationManagementResource
 
    @Managed("{path: .*}")
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the navigation node")
-   public void removeNode(@MappedPath("path") String path, @ManagedContext ModelObject model)
+   public void removeNode(@MappedPath("path") String path)
    {
       Node node = navigation.getNode(NodePath.fromString(path), visitNone());
       if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
@@ -90,8 +95,7 @@ public class NavigationManagementResource
 
    @Managed("{path: .*}")
    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the navigation node")
-   public ModelObject addNode(@MappedPath("path") String path,
-                              @ManagedContext ModelObject model)
+   public ModelObject addNode(@MappedPath("path") String path)
    {
       NodePath nodePath = NodePath.fromString(path);
       Node parent = navigation.getNode(NodePath.fromString(path), Nodes.visitNone());
@@ -100,6 +104,7 @@ public class NavigationManagementResource
 
       navigation.saveNode(node);
 
+      ModelObject model = modelProvider.newModel(ModelObject.class);
       populateModel(node, model);
 
       return model;

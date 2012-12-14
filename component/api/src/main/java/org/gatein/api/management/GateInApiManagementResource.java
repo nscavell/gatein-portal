@@ -47,6 +47,7 @@ import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
+import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
 
@@ -64,25 +65,38 @@ public class GateInApiManagementResource
 
    private final Portal portal;
 
+   @ManagedContext
+   private final ModelProvider modelProvider;
+
    public GateInApiManagementResource(Portal portal)
    {
+      this(portal, null);
+   }
+
+   GateInApiManagementResource(Portal portal, ModelProvider modelProvider)
+   {
       this.portal = portal;
+      this.modelProvider = modelProvider;
    }
 
    //------------------------------------------------- Portal Sites --------------------------------------------------//
    @Managed("/sites")
-   public ModelList getSites(@ManagedContext ModelList list, @ManagedContext PathAddress address)
+   public ModelList getSites(@ManagedContext PathAddress address)
    {
       List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
+
+      ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(sites, list, address);
 
       return list;
    }
 
    @Managed("/sites/{site-name}")
-   public ModelObject getSite(@MappedPath("site-name") String siteName, @ManagedContext ModelObject siteModel, @ManagedContext PathAddress address)
+   public ModelObject getSite(@MappedPath("site-name") String siteName, @ManagedContext PathAddress address)
    {
       SiteId id = new SiteId(siteName);
+
+      ModelObject siteModel = modelProvider.newModel(ModelObject.class);
       populateModel(id, siteModel, address);
 
       return siteModel;
@@ -107,30 +121,31 @@ public class GateInApiManagementResource
    @Managed("/sites/{site-name}/pages")
    public PageManagementResource getPages(@MappedPath("site-name") String siteName)
    {
-      return new PageManagementResource(portal, new SiteId(siteName));
+      return new PageManagementResource(portal, modelProvider, new SiteId(siteName));
    }
 
    @Managed("/sites/{site-name}/navigation")
    public NavigationManagementResource getNavigation(@MappedPath("site-name") String siteName)
    {
-      return new NavigationManagementResource(portal, new SiteId(siteName));
+      return new NavigationManagementResource(portal, modelProvider, new SiteId(siteName));
    }
 
    //--------------------------------------------- Group Sites (Spaces) ----------------------------------------------//
    @Managed("/spaces")
-   public ModelList getSitesForGroup(@ManagedContext ModelList list, @ManagedContext PathAddress address)
+   public ModelList getSitesForGroup(@ManagedContext PathAddress address)
    {
       List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).build());
+
+      ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(sites, list, address);
 
       return list;
    }
 
    @Managed("/spaces/{group-name: .*}")
-   public ModelObject getSiteForGroup(@MappedPath("group-name") String groupName,
-                                      @ManagedContext ModelObject siteModel,
-                                      @ManagedContext PathAddress address)
+   public ModelObject getSiteForGroup(@MappedPath("group-name") String groupName, @ManagedContext PathAddress address)
    {
+      ModelObject siteModel = modelProvider.newModel(ModelObject.class);
       populateModel(new SiteId(new Group(groupName)), siteModel, address);
 
       return siteModel;
@@ -155,28 +170,31 @@ public class GateInApiManagementResource
    @Managed("/spaces/{group-name: .*}/pages")
    public PageManagementResource getPagesForGroup(@MappedPath("group-name") String groupName)
    {
-      return new PageManagementResource(portal, new SiteId(new Group(groupName)));
+      return new PageManagementResource(portal, modelProvider, new SiteId(new Group(groupName)));
    }
 
    @Managed("/spaces/{group-name: .*}/navigation")
    public NavigationManagementResource getNavigationForGroup(@MappedPath("group-name") String groupName)
    {
-      return new NavigationManagementResource(portal, new SiteId(new Group(groupName)));
+      return new NavigationManagementResource(portal, modelProvider, new SiteId(new Group(groupName)));
    }
 
    //-------------------------------------------- User Sites (Dashboard) ---------------------------------------------//
    @Managed("/dashboards")
-   public ModelList getSitesForUser(@ManagedContext ModelList list, @ManagedContext PathAddress address)
+   public ModelList getSitesForUser(@ManagedContext PathAddress address)
    {
       List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).build());
+
+      ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(sites, list, address);
 
       return list;
    }
 
    @Managed("/dashboards/{user-name}")
-   public ModelObject getSiteForUser(@MappedPath("user-name") String userName, @ManagedContext ModelObject siteModel, @ManagedContext PathAddress address)
+   public ModelObject getSiteForUser(@MappedPath("user-name") String userName, @ManagedContext PathAddress address)
    {
+      ModelObject siteModel = modelProvider.newModel(ModelObject.class);
       populateModel(new SiteId(new User(userName)), siteModel, address);
 
       return siteModel;
@@ -201,13 +219,13 @@ public class GateInApiManagementResource
    @Managed("/dashboards/{user-name}/pages")
    public PageManagementResource getPagesForUser(@MappedPath("user-name") String userName)
    {
-      return new PageManagementResource(portal, new SiteId(new User(userName)));
+      return new PageManagementResource(portal, modelProvider, new SiteId(new User(userName)));
    }
 
    @Managed("/dashboards/{user-name}/navigation")
    public NavigationManagementResource getNavigationForUser(@MappedPath("user-name") String userName)
    {
-      return new NavigationManagementResource(portal, new SiteId(new User(userName)));
+      return new NavigationManagementResource(portal, modelProvider, new SiteId(new User(userName)));
    }
 
    private Site getSite(SiteId id, boolean require)

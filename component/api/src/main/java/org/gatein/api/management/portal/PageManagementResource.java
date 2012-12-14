@@ -40,6 +40,7 @@ import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
+import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.model.ModelString;
 import org.gatein.management.api.operation.OperationNames;
@@ -53,30 +54,34 @@ import static org.gatein.api.management.portal.ModelUtils.*;
 public class PageManagementResource
 {
    private final Portal portal;
+   private final ModelProvider modelProvider;
    private final SiteId siteId;
 
-   public PageManagementResource(Portal portal, SiteId siteId)
+   public PageManagementResource(Portal portal, ModelProvider modelProvider, SiteId siteId)
    {
       this.portal = portal;
+      this.modelProvider = modelProvider;
       this.siteId = siteId;
    }
 
    @Managed(description = "Retrieves all pages for given site")
-   public ModelList getPages(@ManagedContext ModelList list, @ManagedContext PathAddress address)
+   public ModelList getPages(@ManagedContext PathAddress address)
    {
       // Populate model
+      ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(portal.findPages(new PageQuery.Builder().build()), list, address);
 
       return list;
    }
 
    @Managed("{page-name}")
-   public ModelObject getPage(@MappedPath("page-name") String name, @ManagedContext ModelObject model)
+   public ModelObject getPage(@MappedPath("page-name") String name)
    {
       Page page = portal.getPage(new PageId(siteId, name));
       if (page == null) throw new ResourceNotFoundException("Page " + name + " does not exist for site id " + siteId);
 
       // Populate model
+      ModelObject model = modelProvider.newModel(ModelObject.class);
       populateModel(page, model);
 
       return model;
@@ -98,11 +103,12 @@ public class PageManagementResource
 
    @Managed("{page-name}")
    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the given page to the portal")
-   public ModelObject addPage(@MappedPath("page-name") String name, @ManagedContext ModelObject model)
+   public ModelObject addPage(@MappedPath("page-name") String name)
    {
       Page page = portal.createPage(new PageId(siteId, name));
       portal.savePage(page);
 
+      ModelObject model = modelProvider.newModel(ModelObject.class);
       populateModel(page, model);
 
       return model;
