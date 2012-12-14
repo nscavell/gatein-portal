@@ -4,6 +4,7 @@ import java.io.InputStream;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.config.DataStorage;
+import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.page.PageService;
@@ -11,6 +12,8 @@ import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
+import org.exoplatform.services.security.Authenticator;
+import org.exoplatform.services.security.IdentityRegistry;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
@@ -95,8 +98,11 @@ public class TmpPortalIT
       OrganizationService orgService = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
       ResourceBundleManager bundleManager = (ResourceBundleManager) container
             .getComponentInstanceOfType(ResourceBundleManager.class);
+      Authenticator authenticator = (Authenticator) container.getComponentInstanceOfType(Authenticator.class);
+      IdentityRegistry identityRegistry = (IdentityRegistry) container.getComponentInstanceOfType(IdentityRegistry.class);
+      UserACL acl = (UserACL) container.getComponentInstanceOfType(UserACL.class);
 
-      portal = new PortalImpl(dataStorage, pageService, navService, descriptionService, bundleManager);//, orgService, bundleManager);
+      portal = new PortalImpl(dataStorage, pageService, navService, descriptionService, bundleManager, authenticator, identityRegistry, acl);//, orgService, bundleManager);
    }
 
    @After

@@ -24,6 +24,7 @@ package org.gatein.api.impl;
 
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
+import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.QueryResult;
 import org.exoplatform.portal.mop.SiteKey;
@@ -36,11 +37,18 @@ import org.exoplatform.portal.mop.page.PageServiceImpl;
 import org.exoplatform.portal.mop.page.PageServiceWrapper;
 import org.exoplatform.portal.mop.page.PageState;
 import org.exoplatform.services.resources.ResourceBundleManager;
+import org.exoplatform.services.security.Authenticator;
+import org.exoplatform.services.security.Identity;
+import org.exoplatform.services.security.IdentityConstants;
+import org.exoplatform.services.security.IdentityRegistry;
+import org.gatein.api.ApiException;
 import org.gatein.api.EntityAlreadyExistsException;
+import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.portal.DataStorageContext;
 import org.gatein.api.impl.portal.navigation.NavigationImpl;
 import org.gatein.api.impl.portal.page.PageImpl;
+import org.gatein.api.internal.Strings;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
 import org.gatein.api.portal.navigation.Navigation;
@@ -85,14 +93,20 @@ public class PortalImpl extends DataStorageContext implements Portal
    private final NavigationService navigationService;
    private final DescriptionService descriptionService;
    private final ResourceBundleManager bundleManager;
+   private UserACL acl;
+   private Authenticator authenticator; 
+   private IdentityRegistry identityRegistry;
 
-   public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService, DescriptionService descriptionService, ResourceBundleManager bundleManager)
+   public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService, DescriptionService descriptionService, ResourceBundleManager bundleManager, Authenticator authenticator, IdentityRegistry identityRegistry, UserACL acl)
    {
       super(dataStorage);
       this.pageService = pageService;
       this.navigationService = navigationService;
       this.descriptionService = descriptionService;
       this.bundleManager = bundleManager;
+      this.authenticator = authenticator;
+      this.identityRegistry = identityRegistry;
+      this.acl = acl;
    }
 
    @Override
@@ -293,8 +307,38 @@ public class PortalImpl extends DataStorageContext implements Portal
    @Override
    public boolean hasPermission(User user, Permission permission)
    {
-       //TODO: Implement
-       throw new UnsupportedOperationException();
+      String expPerm = Strings.joiner(",").join(Util.from(permission));
+
+      Identity identity;
+      if (user == User.anonymous())
+      {
+         identity = new Identity(IdentityConstants.ANONIM);
+      }
+      else
+      {
+         identity = identityRegistry.getIdentity(user.getId());
+      }
+
+      if (identity == null)
+      {
+         try
+         {
+            identity = authenticator.createIdentity(user.getId());
+         }
+         catch (Exception e)
+         {
+            throw new ApiException("Failed to retrive user identity", e);
+         }
+
+         if (identity == null)
+         {
+            throw new EntityNotFoundException("User not found");
+         }
+
+         identityRegistry.register(identity);
+      }
+
+      return acl.hasPermission(identity, expPerm);
    }
 
    private static <T> void filter(List<T> list, Filter<T> filter)

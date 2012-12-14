@@ -524,6 +524,22 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals("page1", pages.get(6).getName());
    }
 
+   public void testHasPermission()
+   {
+      createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "permissions", "page");
+      PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("permissions")).build();
+
+      setPermission(org.exoplatform.portal.mop.SiteType.PORTAL, "permissions", "page", "*:/platform/administrators", "Everyone");
+
+      Page page = portal.findPages(query).get(0);
+
+      assertTrue(portal.hasPermission(new User("root"), page.getAccessPermission()));
+      assertTrue(portal.hasPermission(new User("root"), page.getEditPermission()));
+
+      assertTrue(portal.hasPermission(User.anonymous(), page.getAccessPermission()));
+      assertFalse(portal.hasPermission(User.anonymous(), page.getEditPermission()));
+   }
+
    // Just remove all sites
    void cleanup()
    {

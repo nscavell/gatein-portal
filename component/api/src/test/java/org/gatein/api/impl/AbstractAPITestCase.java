@@ -11,6 +11,7 @@ import org.exoplatform.component.test.ContainerScope;
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.AbstractPortalTest;
 import org.exoplatform.portal.config.DataStorage;
+import org.exoplatform.portal.config.UserACL;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.SiteType;
@@ -28,6 +29,8 @@ import org.exoplatform.portal.mop.page.PageState;
 import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
+import org.exoplatform.services.security.Authenticator;
+import org.exoplatform.services.security.IdentityRegistry;
 import org.gatein.api.Portal;
 import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.User;
@@ -93,6 +96,9 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
       DescriptionService descriptionService = (DescriptionService) container.getComponentInstanceOfType(DescriptionService.class);
       ResourceBundleManager bundleManager = (ResourceBundleManager) container.getComponentInstanceOfType(ResourceBundleManager.class);
       pageService = (PageService) container.getComponentInstanceOfType(PageService.class);
+      Authenticator authenticator = (Authenticator) container.getComponentInstanceOfType(Authenticator.class);
+      IdentityRegistry identityRegistry = (IdentityRegistry) container.getComponentInstanceOfType(IdentityRegistry.class);
+      UserACL acl = (UserACL) container.getComponentInstanceOfType(UserACL.class);
 
       this.mgr = mgr;
       this.navService = navService;
@@ -100,7 +106,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
 //      this.invoker = invoker;
       this.userLocale = Locale.ENGLISH;
 
-      this.portal = new PortalImpl(dataStorage, pageService, navService, descriptionService, bundleManager);//, orgService, bundleManager);
+      this.portal = new PortalImpl(dataStorage, pageService, navService, descriptionService, bundleManager, authenticator, identityRegistry, acl);//, orgService, bundleManager);
 
       TestPortalRequest.setInstance(new User("test"), new SiteId("classic"), NodePath.root(), userLocale, portal);
 
@@ -168,5 +174,12 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
          afe.initCause(e);
          throw afe;
       }
+   }
+
+   protected void setPermission(SiteType type, String name, String page, String editPermission, String... accessPermissions)
+   {
+      PageContext p = pageService.loadPage(new PageKey(new SiteKey(type, name), page));
+      p.setState(p.getState().builder().editPermission(editPermission).accessPermissions(accessPermissions).build());
+      pageService.savePage(p);
    }
 }
