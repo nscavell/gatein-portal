@@ -40,6 +40,7 @@ import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
+import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.Portal;
 import org.gatein.api.impl.TestPortalRequest;
 import org.gatein.api.impl.Util;
@@ -107,7 +108,7 @@ public class NavigationImplTest
       assertNotNull(root.getChild("parent2"));
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test(expected = EntityAlreadyExistsException.class)
    public void addChildExisting()
    {
       createNavigationChildren();
@@ -246,7 +247,6 @@ public class NavigationImplTest
       Node node = navigation.getNode(NodePath.path("parent"), Nodes.visitNone());
       assertNotNull(node);
       assertFalse(node.isChildrenLoaded());
-      assertNull(node.getChild("child"));
 
       node = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
       assertTrue(node.isChildrenLoaded());
@@ -256,7 +256,8 @@ public class NavigationImplTest
    @Test(expected = IllegalArgumentException.class)
    public void getNode_EmptyPath()
    {
-      navigation.getNode(new String[0]);
+      String[] path = new String[0];
+      navigation.getNode(path);
    }
 
    @Test(expected = IllegalArgumentException.class)
@@ -350,7 +351,6 @@ public class NavigationImplTest
       Node parent = node.getChild("parent");
       assertTrue(node.isChildrenLoaded());
       assertFalse(parent.isChildrenLoaded());
-      assertNull(parent.getChild("child"));
 
       navigation.loadChildren(parent);
 
@@ -376,10 +376,54 @@ public class NavigationImplTest
       assertNull(parent1.getIconName());
    }
 
+   @Test
+   public void something()
+   {
+      Node root = navigation.loadNodes(Nodes.visitChildren());
+      Node a = root.addChild("a");
+      Node b = a.addChild("b");
+      b.addChild("c");
+
+      navigation.saveNode(root);
+
+      a = navigation.getNode("a");
+      b = navigation.getNode("a", "b");
+
+      a.setIconName("a-icon");
+      navigation.saveNode(a);
+
+      navigation.loadChildren(b);
+      System.out.println(b.getParent().getIconName());
+      assertNull(b.getParent().getIconName());
+   }
+
    @Test(expected = IllegalArgumentException.class)
    public void loadChildren_NullParent()
    {
       navigation.loadChildren(null);
+   }
+
+   @Test
+   public void moveNode()
+   {
+      Node root = navigation.loadNodes(Nodes.visitChildren());
+      root.addChild("a").addChild("b").addChild("c").addChild("d");
+      root.addChild("e").addChild("f").addChild("g").addChild("h");
+
+      navigation.saveNode(root);
+
+      root = navigation.loadNodes(Nodes.visitAll());
+
+      Node d = root.getNode("a", "b", "c", "d");
+      Node h = root.getNode("e", "f", "g", "h");
+      navigation.loadChildren(h);
+      d.moveTo(h);
+
+      navigation.saveNode(root);
+
+      root = navigation.loadNodes(Nodes.visitAll());
+      assertNull(root.getNode("a", "b", "c", "d"));
+      assertNotNull(root.getNode("e", "f", "g", "h", "d"));
    }
 
    @Test
