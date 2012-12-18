@@ -313,7 +313,7 @@ public class ApiNode implements Node
          root = root.getParent();
       }
 
-      if (root.getNode(parent.getNodePath()) != parent)
+      if (((ApiNode) root.getNode(parent.getNodePath())).getContext() != ((ApiNode) parent).getContext())
       {
          throw new IllegalArgumentException("Can't move node to a different branch");
       }

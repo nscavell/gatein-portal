@@ -115,14 +115,14 @@ public class FilteredNode extends ApiNode
    @Override
    public Node getParent()
    {
-      return map.getFiltered(super.getParent());
+      return super.getParent() != null ? map.getFiltered(super.getParent()) : null;
    }
 
    @Override
    public boolean hasChild(String childName)
    {
       Node n = super.getChild(childName);
-      return map.isAccepted(n);
+      return n != null ? map.isAccepted(n) : false;
    }
 
    @Override

@@ -24,8 +24,10 @@ package org.gatein.api.impl.portal.navigation;
 import static org.gatein.api.impl.portal.navigation.ApiNodeTest.assertIterator;
 import static org.gatein.api.impl.portal.navigation.ApiNodeTest.createRoot;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
@@ -141,6 +143,14 @@ public class FilteredNodeTest
       assertNotNull(filtered.getNode(NodePath.path("child0", "child0-0")));
       assertNull(filtered.getNode(NodePath.path("child1")));
       assertNull(filtered.getNode(NodePath.path("child1", "child0-0")));
+   }
+
+   @Test
+   public void hasChild()
+   {
+      assertTrue(filtered.hasChild("child0"));
+      assertFalse(filtered.hasChild("child1"));
+      assertFalse(filtered.hasChild("nosuch"));
    }
 
    @Test
