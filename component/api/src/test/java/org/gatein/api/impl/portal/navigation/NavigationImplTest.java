@@ -466,6 +466,30 @@ public class NavigationImplTest
    }
 
    @Test
+   public void saveNode_SaveChildSavesParent()
+   {
+      createNavigationChildren();
+
+      Node node = navigation.loadNodes(Nodes.visitAll());
+
+      Node parent = node.getChild("parent");
+      parent.setIconName("new");
+
+      Node child = parent.getNode("child");
+      child.setIconName("new");
+
+      parent.addChild("child2");
+
+      navigation.saveNode(child);
+
+      node = navigation.loadNodes(Nodes.visitAll());
+
+      assertEquals("new", node.getChild("parent").getIconName());
+      assertEquals(2, node.getChild("parent").getChildCount());
+      assertEquals("new", node.getChild("parent").getChild("child").getIconName());
+   }
+
+   @Test
    public void saveNode_Merge()
    {
       createNavigationChildren();
