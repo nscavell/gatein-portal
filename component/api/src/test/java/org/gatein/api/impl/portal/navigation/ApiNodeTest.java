@@ -27,7 +27,7 @@ import org.gatein.api.portal.navigation.Node;
 import org.gatein.api.portal.navigation.NodePath;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.navigation.Visibility.Flag;
+import org.gatein.api.portal.navigation.Visibility.Status;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.junit.Before;
@@ -55,10 +55,10 @@ public class ApiNodeTest
       assertFalse(itr.hasNext());
    }
 
-   public static void assertVisibility(boolean expectedVisible, Flag expectedFlag, PublicationDate expectedDate, Node actualNode)
+   public static void assertVisibility(boolean expectedVisible, Status expectedFlag, PublicationDate expectedDate, Node actualNode)
    {
       assertEquals(expectedVisible, actualNode.isVisible());
-      assertEquals(expectedFlag, actualNode.getVisibility().getFlag());
+      assertEquals(expectedFlag, actualNode.getVisibility().getStatus());
       assertEquals(expectedDate, actualNode.getVisibility().getPublicationDate());
    }
 
@@ -464,16 +464,16 @@ public class ApiNodeTest
    public void visibility()
    {
       Node c = root.addChild("child");
-      assertVisibility(true, Flag.VISIBLE, null, c);
+      assertVisibility(true, Status.VISIBLE, null, c);
 
       c.setVisibility(false);
-      assertVisibility(false, Flag.HIDDEN, null, c);
+      assertVisibility(false, Status.HIDDEN, null, c);
 
       PublicationDate d = PublicationDate.between(new Date(), new Date(System.currentTimeMillis() + 60000));
       c.setVisibility(d);
-      assertVisibility(true, Flag.PUBLICATION, d, c);
+      assertVisibility(true, Status.PUBLICATION, d, c);
 
-      c.setVisibility(new Visibility(Flag.SYSTEM));
-      assertVisibility(true, Flag.SYSTEM, null, c);
+      c.setVisibility(new Visibility(Status.SYSTEM));
+      assertVisibility(true, Status.SYSTEM, null, c);
    }
 }

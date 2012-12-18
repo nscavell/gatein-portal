@@ -40,7 +40,7 @@ import org.gatein.api.portal.navigation.NodeVisitor;
 import org.gatein.api.portal.navigation.Nodes;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.navigation.Visibility.Flag;
+import org.gatein.api.portal.navigation.Visibility.Status;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.util.Filter;
@@ -426,14 +426,14 @@ public class ApiNode implements Node
 
       Parameters.requireNonNull(visibility, "visibility");
 
-      if (visibility.getFlag() == Flag.PUBLICATION)
+      if (visibility.getStatus() == Status.PUBLICATION)
       {
          setVisibility(visibility.getPublicationDate());
       }
       else
       {
          setState(getStateBuilder().startPublicationTime(-1).endPublicationTime(-1)
-               .visibility(ObjectFactory.createVisibility(visibility.getFlag())));
+               .visibility(ObjectFactory.createVisibility(visibility.getStatus())));
       }
    }
 

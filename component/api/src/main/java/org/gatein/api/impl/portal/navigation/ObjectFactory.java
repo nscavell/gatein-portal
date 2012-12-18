@@ -28,7 +28,7 @@ import org.gatein.api.portal.Localized.Value;
 import org.gatein.api.portal.LocalizedString;
 import org.gatein.api.portal.navigation.PublicationDate;
 import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.navigation.Visibility.Flag;
+import org.gatein.api.portal.navigation.Visibility.Status;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -70,7 +70,7 @@ public class ObjectFactory
       return descriptions;
    }
 
-   public static org.exoplatform.portal.mop.Visibility createVisibility(Flag flag)
+   public static org.exoplatform.portal.mop.Visibility createVisibility(Status flag)
    {
       switch (flag)
       {
@@ -87,7 +87,7 @@ public class ObjectFactory
 
    public static Visibility createVisibility(NodeState nodeState)
    {
-      Flag flag = createFlag(nodeState.getVisibility());
+      Status flag = createFlag(nodeState.getVisibility());
 
       long start = nodeState.getStartPublicationTime();
       long end = nodeState.getEndPublicationTime();
@@ -109,18 +109,18 @@ public class ObjectFactory
       return new Visibility(flag, publicationDate);
    }
 
-   private static Flag createFlag(org.exoplatform.portal.mop.Visibility visibility)
+   private static Status createFlag(org.exoplatform.portal.mop.Visibility visibility)
    {
       switch (visibility)
       {
          case DISPLAYED:
-            return Flag.VISIBLE;
+            return Status.VISIBLE;
          case HIDDEN:
-            return Flag.HIDDEN;
+            return Status.HIDDEN;
          case SYSTEM:
-            return Flag.SYSTEM;
+            return Status.SYSTEM;
          case TEMPORAL:
-            return Flag.PUBLICATION;
+            return Status.PUBLICATION;
          default:
             throw new ApiException("Unknown internal visibility '" + visibility + "'");
       }
