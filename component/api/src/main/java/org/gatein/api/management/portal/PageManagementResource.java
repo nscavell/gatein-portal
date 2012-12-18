@@ -26,8 +26,6 @@ import java.util.List;
 
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
-import org.gatein.api.portal.Membership;
-import org.gatein.api.portal.Permission;
 import org.gatein.api.portal.page.Page;
 import org.gatein.api.portal.page.PageId;
 import org.gatein.api.portal.page.PageQuery;
@@ -42,7 +40,6 @@ import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
-import org.gatein.management.api.model.ModelString;
 import org.gatein.management.api.operation.OperationNames;
 
 import static org.gatein.api.management.portal.ModelUtils.*;

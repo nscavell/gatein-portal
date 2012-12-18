@@ -10,10 +10,10 @@ import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
-import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.IdentityRegistry;
+import org.gatein.api.portal.site.SiteId;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;
@@ -25,6 +25,7 @@ import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
@@ -83,6 +84,12 @@ public class TmpPortalIT
       return javaArchive;
    }
 
+   @Test
+   public void test()
+   {
+      portal.getNavigation(new SiteId("classic"));
+   }
+
    @Before
    public void setup()
    {
@@ -95,7 +102,6 @@ public class TmpPortalIT
       navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
       DescriptionService descriptionService = (DescriptionService) container
             .getComponentInstanceOfType(DescriptionService.class);
-      OrganizationService orgService = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
       ResourceBundleManager bundleManager = (ResourceBundleManager) container
             .getComponentInstanceOfType(ResourceBundleManager.class);
       Authenticator authenticator = (Authenticator) container.getComponentInstanceOfType(Authenticator.class);

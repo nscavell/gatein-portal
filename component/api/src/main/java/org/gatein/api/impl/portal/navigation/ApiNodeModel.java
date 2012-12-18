@@ -23,7 +23,6 @@ package org.gatein.api.impl.portal.navigation;
 
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeModel;
-import org.gatein.api.portal.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>

@@ -27,7 +27,6 @@ import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.exoplatform.portal.pom.config.POMSessionManager;
-import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.IdentityRegistry;
@@ -91,7 +90,6 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
       PortalContainer container = getContainer();
       POMSessionManager mgr = (POMSessionManager) container.getComponentInstanceOfType(POMSessionManager.class);
       NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
-      OrganizationService orgService = (OrganizationService) container.getComponentInstanceOfType(OrganizationService.class);
       DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
       DescriptionService descriptionService = (DescriptionService) container.getComponentInstanceOfType(DescriptionService.class);
       ResourceBundleManager bundleManager = (ResourceBundleManager) container.getComponentInstanceOfType(ResourceBundleManager.class);
@@ -121,7 +119,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
       end(false);
    }
 
-   protected NodeContext createSite(SiteType type, String name)
+   protected NodeContext<NodeContext<?>> createSite(SiteType type, String name)
    {
       try
       {
@@ -147,7 +145,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
       }
    }
 
-   protected NodeContext createSite(SiteType type, String name, String...pages)
+   protected NodeContext<NodeContext<?>> createSite(SiteType type, String name, String... pages)
    {
       try
       {

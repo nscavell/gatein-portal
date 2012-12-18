@@ -53,8 +53,6 @@ import org.gatein.management.api.operation.OperationNames;
 
 import java.util.List;
 
-import static org.gatein.api.portal.site.Site.*;
-
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */

@@ -32,7 +32,6 @@ import org.gatein.api.portal.site.Site;
 import org.gatein.api.portal.site.SiteId;
 import org.gatein.api.portal.site.SiteType;
 
-import java.io.Serializable;
 import java.util.Locale;
 
 /**
