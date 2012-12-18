@@ -32,9 +32,8 @@ import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope.Visitor;
 import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.exoplatform.portal.mop.page.PageKey;
-import org.gatein.api.impl.portal.navigation.NodeVisitorScope;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
 import org.junit.Test;
 
 /**

@@ -22,10 +22,10 @@
 
 package org.gatein.api.impl.portal;
 
-import org.gatein.api.PortalRequest;
-
 import java.util.Locale;
 import java.util.ResourceBundle;
+
+import org.gatein.api.PortalRequest;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

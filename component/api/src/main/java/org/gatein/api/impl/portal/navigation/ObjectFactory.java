@@ -21,19 +21,19 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import org.exoplatform.portal.mop.Described;
-import org.exoplatform.portal.mop.navigation.NodeState;
-import org.gatein.api.ApiException;
-import org.gatein.api.portal.Localized.Value;
-import org.gatein.api.portal.LocalizedString;
-import org.gatein.api.portal.navigation.PublicationDate;
-import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.navigation.Visibility.Status;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import org.exoplatform.portal.mop.Described;
+import org.exoplatform.portal.mop.navigation.NodeState;
+import org.gatein.api.ApiException;
+import org.gatein.api.common.i18n.Localized.Value;
+import org.gatein.api.common.i18n.LocalizedString;
+import org.gatein.api.navigation.PublicationDate;
+import org.gatein.api.navigation.Visibility;
+import org.gatein.api.navigation.Visibility.Status;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>

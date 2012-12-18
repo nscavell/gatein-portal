@@ -33,14 +33,14 @@ import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.gatein.api.impl.portal.site.SiteImpl;
-import org.gatein.api.portal.Group;
-import org.gatein.api.portal.Membership;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.page.PageId;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteType;
+import org.gatein.api.page.PageId;
+import org.gatein.api.security.Group;
+import org.gatein.api.security.Membership;
+import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteId;
+import org.gatein.api.site.SiteType;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

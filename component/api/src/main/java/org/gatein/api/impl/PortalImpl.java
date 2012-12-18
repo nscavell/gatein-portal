@@ -22,6 +22,12 @@
 
 package org.gatein.api.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.UserACL;
@@ -45,31 +51,24 @@ import org.gatein.api.ApiException;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
+import org.gatein.api.common.Filter;
+import org.gatein.api.common.Pagination;
 import org.gatein.api.impl.portal.DataStorageContext;
 import org.gatein.api.impl.portal.navigation.NavigationImpl;
 import org.gatein.api.impl.portal.page.PageImpl;
 import org.gatein.api.internal.Strings;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.page.PageId;
-import org.gatein.api.portal.page.PageQuery;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteQuery;
-import org.gatein.api.portal.site.SiteType;
-import org.gatein.api.util.Filter;
-import org.gatein.api.util.Pagination;
+import org.gatein.api.navigation.Navigation;
+import org.gatein.api.page.Page;
+import org.gatein.api.page.PageId;
+import org.gatein.api.page.PageQuery;
+import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteId;
+import org.gatein.api.site.SiteQuery;
+import org.gatein.api.site.SiteType;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
@@ -278,13 +277,6 @@ public class PortalImpl extends DataStorageContext implements Portal
       while (iterator.hasNext())
       {
          pages.add(new PageImpl(iterator.next()));
-      }
-
-      //TODO: PageQuery should not support sorting, or at least not when paging is being used.
-      Comparator<Page> comparator = Comparators.page(query.getSorting());
-      if (comparator != null)
-      {
-         Collections.sort(pages, comparator);
       }
 
       filter(pages, query.getFilter());

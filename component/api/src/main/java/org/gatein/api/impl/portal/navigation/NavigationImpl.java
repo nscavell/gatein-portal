@@ -21,6 +21,9 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
+import java.util.Locale;
+import java.util.Map;
+
 import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.Described.State;
 import org.exoplatform.portal.mop.SiteKey;
@@ -34,21 +37,18 @@ import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.ApiException;
+import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.impl.Parameters;
 import org.gatein.api.impl.Util;
 import org.gatein.api.impl.portal.AbstractI18NResolver;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteNotFoundException;
-
-import java.util.Locale;
-import java.util.Map;
+import org.gatein.api.navigation.Navigation;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
+import org.gatein.api.navigation.Nodes;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -314,7 +314,7 @@ public class NavigationImpl implements Navigation
 
       if (navCtx == null)
       {
-         throw new SiteNotFoundException(siteId);
+         throw new EntityNotFoundException("Site " + siteId + " not found");
       }
    }
 }

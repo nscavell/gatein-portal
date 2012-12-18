@@ -22,12 +22,12 @@
 
 package org.gatein.api.impl;
 
-import org.exoplatform.portal.config.model.PortalConfig;
-import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.util.Sorting;
-
 import java.util.Comparator;
+
+import org.exoplatform.portal.config.model.PortalConfig;
+import org.gatein.api.common.Sorting;
+import org.gatein.api.page.Page;
+import org.gatein.api.site.Site;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

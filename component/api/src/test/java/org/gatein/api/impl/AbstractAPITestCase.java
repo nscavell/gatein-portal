@@ -31,10 +31,10 @@ import org.exoplatform.services.resources.ResourceBundleManager;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.gatein.api.Portal;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
+import org.gatein.api.site.SiteId;
 
 /**
  * @author <a href="mailto:julien.viet@exoplatform.com">Julien Viet</a>

@@ -22,12 +22,12 @@
 
 package org.gatein.api.impl.portal.navigation;
 
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

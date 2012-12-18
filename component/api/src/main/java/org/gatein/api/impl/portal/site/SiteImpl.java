@@ -22,17 +22,17 @@
 
 package org.gatein.api.impl.portal.site;
 
-import org.gatein.api.internal.Objects;
-import org.gatein.api.portal.Attributes;
-import org.gatein.api.portal.Group;
-import org.gatein.api.portal.LocalizedString;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteType;
-
 import java.util.Locale;
+
+import org.gatein.api.common.Attributes;
+import org.gatein.api.common.i18n.LocalizedString;
+import org.gatein.api.internal.Objects;
+import org.gatein.api.security.Group;
+import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteId;
+import org.gatein.api.site.SiteType;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

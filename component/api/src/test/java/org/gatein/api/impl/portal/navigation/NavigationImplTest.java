@@ -22,7 +22,22 @@
 
 package org.gatein.api.impl.portal.navigation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
 import junit.framework.AssertionFailedError;
+
 import org.exoplatform.component.test.ConfigurationUnit;
 import org.exoplatform.component.test.ConfiguredBy;
 import org.exoplatform.component.test.ContainerScope;
@@ -41,33 +56,22 @@ import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.EntityAlreadyExistsException;
+import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
+import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.impl.TestPortalRequest;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.LocalizedString;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodeNotFoundException;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteNotFoundException;
+import org.gatein.api.navigation.Navigation;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.Nodes;
+import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
+import org.gatein.api.site.SiteId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
-import static org.junit.Assert.*;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -207,7 +211,7 @@ public class NavigationImplTest
       navigation.removeNode(null);
    }
 
-   @Test(expected = NodeNotFoundException.class)
+   @Test(expected = EntityNotFoundException.class)
    public void removeNode_NodeNotFound()
    {
       navigation.removeNode(NodePath.path("nosuch"));
@@ -281,7 +285,7 @@ public class NavigationImplTest
       assertNull(node);
    }
 
-   @Test(expected = SiteNotFoundException.class)
+   @Test(expected = EntityNotFoundException.class)
    public void getNavigation_InvalidSite()
    {
       portal.getNavigation(new SiteId("invalid")).loadNodes(Nodes.visitAll());
@@ -342,27 +346,6 @@ public class NavigationImplTest
    }
 
    @Test
-   public void something()
-   {
-      Node root = navigation.loadNodes(Nodes.visitChildren());
-      Node a = root.addChild("a");
-      Node b = a.addChild("b");
-      b.addChild("c");
-
-      navigation.saveNode(root);
-
-      a = navigation.getNode("a");
-      b = navigation.getNode("a", "b");
-
-      a.setIconName("a-icon");
-      navigation.saveNode(a);
-
-      navigation.loadChildren(b);
-      System.out.println(b.getParent().getIconName());
-      assertNull(b.getParent().getIconName());
-   }
-
-   @Test
    public void moveNode()
    {
       Node root = navigation.loadNodes(Nodes.visitChildren());
@@ -375,7 +358,7 @@ public class NavigationImplTest
 
       Node d = root.getNode("a", "b", "c", "d");
       Node h = root.getNode("e", "f", "g", "h");
-      navigation.loadChildren(h);
+      navigation.refreshNode(h, Nodes.visitChildren());
       d.moveTo(h);
 
       navigation.saveNode(root);

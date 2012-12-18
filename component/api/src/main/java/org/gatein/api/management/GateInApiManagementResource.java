@@ -22,21 +22,23 @@
 
 package org.gatein.api.management;
 
+import java.util.List;
+
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.management.portal.NavigationManagementResource;
 import org.gatein.api.management.portal.PageManagementResource;
-import org.gatein.api.portal.Group;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.page.PageQuery;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteQuery;
-import org.gatein.api.portal.site.SiteType;
-import org.gatein.api.portal.User;
+import org.gatein.api.navigation.Navigation;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.Nodes;
+import org.gatein.api.page.Page;
+import org.gatein.api.page.PageQuery;
+import org.gatein.api.security.Group;
+import org.gatein.api.security.User;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteId;
+import org.gatein.api.site.SiteQuery;
+import org.gatein.api.site.SiteType;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.management.api.PathAddress;
@@ -50,8 +52,6 @@ import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
-
-import java.util.List;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

@@ -13,7 +13,7 @@ import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.IdentityRegistry;
-import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.site.SiteId;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.osgi.spi.ManifestBuilder;

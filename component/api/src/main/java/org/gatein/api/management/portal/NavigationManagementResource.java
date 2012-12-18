@@ -22,12 +22,15 @@
 
 package org.gatein.api.management.portal;
 
+import static org.gatein.api.navigation.Nodes.visitChildren;
+import static org.gatein.api.navigation.Nodes.visitNone;
+
 import org.gatein.api.Portal;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.navigation.Navigation;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.Nodes;
+import org.gatein.api.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
@@ -39,8 +42,6 @@ import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
-
-import static org.gatein.api.portal.navigation.Nodes.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

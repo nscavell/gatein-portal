@@ -22,10 +22,10 @@
 
 package org.gatein.api.management.portal;
 
-import org.gatein.api.portal.Localized;
-import org.gatein.api.portal.LocalizedString;
-import org.gatein.api.portal.Membership;
-import org.gatein.api.portal.Permission;
+import org.gatein.api.common.i18n.Localized;
+import org.gatein.api.common.i18n.LocalizedString;
+import org.gatein.api.security.Membership;
+import org.gatein.api.security.Permission;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelString;

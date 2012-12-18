@@ -24,12 +24,12 @@ package org.gatein.api.impl.portal.page;
 
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageState;
+import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.LocalizedString;
-import org.gatein.api.portal.Permission;
-import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.page.PageId;
-import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.page.Page;
+import org.gatein.api.page.PageId;
+import org.gatein.api.security.Permission;
+import org.gatein.api.site.SiteId;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

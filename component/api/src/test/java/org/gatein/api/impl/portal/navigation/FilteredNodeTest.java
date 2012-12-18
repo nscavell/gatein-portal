@@ -29,9 +29,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.util.Filter;
+import org.gatein.api.common.Filter;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
 import org.junit.Before;
 import org.junit.Test;
 

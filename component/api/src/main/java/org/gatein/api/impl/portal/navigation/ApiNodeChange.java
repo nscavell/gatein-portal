@@ -22,15 +22,15 @@
 
 package org.gatein.api.impl.portal.navigation;
 
+import java.io.Serializable;
+
 import org.exoplatform.portal.mop.navigation.NodeChange;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.navigation.Nodes;
-
-import java.io.Serializable;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
+import org.gatein.api.navigation.Nodes;
 
 /**
  * Used to store uncommitted node changes during serialization, derived from {@link org.exoplatform.portal.mop.navigation.NodeChange}.

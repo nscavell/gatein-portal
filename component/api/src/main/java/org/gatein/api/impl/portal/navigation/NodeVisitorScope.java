@@ -25,10 +25,10 @@ import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
 import org.gatein.api.impl.Util;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.page.PageId;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
+import org.gatein.api.navigation.Visibility;
+import org.gatein.api.page.PageId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>

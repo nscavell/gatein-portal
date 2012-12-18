@@ -22,18 +22,18 @@
 
 package org.gatein.api.impl.portal;
 
-import org.exoplatform.commons.utils.ListAccess;
-import org.exoplatform.portal.config.DataStorage;
-import org.exoplatform.portal.config.Query;
-import org.gatein.api.ApiException;
-import org.gatein.api.util.Pagination;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.exoplatform.commons.utils.ListAccess;
+import org.exoplatform.portal.config.DataStorage;
+import org.exoplatform.portal.config.Query;
+import org.gatein.api.ApiException;
+import org.gatein.api.common.Pagination;
+import org.gatein.common.logging.Logger;
+import org.gatein.common.logging.LoggerFactory;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

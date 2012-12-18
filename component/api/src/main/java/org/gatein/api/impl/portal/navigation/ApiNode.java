@@ -21,30 +21,6 @@
  */
 package org.gatein.api.impl.portal.navigation;
 
-import org.exoplatform.portal.mop.Described;
-import org.exoplatform.portal.mop.navigation.NodeChange;
-import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.exoplatform.portal.mop.navigation.NodeState;
-import org.exoplatform.portal.mop.navigation.NodeState.Builder;
-import org.gatein.api.EntityAlreadyExistsException;
-import org.gatein.api.Portal;
-import org.gatein.api.PortalRequest;
-import org.gatein.api.impl.Parameters;
-import org.gatein.api.impl.Util;
-import org.gatein.api.internal.Objects;
-import org.gatein.api.portal.LocalizedString;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodeNotFoundException;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.NodeVisitor;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.navigation.PublicationDate;
-import org.gatein.api.portal.navigation.Visibility;
-import org.gatein.api.portal.navigation.Visibility.Status;
-import org.gatein.api.portal.page.PageId;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.util.Filter;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -56,6 +32,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import org.exoplatform.portal.mop.Described;
+import org.exoplatform.portal.mop.navigation.NodeChange;
+import org.exoplatform.portal.mop.navigation.NodeContext;
+import org.exoplatform.portal.mop.navigation.NodeState;
+import org.exoplatform.portal.mop.navigation.NodeState.Builder;
+import org.gatein.api.EntityAlreadyExistsException;
+import org.gatein.api.EntityNotFoundException;
+import org.gatein.api.Portal;
+import org.gatein.api.PortalRequest;
+import org.gatein.api.common.Filter;
+import org.gatein.api.common.i18n.LocalizedString;
+import org.gatein.api.impl.Parameters;
+import org.gatein.api.impl.Util;
+import org.gatein.api.internal.Objects;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
+import org.gatein.api.navigation.Nodes;
+import org.gatein.api.navigation.PublicationDate;
+import org.gatein.api.navigation.Visibility;
+import org.gatein.api.navigation.Visibility.Status;
+import org.gatein.api.page.PageId;
+import org.gatein.api.site.SiteId;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -318,7 +318,6 @@ public class ApiNode implements Node
          throw new IllegalArgumentException("Can't move node to a different branch");
       }
 
-      context.remove();
       ((ApiNode) parent).context.add(index, context);
    }
 
@@ -329,7 +328,7 @@ public class ApiNode implements Node
 
       if (!hasChild(childName))
       {
-         throw new NodeNotFoundException(siteId, getNodePath().append(childName));
+         throw new EntityNotFoundException("Node " + getNodePath().append(childName) + " not found for site " + siteId);
       }
 
       return context.removeNode(childName);

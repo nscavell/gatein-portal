@@ -27,9 +27,9 @@ import java.util.NoSuchElementException;
 import java.util.WeakHashMap;
 
 import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.util.Filter;
+import org.gatein.api.common.Filter;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>

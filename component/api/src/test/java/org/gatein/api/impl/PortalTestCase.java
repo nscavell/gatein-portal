@@ -22,23 +22,24 @@
 
 package org.gatein.api.impl;
 
-import org.gatein.api.EntityAlreadyExistsException;
-import org.gatein.api.impl.portal.site.SiteImpl;
-import org.gatein.api.portal.Group;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.page.Page;
-import org.gatein.api.portal.page.PageId;
-import org.gatein.api.portal.page.PageQuery;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteId;
-import org.gatein.api.portal.site.SiteQuery;
-import org.gatein.api.portal.site.SiteType;
-import org.gatein.api.util.Filter;
-import org.gatein.api.util.Pagination;
-
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
+import org.gatein.api.EntityAlreadyExistsException;
+import org.gatein.api.common.Filter;
+import org.gatein.api.common.Pagination;
+import org.gatein.api.impl.portal.site.SiteImpl;
+import org.gatein.api.page.Page;
+import org.gatein.api.page.PageId;
+import org.gatein.api.page.PageQuery;
+import org.gatein.api.security.Group;
+import org.gatein.api.security.User;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteId;
+import org.gatein.api.site.SiteQuery;
+import org.gatein.api.site.SiteType;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
@@ -78,42 +79,6 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals("b", sites.get(3).getId().getName());
    }
 
-   public void testSortedSiteQuery_ascending()
-   {
-      cleanup();
-
-      portal.saveSite(new SiteImpl("c"));
-      portal.saveSite(new SiteImpl("a"));
-      portal.saveSite(new SiteImpl("d"));
-      portal.saveSite(new SiteImpl("b"));
-
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withSorting().ascending().build());
-
-      assertEquals(4, sites.size());
-      assertEquals("a", sites.get(0).getId().getName());
-      assertEquals("b", sites.get(1).getId().getName());
-      assertEquals("c", sites.get(2).getId().getName());
-      assertEquals("d", sites.get(3).getId().getName());
-   }
-
-   public void testSortedSiteQuery_descending()
-   {
-      cleanup();
-
-      portal.saveSite(new SiteImpl("c"));
-      portal.saveSite(new SiteImpl("a"));
-      portal.saveSite(new SiteImpl("d"));
-      portal.saveSite(new SiteImpl("b"));
-
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withSorting().descending().build());
-
-      assertEquals(4, sites.size());
-      assertEquals("d", sites.get(0).getId().getName());
-      assertEquals("c", sites.get(1).getId().getName());
-      assertEquals("b", sites.get(2).getId().getName());
-      assertEquals("a", sites.get(3).getId().getName());
-   }
-
    public void testSortedSiteQuery_comparator()
    {
       cleanup();
@@ -134,14 +99,17 @@ public class PortalTestCase extends AbstractAPITestCase
       site.setDisplayName("Ford");
       portal.saveSite(site);
 
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withSorting().withComparator(new Comparator<Site>()
+      List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).build());
+
+      Comparator<Site> c = new Comparator<Site>()
       {
          @Override
          public int compare(Site o1, Site o2)
          {
             return o1.resolveDisplayName().compareTo(o2.resolveDisplayName());
          }
-      }).build());
+      };
+      Collections.sort(sites, c);
 
       assertEquals(4, sites.size());
       assertEquals("a", sites.get(0).getId().getName());
@@ -489,7 +457,7 @@ public class PortalTestCase extends AbstractAPITestCase
 
       createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page5", "page2", "page3", "page1", "page6", "page4", "page7");
 
-      PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withSorting().ascending().build();
+      PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build();
       List<Page> pages = portal.findPages(query);
       assertEquals(7, pages.size());
       assertEquals("page1", pages.get(0).getName());
@@ -499,16 +467,6 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals("page5", pages.get(4).getName());
       assertEquals("page6", pages.get(5).getName());
       assertEquals("page7", pages.get(6).getName());
-
-      pages = portal.findPages(new PageQuery.Builder().from(query).withSorting().descending().build());
-      assertEquals(7, pages.size());
-      assertEquals("page7", pages.get(0).getName());
-      assertEquals("page6", pages.get(1).getName());
-      assertEquals("page5", pages.get(2).getName());
-      assertEquals("page4", pages.get(3).getName());
-      assertEquals("page3", pages.get(4).getName());
-      assertEquals("page2", pages.get(5).getName());
-      assertEquals("page1", pages.get(6).getName());
    }
 
    public void testHasPermission()

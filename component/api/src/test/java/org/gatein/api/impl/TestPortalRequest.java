@@ -22,13 +22,13 @@
 
 package org.gatein.api.impl;
 
+import java.util.Locale;
+
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.site.SiteId;
-
-import java.util.Locale;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.security.User;
+import org.gatein.api.site.SiteId;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>

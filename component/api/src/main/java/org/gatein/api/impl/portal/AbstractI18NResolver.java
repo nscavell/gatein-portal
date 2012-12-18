@@ -21,13 +21,13 @@
  */
 package org.gatein.api.impl.portal;
 
+import java.util.Locale;
+import java.util.ResourceBundle;
+
 import org.exoplatform.commons.utils.ExpressionUtil;
 import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.description.DescriptionService;
-import org.gatein.api.portal.LocalizedString;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
+import org.gatein.api.common.i18n.LocalizedString;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
