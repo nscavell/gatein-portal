@@ -24,11 +24,10 @@ package org.exoplatform.portal.application;
 
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
-import org.gatein.api.impl.Util;
-import org.gatein.api.portal.User;
-import org.gatein.api.portal.navigation.NodePath;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.SiteId;
+import org.gatein.api.Util;
+import org.gatein.api.navigation.NodePath;
+import org.gatein.api.security.User;
+import org.gatein.api.site.SiteId;
 
 import java.util.Locale;
 

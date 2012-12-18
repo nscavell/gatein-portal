@@ -24,12 +24,12 @@ package org.gatein.portal.samples.api;
 
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
-import org.gatein.api.portal.navigation.Navigation;
-import org.gatein.api.portal.navigation.Node;
-import org.gatein.api.portal.navigation.Nodes;
-import org.gatein.api.portal.site.Site;
-import org.gatein.api.portal.site.SiteQuery;
-import org.gatein.api.portal.site.SiteType;
+import org.gatein.api.navigation.Navigation;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.Nodes;
+import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteQuery;
+import org.gatein.api.site.SiteType;
 
 import javax.portlet.GenericPortlet;
 import javax.portlet.PortletConfig;
