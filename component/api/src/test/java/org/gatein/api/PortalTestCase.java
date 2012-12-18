@@ -451,24 +451,6 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals(2, pages.size());
    }
 
-   public void testFindPages_Sorting()
-   {
-      cleanup();
-
-      createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page5", "page2", "page3", "page1", "page6", "page4", "page7");
-
-      PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build();
-      List<Page> pages = portal.findPages(query);
-      assertEquals(7, pages.size());
-      assertEquals("page1", pages.get(0).getName());
-      assertEquals("page2", pages.get(1).getName());
-      assertEquals("page3", pages.get(2).getName());
-      assertEquals("page4", pages.get(3).getName());
-      assertEquals("page5", pages.get(4).getName());
-      assertEquals("page6", pages.get(5).getName());
-      assertEquals("page7", pages.get(6).getName());
-   }
-
    public void testHasPermission()
    {
       createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "permissions", "page");

@@ -265,8 +265,7 @@ public class PortalImpl extends DataStorageContext implements Portal
       }
       else
       {
-         QueryResult<PageContext> result = pageService.findPages(
-            pagination.getOffset(), pagination.getLimit(),
+         QueryResult<PageContext> result = pageService.findPages(pagination.getOffset(), pagination.getLimit(),
             Util.from(query.getSiteType()), query.getSiteName(), null, query.getDisplayName());
 
          iterator = result.iterator();
