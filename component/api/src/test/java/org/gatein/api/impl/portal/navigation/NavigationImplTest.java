@@ -342,41 +342,6 @@ public class NavigationImplTest
    }
 
    @Test
-   public void loadChildren()
-   {
-      createNavigationChildren();
-
-      Node node = navigation.loadNodes(Nodes.visitChildren());
-      assertNotNull(node);
-      Node parent = node.getChild("parent");
-      assertTrue(node.isChildrenLoaded());
-      assertFalse(parent.isChildrenLoaded());
-
-      navigation.loadChildren(parent);
-
-      assertTrue(parent.isChildrenLoaded());
-      assertNotNull(parent.getChild("child"));
-   }
-
-   @Test
-   public void loadChildren_ParentNodeStateChanged()
-   {
-      createNavigationChildren();
-
-      Node node1 = navigation.loadNodes(Nodes.visitChildren());
-      Node parent1 = node1.getChild("parent");
-
-      Node node2 = navigation.loadNodes(Nodes.visitChildren());
-      Node parent2 = node2.getChild("parent");
-      parent2.setIconName("new");
-      navigation.saveNode(parent2);
-
-      navigation.loadChildren(parent1);
-
-      assertNull(parent1.getIconName());
-   }
-
-   @Test
    public void something()
    {
       Node root = navigation.loadNodes(Nodes.visitChildren());
@@ -395,12 +360,6 @@ public class NavigationImplTest
       navigation.loadChildren(b);
       System.out.println(b.getParent().getIconName());
       assertNull(b.getParent().getIconName());
-   }
-
-   @Test(expected = IllegalArgumentException.class)
-   public void loadChildren_NullParent()
-   {
-      navigation.loadChildren(null);
    }
 
    @Test
@@ -473,6 +432,22 @@ public class NavigationImplTest
    }
 
    @Test
+   public void refreshNode_LoadChildren()
+   {
+      createNavigationChildren();
+
+      Node n = navigation.loadNodes(Nodes.visitChildren());
+      Node p = n.getChild("parent");
+
+      assertTrue(n.isChildrenLoaded());
+      assertFalse(p.isChildrenLoaded());
+
+      navigation.refreshNode(p, Nodes.visitChildren());
+
+      assertTrue(p.isChildrenLoaded());
+   }
+
+   @Test
    public void saveNode() throws InterruptedException
    {
       createNavigationChildren();
@@ -525,7 +500,7 @@ public class NavigationImplTest
       ObjectOutputStream out = new ObjectOutputStream(baos);
       Node parent = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
       Node child = parent.getChild("child");
-      navigation.loadChildren(child);
+      navigation.refreshNode(child, Nodes.visitChildren());
 
       // transient changes
       child.addChild("foo");

@@ -92,7 +92,7 @@ abstract class ApiNodeChange implements Serializable
          ApiNode node = getNode(root, parent);
          if (!node.isChildrenLoaded())
          {
-            node.navigation.loadChildren(node);
+            node.navigation.refreshNode(node, Nodes.visitChildren());
          }
          int index = (previous == null) ? 0 : node.indexOf(previous.getLastSegment());
          if (index < 0)

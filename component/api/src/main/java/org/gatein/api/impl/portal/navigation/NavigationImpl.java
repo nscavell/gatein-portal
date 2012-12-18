@@ -149,15 +149,6 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public void loadChildren(Node parent)
-   {
-      Parameters.requireNonNull(parent, "parent");
-
-      NodeContext<ApiNode> ctx = ((ApiNode) parent).getContext();
-      rebaseNodeContext(ctx, new NodeVisitorScope(Nodes.visitChildren()), null);
-   }
-
-   @Override
    public void refreshNode(Node node)
    {
       refreshNode(node, Nodes.visitNone());
