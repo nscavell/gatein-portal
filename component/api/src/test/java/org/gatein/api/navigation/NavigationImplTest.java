@@ -182,17 +182,9 @@ public class NavigationImplTest
 
       navigation = portal.getNavigation(siteId);
 
-      assertEquals(10, navigation.getPriority().intValue());
+      assertEquals(10, navigation.getPriority());
       assertEquals(siteId, navigation.getSiteId());
       assertEquals(0, navigation.loadNodes(Nodes.visitAll()).getChildCount());
-   }
-
-   @Test
-   public void setPriority_Null()
-   {
-      navigation.setPriority(null);
-
-      assertNull(portal.getNavigation(siteId).getPriority());
    }
 
    @Test

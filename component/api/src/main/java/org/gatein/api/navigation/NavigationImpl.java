@@ -129,7 +129,7 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public Integer getPriority()
+   public int getPriority()
    {
       updateNavigationContext();
       return navCtx.getState().getPriority();
@@ -175,7 +175,7 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public void setPriority(Integer priority)
+   public void setPriority(int priority)
    {
       navCtx.setState(new NavigationState(priority));
       save(navCtx);
