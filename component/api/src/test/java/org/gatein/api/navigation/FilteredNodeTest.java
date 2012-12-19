@@ -30,9 +30,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.gatein.api.common.Filter;
-import org.gatein.api.navigation.ApiNode;
-import org.gatein.api.navigation.Node;
-import org.gatein.api.navigation.NodePath;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -113,6 +110,7 @@ public class FilteredNodeTest
    public void getChild()
    {
       assertNotNull(filtered.getChild("child0"));
+      assertTrue(filtered.getChild("child0") instanceof FilteredNode);
       assertNull(filtered.getChild("child1"));
    }
 
@@ -120,6 +118,7 @@ public class FilteredNodeTest
    public void getChild_Index()
    {
       assertEquals("child0", filtered.getChild(0).getName());
+      assertTrue(filtered.getChild(0) instanceof FilteredNode);
       assertEquals("child2", filtered.getChild(1).getName());
    }
 
@@ -142,6 +141,7 @@ public class FilteredNodeTest
       root.getChild("child1").addChild("child1-0");
 
       assertNotNull(filtered.getNode(NodePath.path("child0", "child0-0")));
+      assertTrue(filtered.getNode(NodePath.path("child0", "child0-0")) instanceof FilteredNode);
       assertNull(filtered.getNode(NodePath.path("child1")));
       assertNull(filtered.getNode(NodePath.path("child1", "child0-0")));
    }
@@ -165,6 +165,7 @@ public class FilteredNodeTest
    public void iterator()
    {
       assertIterator(filtered.iterator(), "child0", "child2", "child4");
+      assertTrue(filtered.iterator().next() instanceof FilteredNode);
    }
 
    @Test

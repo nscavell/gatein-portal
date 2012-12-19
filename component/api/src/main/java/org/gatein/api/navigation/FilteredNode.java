@@ -226,7 +226,7 @@ public class FilteredNode extends ApiNode
             ApiNode n = itr.next();
             if (map.isAccepted(n))
             {
-               return n;
+               return map.getFiltered(n);
             }
          }
 
