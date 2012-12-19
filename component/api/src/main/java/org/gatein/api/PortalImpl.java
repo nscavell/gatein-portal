@@ -53,7 +53,7 @@ import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.common.Filter;
 import org.gatein.api.common.Pagination;
-import org.gatein.api.internal.Strings;
+import org.gatein.api.internal.StringJoiner;
 import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.NavigationImpl;
 import org.gatein.api.page.Page;
@@ -298,7 +298,7 @@ public class PortalImpl extends DataStorageContext implements Portal
    @Override
    public boolean hasPermission(User user, Permission permission)
    {
-      String expPerm = Strings.joiner(",").join(Util.from(permission));
+      String expPerm = StringJoiner.joiner(",").join(Util.from(permission));
 
       Identity identity;
       if (user == User.anonymous())

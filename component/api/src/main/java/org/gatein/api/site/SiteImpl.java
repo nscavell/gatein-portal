@@ -26,7 +26,7 @@ import java.util.Locale;
 
 import org.gatein.api.common.Attributes;
 import org.gatein.api.common.i18n.LocalizedString;
-import org.gatein.api.internal.Objects;
+import org.gatein.api.internal.ObjectToStringBuilder;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
@@ -206,7 +206,7 @@ public class SiteImpl implements Site
    @Override
    public String toString()
    {
-      return Objects.toStringBuilder(getClass())
+      return ObjectToStringBuilder.toStringBuilder(getClass())
          .add("type", getType().getName())
          .add("name", getName())
          .add("displayName", getDisplayName())

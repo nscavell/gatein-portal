@@ -46,7 +46,7 @@ import org.gatein.api.PortalRequest;
 import org.gatein.api.Util;
 import org.gatein.api.common.Filter;
 import org.gatein.api.common.i18n.LocalizedString;
-import org.gatein.api.internal.Objects;
+import org.gatein.api.internal.ObjectToStringBuilder;
 import org.gatein.api.navigation.Node;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.navigation.NodeVisitor;
@@ -466,7 +466,7 @@ public class ApiNode implements Node
    @Override
    public String toString()
    {
-      return Objects.toStringBuilder(getClass()).add("name", getName()).add("path", getNodePath())
+      return ObjectToStringBuilder.toStringBuilder(getClass()).add("name", getName()).add("path", getNodePath())
             .add("visibility", getVisibility()).add("iconName", getIconName()).add("pageId", getPageId()).toString();
    }
 
