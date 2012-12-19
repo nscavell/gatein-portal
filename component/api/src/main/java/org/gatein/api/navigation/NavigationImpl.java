@@ -162,6 +162,22 @@ public class NavigationImpl implements Navigation
 
       NodeContext<ApiNode> ctx = ((ApiNode) node).getContext();
       rebaseNodeContext(ctx, new NodeVisitorScope(visitor), null);
+
+      Node r = node;
+      while (!r.isRoot()) r = r.getParent();
+      clearCached(r);
+   }
+
+   private void clearCached(Node node)
+   {
+      ((ApiNode) node).clearCached();
+      if (node.isChildrenLoaded())
+      {
+         for (Node c : node)
+         {
+            clearCached(c);
+         }
+      }
    }
 
    @Override

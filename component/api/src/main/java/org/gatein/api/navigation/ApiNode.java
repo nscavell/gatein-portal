@@ -68,6 +68,7 @@ public class ApiNode implements Node
 
    private LocalizedString displayName;
    private String resolvedDisplayName;
+   private URI resolvedURI;
    private boolean displayNameChanged;
 
    private final SiteId siteId;
@@ -229,7 +230,18 @@ public class ApiNode implements Node
    @Override
    public URI resolveURI()
    {
-      return URIResolver.resolveURI(this);
+      if (resolvedURI == null)
+      {
+         resolvedURI = URIResolver.resolveURI(this);
+      }
+      
+      return resolvedURI;
+   }
+
+   void clearCached()
+   {
+      resolvedDisplayName = null;
+      resolvedURI = null;
    }
 
    @Override
