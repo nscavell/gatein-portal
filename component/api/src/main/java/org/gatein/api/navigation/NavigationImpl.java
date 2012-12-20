@@ -142,7 +142,7 @@ public class NavigationImpl implements Navigation
    }
 
    @Override
-   public Node loadNodes(NodeVisitor visitor)
+   public Node getRootNode(NodeVisitor visitor)
    {
       NodeContext<ApiNode> ctx = loadNodeContext(visitor);
       return (ctx == null) ? null : ctx.getNode();

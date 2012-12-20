@@ -113,7 +113,7 @@ public class NavigationManagementResource
 
    private void populateModel(ModelObject model, PathAddress address)
    {
-      Node node = navigation.loadNodes(visitChildren());
+      Node node = navigation.getRootNode(visitChildren());
       model.set("priority", navigation.getPriority());
       ModelList modelNodes = model.get("node").setEmptyList();
       for (Node n : node)

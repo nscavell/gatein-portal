@@ -102,14 +102,14 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node root = navigation.loadNodes(Nodes.visitAll());
+      Node root = navigation.getRootNode(Nodes.visitAll());
       Node node = root.addChild("parent2");
 
       assertNotNull(root.getChild("parent2"));
 
       navigation.saveNode(node);
 
-      root = navigation.loadNodes(Nodes.visitAll());
+      root = navigation.getRootNode(Nodes.visitAll());
       assertNotNull(root.getChild("parent2"));
    }
 
@@ -118,7 +118,7 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
       node.getChild("parent").addChild("child");
    }
 
@@ -127,7 +127,7 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitChildren());
+      Node node = navigation.getRootNode(Nodes.visitChildren());
       node.getChild("parent").addChild("child");
    }
 
@@ -160,7 +160,7 @@ public class NavigationImplTest
    @Test
    public void createNavigationChildren()
    {
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
 
       Node parent = node.addChild("parent");
       parent.addChild("child");
@@ -168,7 +168,7 @@ public class NavigationImplTest
       navigation.saveNode(node);
 
       navigation = portal.getNavigation(siteId);
-      node = navigation.loadNodes(Nodes.visitAll());
+      node = navigation.getRootNode(Nodes.visitAll());
 
       assertEquals(1, node.getChildCount());
       assertEquals(1, node.getChild("parent").getChildCount());
@@ -184,7 +184,7 @@ public class NavigationImplTest
 
       assertEquals(10, navigation.getPriority());
       assertEquals(siteId, navigation.getSiteId());
-      assertEquals(0, navigation.loadNodes(Nodes.visitAll()).getChildCount());
+      assertEquals(0, navigation.getRootNode(Nodes.visitAll()).getChildCount());
    }
 
    @Test
@@ -194,7 +194,7 @@ public class NavigationImplTest
 
       assertTrue(navigation.removeNode(NodePath.path("parent", "child")));
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
       assertEquals(0, node.getChild("parent").getChildCount());
    }
 
@@ -215,12 +215,12 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
       assertNotNull(node);
       assertTrue(node.isChildrenLoaded());
       assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
 
-      node = navigation.loadNodes(Nodes.visitChildren());
+      node = navigation.getRootNode(Nodes.visitChildren());
       assertNotNull(node);
       assertTrue(node.isChildrenLoaded());
       assertFalse(node.getChild("parent").isChildrenLoaded());
@@ -281,7 +281,7 @@ public class NavigationImplTest
    @Test(expected = EntityNotFoundException.class)
    public void getNavigation_InvalidSite()
    {
-      portal.getNavigation(new SiteId("invalid")).loadNodes(Nodes.visitAll());
+      portal.getNavigation(new SiteId("invalid")).getRootNode(Nodes.visitAll());
    }
 
    @Test(expected = IllegalArgumentException.class)
@@ -293,7 +293,7 @@ public class NavigationImplTest
    @Test
    public void displayName_extended()
    {
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
 
       Node n = node.addChild("parent");
 
@@ -305,7 +305,7 @@ public class NavigationImplTest
 
       navigation.saveNode(node);
 
-      n = navigation.loadNodes(Nodes.visitChildren()).getChild("parent");
+      n = navigation.getRootNode(Nodes.visitChildren()).getChild("parent");
 
       assertNotNull(n.getDisplayName());
       assertTrue(n.getDisplayName().isLocalized());
@@ -316,7 +316,7 @@ public class NavigationImplTest
    @Test
    public void displayName_simple()
    {
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
 
       Node n = node.addChild("parent");
       n.setDisplayName("simple");
@@ -325,7 +325,7 @@ public class NavigationImplTest
 
       assertEquals("simple", n.getDisplayName().getValue());
 
-      n = navigation.loadNodes(Nodes.visitChildren()).getChild("parent");
+      n = navigation.getRootNode(Nodes.visitChildren()).getChild("parent");
 
       assertNotNull(n.getDisplayName());
       assertEquals("simple", n.getDisplayName().getValue());
@@ -335,19 +335,19 @@ public class NavigationImplTest
    @Test(expected = IllegalArgumentException.class)
    public void loadNodes_NullVisitor()
    {
-      navigation.loadNodes(null);
+      navigation.getRootNode(null);
    }
 
    @Test
    public void moveNode()
    {
-      Node root = navigation.loadNodes(Nodes.visitChildren());
+      Node root = navigation.getRootNode(Nodes.visitChildren());
       root.addChild("a").addChild("b").addChild("c").addChild("d");
       root.addChild("e").addChild("f").addChild("g").addChild("h");
 
       navigation.saveNode(root);
 
-      root = navigation.loadNodes(Nodes.visitAll());
+      root = navigation.getRootNode(Nodes.visitAll());
 
       Node d = root.getNode("a", "b", "c", "d");
       Node h = root.getNode("e", "f", "g", "h");
@@ -356,7 +356,7 @@ public class NavigationImplTest
 
       navigation.saveNode(root);
 
-      root = navigation.loadNodes(Nodes.visitAll());
+      root = navigation.getRootNode(Nodes.visitAll());
       assertNull(root.getNode("a", "b", "c", "d"));
       assertNotNull(root.getNode("e", "f", "g", "h", "d"));
    }
@@ -366,8 +366,8 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node nodeA = navigation.loadNodes(Nodes.visitAll());
-      Node nodeB = navigation.loadNodes(Nodes.visitAll());
+      Node nodeA = navigation.getRootNode(Nodes.visitAll());
+      Node nodeB = navigation.getRootNode(Nodes.visitAll());
 
       nodeA.addChild("childA");
       navigation.saveNode(nodeA);
@@ -394,8 +394,8 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node nodeA = navigation.loadNodes(Nodes.visitAll());
-      Node nodeB = navigation.loadNodes(Nodes.visitAll());
+      Node nodeA = navigation.getRootNode(Nodes.visitAll());
+      Node nodeB = navigation.getRootNode(Nodes.visitAll());
 
       nodeA.addChild("childA").addChild("childA-1").addChild("childA-1-1");
       navigation.saveNode(nodeA);
@@ -412,7 +412,7 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node n = navigation.loadNodes(Nodes.visitChildren());
+      Node n = navigation.getRootNode(Nodes.visitChildren());
       Node p = n.getChild("parent");
 
       assertTrue(n.isChildrenLoaded());
@@ -428,17 +428,17 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
 
       Node parent = node.getChild("parent");
 
       parent.addChild("child2");
       
-      assertNull(navigation.loadNodes(Nodes.visitAll()).getChild("parent").getChild("child2"));
+      assertNull(navigation.getRootNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
 
       navigation.saveNode(parent);
 
-      assertNotNull(navigation.loadNodes(Nodes.visitAll()).getChild("parent").getChild("child2"));
+      assertNotNull(navigation.getRootNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
    }
 
    @Test
@@ -446,7 +446,7 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node node = navigation.loadNodes(Nodes.visitAll());
+      Node node = navigation.getRootNode(Nodes.visitAll());
 
       Node parent = node.getChild("parent");
       parent.setIconName("new");
@@ -458,7 +458,7 @@ public class NavigationImplTest
 
       navigation.saveNode(child);
 
-      node = navigation.loadNodes(Nodes.visitAll());
+      node = navigation.getRootNode(Nodes.visitAll());
 
       assertEquals("new", node.getChild("parent").getIconName());
       assertEquals(2, node.getChild("parent").getChildCount());
@@ -470,8 +470,8 @@ public class NavigationImplTest
    {
       createNavigationChildren();
 
-      Node nodeA = navigation.loadNodes(Nodes.visitAll());
-      Node nodeB = navigation.loadNodes(Nodes.visitAll());
+      Node nodeA = navigation.getRootNode(Nodes.visitAll());
+      Node nodeB = navigation.getRootNode(Nodes.visitAll());
 
       nodeA.addChild("childA");
       navigation.saveNode(nodeA);
@@ -479,7 +479,7 @@ public class NavigationImplTest
       nodeB.addChild("childB");
       navigation.saveNode(nodeB);
 
-      Node nodeC = navigation.loadNodes(Nodes.visitAll());
+      Node nodeC = navigation.getRootNode(Nodes.visitAll());
 
       assertNotNull(nodeC.getChild("childA"));
       assertNotNull(nodeC.getChild("childB"));
@@ -539,7 +539,7 @@ public class NavigationImplTest
    public void serialization_multipath() throws Exception
    {
       createNavigationChildren();
-      Node root = navigation.loadNodes(Nodes.visitAll());
+      Node root = navigation.getRootNode(Nodes.visitAll());
       Node parent = root.getChild("parent");
       Node foo = parent.addChild("foo");
       foo.addChild("bar");
