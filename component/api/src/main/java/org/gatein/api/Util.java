@@ -78,9 +78,9 @@ public class Util
 
       SiteKey siteKey = from(site.getId());
       PortalConfig portalConfig = new PortalConfig(siteKey.getTypeName(), siteKey.getName());
-      if (site.getDisplayName() != null)
+      if (site.getDisplayNames() != null)
       {
-         portalConfig.setLabel(site.getDisplayName().getValue());
+         portalConfig.setLabel(site.getDisplayNames().getValue());
       }
       if (site.getDescription() != null)
       {

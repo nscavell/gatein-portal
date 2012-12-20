@@ -109,7 +109,7 @@ public class PageImpl implements Page
    }
 
    @Override
-   public LocalizedString getDisplayName()
+   public LocalizedString getDisplayNames()
    {
       return displayName;
    }
@@ -117,11 +117,11 @@ public class PageImpl implements Page
    @Override
    public void setDisplayName(String displayName)
    {
-      setDisplayName((displayName == null) ? null : new LocalizedString(displayName));
+      setDisplayNames((displayName == null) ? null : new LocalizedString(displayName));
    }
 
    @Override
-   public void setDisplayName(LocalizedString displayName)
+   public void setDisplayNames(LocalizedString displayName)
    {
       if (displayName != null && displayName.isLocalized()) throw new IllegalArgumentException("Localized displayName is not supported");
 
@@ -138,7 +138,7 @@ public class PageImpl implements Page
    }
 
    @Override
-   public String resolveDisplayName()
+   public String getDisplayName()
    {
       //TODO: Determine how to create the BasicI18NResolver by finding the appropriate resource bundle and locale, i.e. PortalRequestContext#getTitle()
       return (displayName == null) ? null : displayName.getValue();

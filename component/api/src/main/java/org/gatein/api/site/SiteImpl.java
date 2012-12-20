@@ -117,7 +117,7 @@ public class SiteImpl implements Site
    }
 
    @Override
-   public LocalizedString getDisplayName()
+   public LocalizedString getDisplayNames()
    {
       return displayName;
    }
@@ -125,11 +125,11 @@ public class SiteImpl implements Site
    @Override
    public void setDisplayName(String displayName)
    {
-      setDisplayName(new LocalizedString(displayName));
+      setDisplayNames(new LocalizedString(displayName));
    }
 
    @Override
-   public void setDisplayName(LocalizedString displayName)
+   public void setDisplayNames(LocalizedString displayName)
    {
       if (displayName != null && displayName.isLocalized()) throw new IllegalArgumentException("Localized displayName is not supported");
 
@@ -137,7 +137,7 @@ public class SiteImpl implements Site
    }
 
    @Override
-   public String resolveDisplayName()
+   public String getDisplayName()
    {
       //TODO: Resolve display name should also take care of group name if site is a group site
       return (displayName == null) ? getName() : displayName.getValue();
@@ -209,7 +209,7 @@ public class SiteImpl implements Site
       return ObjectToStringBuilder.toStringBuilder(getClass())
          .add("type", getType().getName())
          .add("name", getName())
-         .add("displayName", getDisplayName())
+         .add("displayName", getDisplayNames())
          .add("description", getDescription())
          .add("locale", getLocale())
          .add("skin", getSkin())

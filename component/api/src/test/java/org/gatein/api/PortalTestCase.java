@@ -106,7 +106,7 @@ public class PortalTestCase extends AbstractAPITestCase
          @Override
          public int compare(Site o1, Site o2)
          {
-            return o1.resolveDisplayName().compareTo(o2.resolveDisplayName());
+            return o1.getDisplayName().compareTo(o2.getDisplayName());
          }
       };
       Collections.sort(sites, c);
@@ -386,7 +386,7 @@ public class PortalTestCase extends AbstractAPITestCase
       assertEquals(2, pages.size());
       for (Page p : pages)
       {
-         assertEquals("FooTitle", p.getDisplayName().getValue());
+         assertEquals("FooTitle", p.getDisplayNames().getValue());
       }
    }
 

@@ -301,16 +301,16 @@ public class NavigationImplTest
       m.put(Locale.ENGLISH, "extended");
       m.put(Locale.FRENCH, "prolongé");
       
-      n.setDisplayName(new LocalizedString(m));
+      n.setDisplayNames(new LocalizedString(m));
 
       navigation.saveNode(node);
 
       n = navigation.getRootNode(Nodes.visitChildren()).getChild("parent");
 
-      assertNotNull(n.getDisplayName());
-      assertTrue(n.getDisplayName().isLocalized());
-      assertEquals("extended", n.getDisplayName().getValue(Locale.ENGLISH));
-      assertEquals("prolongé", n.getDisplayName().getValue(Locale.FRENCH));
+      assertNotNull(n.getDisplayNames());
+      assertTrue(n.getDisplayNames().isLocalized());
+      assertEquals("extended", n.getDisplayNames().getValue(Locale.ENGLISH));
+      assertEquals("prolongé", n.getDisplayNames().getValue(Locale.FRENCH));
    }
 
    @Test
@@ -323,13 +323,13 @@ public class NavigationImplTest
 
       navigation.saveNode(n);
 
-      assertEquals("simple", n.getDisplayName().getValue());
+      assertEquals("simple", n.getDisplayNames().getValue());
 
       n = navigation.getRootNode(Nodes.visitChildren()).getChild("parent");
 
-      assertNotNull(n.getDisplayName());
-      assertEquals("simple", n.getDisplayName().getValue());
-      assertFalse(n.getDisplayName().isLocalized());
+      assertNotNull(n.getDisplayNames());
+      assertEquals("simple", n.getDisplayNames().getValue());
+      assertFalse(n.getDisplayNames().isLocalized());
    }
 
    @Test(expected = IllegalArgumentException.class)

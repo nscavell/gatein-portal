@@ -165,7 +165,7 @@ public class ApiNode implements Node
    }
 
    @Override
-   public LocalizedString getDisplayName()
+   public LocalizedString getDisplayNames()
    {
       if (displayName == null)
       {
@@ -217,7 +217,7 @@ public class ApiNode implements Node
    }
 
    @Override
-   public String resolveDisplayName()
+   public String getDisplayName()
    {
       if (resolvedDisplayName == null)
       {
@@ -228,7 +228,7 @@ public class ApiNode implements Node
    }
 
    @Override
-   public URI resolveURI()
+   public URI getURI()
    {
       if (resolvedURI == null)
       {
@@ -365,11 +365,11 @@ public class ApiNode implements Node
    @Override
    public void setDisplayName(String displayName)
    {
-      setDisplayName(new LocalizedString(displayName));
+      setDisplayNames(new LocalizedString(displayName));
    }
 
    @Override
-   public void setDisplayName(LocalizedString displayName)
+   public void setDisplayNames(LocalizedString displayName)
    {
       checkNonRoot();
 

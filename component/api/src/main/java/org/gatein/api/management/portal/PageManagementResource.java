@@ -126,7 +126,7 @@ public class PageManagementResource
    private void populateModel(Page page, ModelObject model)
    {
       model.set("name", page.getName());
-      populate(page.getDisplayName(), "displayName", model);
+      populate(page.getDisplayNames(), "displayName", model);
       populate(page.getDescription(), "description", model);
       populate(page.getEditPermission(), "edit-permissions", model);
       populate(page.getAccessPermission(), "access-permissions", model);

@@ -223,7 +223,7 @@ public class NavigationImpl implements Navigation
          i18nResolver = new Navigation18NResolver(descriptionService, bundleManager, site.getLocale(), siteId);
       }
 
-      return i18nResolver.resolveName(ctx.getNode().getDisplayName(), ctx.getId(), ctx.getName());
+      return i18nResolver.resolveName(ctx.getNode().getDisplayNames(), ctx.getId(), ctx.getName());
    }
 
    NodeContext<ApiNode> getNodeContext(NodePath nodePath, NodeVisitor visitor)
@@ -296,7 +296,7 @@ public class NavigationImpl implements Navigation
       ApiNode node = ctx.getNode();
       if (node != null && node.isDisplayNameChanged())
       {
-         if (!node.getDisplayName().isLocalized())
+         if (!node.getDisplayNames().isLocalized())
          {
             Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
             if (descriptions != null)
@@ -306,7 +306,7 @@ public class NavigationImpl implements Navigation
          }
          else
          {
-            Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getDisplayName());
+            Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getDisplayNames());
             descriptionService.setDescriptions(ctx.getId(), descriptions);
          }
       }

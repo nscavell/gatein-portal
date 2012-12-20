@@ -128,7 +128,7 @@ public class NavigationManagementResource
    private void populateModel(Node node, ModelObject model)
    {
       model.set("name", node.getName());
-      ModelUtils.populate(node.getDisplayName(), "displayName", model);
+      ModelUtils.populate(node.getDisplayNames(), "displayName", model);
    }
 
    private Node getNode(NodePath path, boolean require)
