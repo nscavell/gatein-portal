@@ -82,13 +82,13 @@ public class NavigationPortlet extends GenericPortlet
 
    private void outputSite(Site site, PrintWriter writer) throws IOException
    {
-      writer.println("<h2>" + site.resolveDisplayName() + "</h2>");
+      writer.println("<h2>" + site.getDisplayName() + "</h2>");
       writer.println("<ul>");
 
       Navigation navigation = PortalRequest.getInstance().getPortal().getNavigation(site.getId());
       if (navigation != null)
       {
-         for (Node node : navigation.loadNodes(Nodes.visitAll()))
+         for (Node node : navigation.getRootNode(Nodes.visitAll()))
          {
             outputNode(node, writer);
          }
@@ -105,8 +105,8 @@ public class NavigationPortlet extends GenericPortlet
       int size = node.getChildCount();
       boolean isLeaf = size == 0;
       writer.println("<li>"
-         + (isLeaf ? "<a style='font-weight: bold; text-decoration: underline; color: #336666;' href='" + node.resolveURI() + "'>" : "")
-         + node.resolveDisplayName()
+         + (isLeaf ? "<a style='font-weight: bold; text-decoration: underline; color: #336666;' href='" + node.getURI() + "'>" : "")
+ + node.getDisplayName()
          + (isLeaf ? "</a>" : "")
          + "</li>");
       if (size != 0)
