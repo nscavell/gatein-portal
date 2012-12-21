@@ -108,7 +108,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
 
       this.portal = new PortalImpl(dataStorage, pageService, navService, descriptionService, bundleManager, authenticator, identityRegistry, acl);//, orgService, bundleManager);
 
-      TestPortalRequest.setInstance(new User("test"), new SiteId("classic"), NodePath.root(), userLocale, portal);
+      BasicPortalRequest.setInstance(new BasicPortalRequest(new User("test"), new SiteId("classic"), NodePath.root(), userLocale, portal));
 
       //
       begin();
@@ -117,7 +117,7 @@ public abstract class AbstractAPITestCase extends AbstractPortalTest
    @Override
    protected void tearDown() throws Exception
    {
-      TestPortalRequest.clearInstance();
+      BasicPortalRequest.setInstance(null);
       end(false);
    }
 

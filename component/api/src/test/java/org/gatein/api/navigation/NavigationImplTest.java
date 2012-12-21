@@ -55,17 +55,12 @@ import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageState;
+import org.gatein.api.BasicPortalRequest;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
-import org.gatein.api.TestPortalRequest;
 import org.gatein.api.Util;
 import org.gatein.api.common.i18n.LocalizedString;
-import org.gatein.api.navigation.ApiNode;
-import org.gatein.api.navigation.Navigation;
-import org.gatein.api.navigation.Node;
-import org.gatein.api.navigation.NodePath;
-import org.gatein.api.navigation.Nodes;
 import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
@@ -135,7 +130,7 @@ public class NavigationImplTest
    public void after()
    {
       deleteSite(SiteType.PORTAL, "classic");
-      TestPortalRequest.clearInstance();
+      BasicPortalRequest.setInstance(null);
    }
 
    @Before
@@ -154,7 +149,7 @@ public class NavigationImplTest
       siteId = new SiteId("classic");
       navigation = portal.getNavigation(siteId);
 
-      TestPortalRequest.setInstance(new User("john"), siteId, NodePath.root(), Locale.ENGLISH, portal);
+      BasicPortalRequest.setInstance(new BasicPortalRequest(new User("john"), siteId, NodePath.root(), Locale.ENGLISH, portal));
    }
 
    @Test

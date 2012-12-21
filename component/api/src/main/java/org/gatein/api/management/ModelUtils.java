@@ -24,11 +24,15 @@ package org.gatein.api.management;
 
 import org.gatein.api.common.i18n.Localized;
 import org.gatein.api.common.i18n.LocalizedString;
+import org.gatein.api.navigation.Visibility;
 import org.gatein.api.security.Membership;
 import org.gatein.api.security.Permission;
+import org.gatein.common.xml.stax.writer.WritableValueTypes;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelString;
+
+import java.util.Date;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -37,7 +41,7 @@ class ModelUtils
 {
    private ModelUtils(){}
 
-   public static void populate(LocalizedString string, String fieldName, ModelObject model)
+   public static void populate(String fieldName, LocalizedString string, ModelObject model)
    {
       if (string == null) return;
 
@@ -67,20 +71,37 @@ class ModelUtils
       }
    }
 
-   public static void populate(Permission permission, String fieldName, ModelObject model)
+   public static void populate(String fieldName, Permission permission, ModelObject model)
    {
       if (permission != null)
       {
-         ModelList list = model.get(fieldName).asValue(ModelList.class);
-         if (permission.getMemberships().isEmpty())
+         ModelList list = model.get(fieldName, ModelList.class);
+         if (permission.isAccessibleToEveryone())
          {
-            list.add().asValue(ModelString.class).set("Everyone");
+            list.add("Everyone");
          }
 
          for (Membership membership : permission.getMemberships())
          {
-            list.add().asValue(ModelString.class).set(membership.toString());
+            list.add(membership.toString());
          }
       }
+   }
+
+   public static void set(String name, Object value, ModelObject model)
+   {
+      String s = (value == null) ? null : value.toString();
+      model.set(name, s);
+   }
+
+   public static void set(String name, Date value, ModelObject model)
+   {
+      String s = null;
+      if (value != null)
+      {
+         s = WritableValueTypes.DATE_TIME.format(value);
+      }
+
+      set(name, s, model);
    }
 }

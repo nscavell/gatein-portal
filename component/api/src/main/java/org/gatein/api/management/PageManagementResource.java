@@ -48,6 +48,7 @@ import org.gatein.management.api.operation.OperationNames;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @Managed
+@SuppressWarnings("unused")
 public class PageManagementResource
 {
    private final Portal portal;
@@ -126,9 +127,11 @@ public class PageManagementResource
    private void populateModel(Page page, ModelObject model)
    {
       model.set("name", page.getName());
-      populate(page.getDisplayNames(), "displayName", model);
-      populate(page.getDescription(), "description", model);
-      populate(page.getEditPermission(), "edit-permissions", model);
-      populate(page.getAccessPermission(), "access-permissions", model);
+      model.set("displayName", page.getDisplayName());
+      // Uncomment below when page's support localized values (description service)
+      //populate("displayNames", page.getDisplayNames(), model);
+      populate("description", page.getDescription(), model);
+      populate("edit-permissions", page.getEditPermission(), model);
+      populate("access-permissions", page.getAccessPermission(), model);
    }
 }

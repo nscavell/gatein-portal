@@ -23,13 +23,15 @@
 package org.gatein.api.management;
 
 import java.util.List;
+import java.util.Locale;
 
+import org.gatein.api.BasicPortalRequest;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
-import org.gatein.api.management.NavigationManagementResource;
-import org.gatein.api.management.PageManagementResource;
+import org.gatein.api.PortalRequest;
 import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.Node;
+import org.gatein.api.navigation.NodePath;
 import org.gatein.api.navigation.Nodes;
 import org.gatein.api.page.Page;
 import org.gatein.api.page.PageQuery;
@@ -41,8 +43,11 @@ import org.gatein.api.site.SiteQuery;
 import org.gatein.api.site.SiteType;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
+import org.gatein.management.api.ManagedUser;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
+import org.gatein.management.api.annotations.ManagedAfter;
+import org.gatein.management.api.annotations.ManagedBefore;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
 import org.gatein.management.api.annotations.MappedPath;
@@ -51,37 +56,63 @@ import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
+import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationNames;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
+@SuppressWarnings("unused")
 @Managed(value = "api", description = "GateIn API Management Resource")
 public class GateInApiManagementResource
 {
    private static final Logger log = LoggerFactory.getLogger("org.gatein.api.management");
 
+   private static final SiteQuery SITE_QUERY = new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build();
+   private static final SiteQuery SPACE_QUERY = new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).build();
+   private static final SiteQuery DASHBOARD_QUERY = new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).build();
+
    private final Portal portal;
 
    @ManagedContext
-   private final ModelProvider modelProvider;
+   private final ModelProvider modelProvider; // gatein-management will set this field via reflection
 
    public GateInApiManagementResource(Portal portal)
    {
       this(portal, null);
    }
 
+   // Constructor for testing to specify ModelProvider instead of gatein-management
    GateInApiManagementResource(Portal portal, ModelProvider modelProvider)
    {
       this.portal = portal;
       this.modelProvider = modelProvider;
    }
 
+   @ManagedBefore
+   public void before(@ManagedContext OperationContext context)
+   {
+      PortalRequest portalRequest = PortalRequest.getInstance();
+      if (portalRequest == null)
+      {
+         setCurrentPortalRequest(context);
+      }
+   }
+
+   @ManagedAfter
+   public void after()
+   {
+      if (PortalRequest.getInstance() instanceof BasicPortalRequest)
+      {
+         BasicPortalRequest.setInstance(null);
+      }
+   }
+
    //------------------------------------------------- Portal Sites --------------------------------------------------//
    @Managed("/sites")
    public ModelList getSites(@ManagedContext PathAddress address)
    {
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
+      List<Site> sites = portal.findSites(SITE_QUERY);
 
       ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(sites, list, address);
@@ -130,9 +161,9 @@ public class GateInApiManagementResource
 
    //--------------------------------------------- Group Sites (Spaces) ----------------------------------------------//
    @Managed("/spaces")
-   public ModelList getSitesForGroup(@ManagedContext PathAddress address)
+   public ModelList getSpaces(@ManagedContext PathAddress address)
    {
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SPACE).build());
+      List<Site> sites = portal.findSites(SPACE_QUERY);
 
       ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(sites, list, address);
@@ -141,7 +172,7 @@ public class GateInApiManagementResource
    }
 
    @Managed("/spaces/{group-name: .*}")
-   public ModelObject getSiteForGroup(@MappedPath("group-name") String groupName, @ManagedContext PathAddress address)
+   public ModelObject getSpace(@MappedPath("group-name") String groupName, @ManagedContext PathAddress address)
    {
       ModelObject siteModel = modelProvider.newModel(ModelObject.class);
       populateModel(new SiteId(new Group(groupName)), siteModel, address);
@@ -151,7 +182,7 @@ public class GateInApiManagementResource
 
    @Managed("/spaces/{group-name: .*}")
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given space")
-   public void removeSiteForGroup(@MappedPath("group-name") String groupName)
+   public void removeSpace(@MappedPath("group-name") String groupName)
    {
       SiteId id = new SiteId(new Group(groupName));
       try
@@ -166,22 +197,22 @@ public class GateInApiManagementResource
    }
 
    @Managed("/spaces/{group-name: .*}/pages")
-   public PageManagementResource getPagesForGroup(@MappedPath("group-name") String groupName)
+   public PageManagementResource getSpacePages(@MappedPath("group-name") String groupName)
    {
       return new PageManagementResource(portal, modelProvider, new SiteId(new Group(groupName)));
    }
 
    @Managed("/spaces/{group-name: .*}/navigation")
-   public NavigationManagementResource getNavigationForGroup(@MappedPath("group-name") String groupName)
+   public NavigationManagementResource getSpaceNavigation(@MappedPath("group-name") String groupName)
    {
       return new NavigationManagementResource(portal, modelProvider, new SiteId(new Group(groupName)));
    }
 
    //-------------------------------------------- User Sites (Dashboard) ---------------------------------------------//
    @Managed("/dashboards")
-   public ModelList getSitesForUser(@ManagedContext PathAddress address)
+   public ModelList getDashboards(@ManagedContext PathAddress address)
    {
-      List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.DASHBOARD).build());
+      List<Site> sites = portal.findSites(DASHBOARD_QUERY);
 
       ModelList list = modelProvider.newModel(ModelList.class);
       populateModel(sites, list, address);
@@ -190,7 +221,7 @@ public class GateInApiManagementResource
    }
 
    @Managed("/dashboards/{user-name}")
-   public ModelObject getSiteForUser(@MappedPath("user-name") String userName, @ManagedContext PathAddress address)
+   public ModelObject getDashboard(@MappedPath("user-name") String userName, @ManagedContext PathAddress address)
    {
       ModelObject siteModel = modelProvider.newModel(ModelObject.class);
       populateModel(new SiteId(new User(userName)), siteModel, address);
@@ -200,7 +231,7 @@ public class GateInApiManagementResource
 
    @Managed("/dashboards/{user-name}")
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given dashboard")
-   public void removeSiteForUser(@MappedPath("user-name") String userName)
+   public void removeDashboard(@MappedPath("user-name") String userName)
    {
       SiteId id = new SiteId(new User(userName));
       try
@@ -215,15 +246,46 @@ public class GateInApiManagementResource
    }
 
    @Managed("/dashboards/{user-name}/pages")
-   public PageManagementResource getPagesForUser(@MappedPath("user-name") String userName)
+   public PageManagementResource getDashboardPages(@MappedPath("user-name") String userName)
    {
       return new PageManagementResource(portal, modelProvider, new SiteId(new User(userName)));
    }
 
    @Managed("/dashboards/{user-name}/navigation")
-   public NavigationManagementResource getNavigationForUser(@MappedPath("user-name") String userName)
+   public NavigationManagementResource getDashboardNavigation(@MappedPath("user-name") String userName)
    {
       return new NavigationManagementResource(portal, modelProvider, new SiteId(new User(userName)));
+   }
+
+   static PathAddress getSiteAddress(SiteId siteId)
+   {
+      PathAddress address = PathAddress.pathAddress("api");
+      switch (siteId.getType())
+      {
+         case SITE:
+            address = address.append("sites");
+            break;
+         case SPACE:
+            address = address.append("spaces");
+            break;
+         case DASHBOARD:
+            address = address.append("dashboards");
+            break;
+         default:
+            throw new AssertionError();
+      }
+
+      return address.append(siteId.getName());
+   }
+
+   static PathAddress getPagesAddress(SiteId siteId)
+   {
+      return getSiteAddress(siteId).append("pages");
+   }
+
+   static PathAddress getNavigationAddress(SiteId siteId)
+   {
+      return getSiteAddress(siteId).append("navigation");
    }
 
    private Site getSite(SiteId id, boolean require)
@@ -272,5 +334,57 @@ public class GateInApiManagementResource
          siteRef.set("type", site.getType().getName());
          siteRef.set(address.append(site.getName()));
       }
+   }
+
+   private void setCurrentPortalRequest(OperationContext context)
+   {
+      ManagedUser user = context.getUser();
+      PathAddress address = context.getAddress();
+      SiteType siteType = null;
+      StringBuilder sb = null;
+      String siteName = null;
+      NodePath nodePath = null;
+      for (String segment : address)
+      {
+         if (segment.equals("sites"))
+         {
+            siteType = SiteType.SITE;
+            sb = new StringBuilder();
+         }
+         else if (segment.equals("spaces"))
+         {
+            siteType = SiteType.SPACE;
+            sb = new StringBuilder();
+         }
+         else if (segment.equals("dashboards"))
+         {
+            siteType = SiteType.DASHBOARD;
+            sb = new StringBuilder();
+         }
+         else if (segment.equals("navigation"))
+         {
+            siteName = sb.toString();
+            sb = null;
+            nodePath = NodePath.root();
+         }
+         else if (segment.equals("pages"))
+         {
+            siteName = sb.toString();
+            sb = null;
+            break;
+         }
+         else if (nodePath != null)
+         {
+            nodePath.append(segment);
+         }
+         else if (sb != null)
+         {
+            sb.append(segment);
+         }
+      }
+      SiteId siteId = (siteName == null) ? null : new SiteId(siteType, siteName);
+      Locale locale = context.getLocale();
+
+      BasicPortalRequest.setInstance(new BasicPortalRequest(new User(user.getUserName()), siteId, nodePath, locale, portal));
    }
 }

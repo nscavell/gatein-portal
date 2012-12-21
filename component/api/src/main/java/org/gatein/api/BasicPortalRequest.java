@@ -22,26 +22,26 @@
 
 package org.gatein.api;
 
-import java.util.Locale;
-
-import org.gatein.api.Portal;
-import org.gatein.api.PortalRequest;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
 
+import java.util.Locale;
+
 /**
+ * A basic portal request supplying all the information needed in the constructor.
+ *
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class TestPortalRequest extends PortalRequest
+public class BasicPortalRequest extends PortalRequest
 {
-   private User user;
-   private SiteId siteId;
-   private NodePath nodePath;
-   private Locale locale;
-   private Portal portal;
+   private final User user;
+   private final SiteId siteId;
+   private final NodePath nodePath;
+   private final Locale locale;
+   private final Portal portal;
 
-   private TestPortalRequest(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal)
+   public BasicPortalRequest(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal)
    {
       this.user = user;
       this.siteId = siteId;
@@ -80,13 +80,8 @@ public class TestPortalRequest extends PortalRequest
       return portal;
    }
 
-   public static void setInstance(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal)
+   public static void setInstance(BasicPortalRequest request)
    {
-      setInstance(new TestPortalRequest(user, siteId, nodePath, locale, portal));
-   }
-
-   public static void clearInstance()
-   {
-      setInstance(null);
+      PortalRequest.setInstance(request);
    }
 }

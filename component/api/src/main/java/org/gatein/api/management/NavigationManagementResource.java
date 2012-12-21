@@ -22,31 +22,39 @@
 
 package org.gatein.api.management;
 
-import static org.gatein.api.navigation.Nodes.visitChildren;
-import static org.gatein.api.navigation.Nodes.visitNone;
-
 import org.gatein.api.Portal;
 import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.Node;
 import org.gatein.api.navigation.NodePath;
+import org.gatein.api.navigation.NodeVisitor;
 import org.gatein.api.navigation.Nodes;
+import org.gatein.api.navigation.Visibility;
+import org.gatein.api.page.PageId;
 import org.gatein.api.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.MappedAttribute;
 import org.gatein.management.api.annotations.MappedPath;
+import org.gatein.management.api.exceptions.OperationException;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
+import org.gatein.management.api.model.Model;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
 
+import java.util.Date;
+
+import static org.gatein.api.management.GateInApiManagementResource.*;
+
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @Managed
+@SuppressWarnings("unused")
 public class NavigationManagementResource
 {
    private final Navigation navigation;
@@ -59,25 +67,40 @@ public class NavigationManagementResource
    }
 
    @Managed
-   public ModelObject getNavigation(@ManagedContext PathAddress address)
+   public ModelObject getNavigation(@ManagedContext PathAddress address, @MappedAttribute("scope") String scopeAttribute)
    {
       // Populate the model
       ModelObject model = modelProvider.newModel(ModelObject.class);
-      populateModel(model, address);
+
+      NodeVisitor visitor = Nodes.visitChildren();
+      int scope = 0;
+      if (scopeAttribute != null)
+      {
+         scope = Integer.parseInt(scopeAttribute);
+         visitor = Nodes.visitNodes(scope);
+      }
+
+      Node node = getNode(NodePath.root(), true, visitor);
+      populateNavigationModel(node, scope, model, address);
 
       return model;
    }
 
    @Managed("{path: .*}")
-   public ModelObject getNode(@MappedPath("path") String path)
+   public ModelObject getNode(@MappedPath("path") String path, @MappedAttribute("scope") String scopeAttribute, @ManagedContext PathAddress address)
    {
-      Node node = navigation.getNode(NodePath.fromString(path), visitNone());
-
-      if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
+      NodeVisitor visitor = Nodes.visitChildren();
+      int scope = 0;
+      if (scopeAttribute != null)
+      {
+         scope = Integer.parseInt(scopeAttribute);
+         visitor = Nodes.visitNodes(scope);
+      }
+      Node node = getNode(path, true, visitor);
 
       // Populate the model
       ModelObject model = modelProvider.newModel(ModelObject.class);
-      populateModel(node, model);
+      populateNode(node, scope, model, address);
 
       return model;
    }
@@ -86,8 +109,7 @@ public class NavigationManagementResource
    @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the navigation node")
    public void removeNode(@MappedPath("path") String path)
    {
-      Node node = navigation.getNode(NodePath.fromString(path), visitNone());
-      if (node == null) throw new ResourceNotFoundException("Node not found for path "  + path);
+      Node node = getNode(path, true);
 
       Node parent = node.getParent();
       parent.removeChild(node.getName());
@@ -96,46 +118,140 @@ public class NavigationManagementResource
 
    @Managed("{path: .*}")
    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the navigation node")
-   public ModelObject addNode(@MappedPath("path") String path)
+   public ModelObject addNode(@MappedPath("path") String path, @ManagedContext PathAddress address)
    {
       NodePath nodePath = NodePath.fromString(path);
-      Node parent = navigation.getNode(NodePath.fromString(path), Nodes.visitNone());
+      Node parent = getNode(nodePath.parent(), true, Nodes.visitChildren());
+      String name = nodePath.getLastSegment();
 
-      Node node = parent.addChild(nodePath.getLastSegment());
+      if (parent.hasChild(name))
+      {
+         throw new OperationException(OperationNames.ADD_RESOURCE, "Node already exists for " + nodePath);
+      }
 
-      navigation.saveNode(node);
+      // Add child and save
+      Node child = parent.addChild(name);
+      navigation.saveNode(parent);
 
+      // Populate model
       ModelObject model = modelProvider.newModel(ModelObject.class);
-      populateModel(node, model);
+      populateNode(child, 0, model, address);
 
       return model;
    }
 
-   private void populateModel(ModelObject model, PathAddress address)
+   @Managed("{path: .*}")
+   @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Updates the navigation node")
+   public ModelObject updateNode(@MappedPath("path") String path, @ManagedContext ModelObject nodeModel)
    {
-      Node node = navigation.getRootNode(visitChildren());
-      model.set("priority", navigation.getPriority());
-      ModelList modelNodes = model.get("node").setEmptyList();
-      for (Node n : node)
-      {
-         ModelReference modelNode = modelNodes.add().asValue(ModelReference.class);
-         modelNode.set("name", n.getName());
+      //TODO: Implement
 
-         modelNode.set(address.append(n.getName()));
-      }
+      return nodeModel;
    }
 
-   private void populateModel(Node node, ModelObject model)
+   private Node getNode(String pathString, boolean require)
    {
-      model.set("name", node.getName());
-      ModelUtils.populate(node.getDisplayNames(), "displayName", model);
+      return getNode(pathString, require, Nodes.visitNone());
+   }
+
+   private Node getNode(String pathString, boolean require, NodeVisitor visitor)
+   {
+      return getNode(NodePath.fromString(pathString), require, visitor);
    }
 
    private Node getNode(NodePath path, boolean require)
    {
-      Node node = navigation.getNode(path);
+      return getNode(path, require, Nodes.visitNone());
+   }
+
+   private Node getNode(NodePath path, boolean require, NodeVisitor visitor)
+   {
+      Node node = navigation.getNode(path, visitor);
       if (node == null && require) throw new ResourceNotFoundException("Node not found for path " + path);
 
       return node;
+   }
+
+   private void populateNavigationModel(Node rootNode, int scope, ModelObject model, PathAddress address)
+   {
+      model.set("priority", navigation.getPriority());
+      model.set("siteType", navigation.getSiteId().getType().getName());
+      model.set("siteName", navigation.getSiteId().getName());
+      ModelList nodesModel = model.get("nodes").setEmptyList();
+      if (rootNode.isChildrenLoaded())
+      {
+         for (Node child : rootNode)
+         {
+            Model childModel = nodesModel.add();
+            PathAddress childAddress = address.append(child.getName());
+            if (scope > 0 || scope < 0) // Continue populating nodes in response
+            {
+               populateNode(child, scope-1, childModel.setEmptyObject(), childAddress);
+            }
+            else // Populate node reference which can be followed
+            {
+               ModelReference nodeRef = childModel.set(childAddress);
+               nodeRef.set("name", child.getName());
+            }
+         }
+      }
+   }
+
+   private void populateNode(Node node, int scope, ModelObject model, PathAddress address)
+   {
+      model.set("name", node.getName());
+      ModelUtils.set("uri", node.getURI(), model);
+      model.set("isVisible", node.isVisible());
+      populateVisibility(node.getVisibility(), model.get("visibility", ModelObject.class));
+      model.set("iconName", node.getIconName());
+
+      // Display name
+      model.set("displayName", node.getDisplayName());
+      ModelUtils.populate("displayNames", node.getDisplayNames(), model);
+
+      // Children nodes
+      ModelList children = model.get("children", ModelList.class);
+      if (node.isChildrenLoaded())
+      {
+         for (Node child : node)
+         {
+            Model childModel = children.add();
+            PathAddress childAddress = address.append(child.getName());
+            if (scope > 0 || scope < 0) // Continue populating nodes in response
+            {
+               populateNode(child, scope-1, childModel.setEmptyObject(), childAddress);
+            }
+            else // Populate node reference which can be followed
+            {
+               ModelReference nodeRef = childModel.set(childAddress);
+               nodeRef.set("name", child.getName());
+            }
+         }
+      }
+      // Page reference
+      ModelReference pageRef = model.get("page").asValue(ModelReference.class);
+      if (node.getPageId() != null)
+      {
+         PageId pageId = node.getPageId();
+         PathAddress pageAddress = getPagesAddress(pageId.getSiteId()).append(pageId.getPageName());
+         pageRef.set(pageAddress);
+         pageRef.set("pageName", pageId.getPageName());
+      }
+   }
+
+   private void populateVisibility(Visibility visibility, ModelObject model)
+   {
+      if (visibility != null)
+      {
+         ModelUtils.set("status", visibility.getStatus(), model);
+         if (visibility.getPublicationDate() != null)
+         {
+            ModelObject pubDateModel = model.get("publication-date", ModelObject.class);
+            Date start = visibility.getPublicationDate().getStart();
+            Date end = visibility.getPublicationDate().getEnd();
+            ModelUtils.set("start", start, pubDateModel);
+            ModelUtils.set("end", end, pubDateModel);
+         }
+      }
    }
 }
