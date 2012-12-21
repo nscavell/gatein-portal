@@ -26,8 +26,8 @@ import java.util.List;
 
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
-import org.gatein.api.management.portal.NavigationManagementResource;
-import org.gatein.api.management.portal.PageManagementResource;
+import org.gatein.api.management.NavigationManagementResource;
+import org.gatein.api.management.PageManagementResource;
 import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.Node;
 import org.gatein.api.navigation.Nodes;

@@ -20,9 +20,9 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.api.management.portal;
+package org.gatein.api.management;
 
-import static org.gatein.api.management.portal.ModelUtils.populate;
+import static org.gatein.api.management.ModelUtils.populate;
 
 import java.util.List;
 
