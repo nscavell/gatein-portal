@@ -79,8 +79,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
     private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(
             org.exoplatform.portal.mop.SiteType.USER.getName(), null, PortalConfig.class);
 
-    // TODO: Do we want a better name for loggeer ? Probably need to standardize our logging for api
-    static final Logger log = LoggerFactory.getLogger(PortalImpl.class);
+    static final Logger log = LoggerFactory.getLogger("org.gatein.api");
 
     // TODO: should be configurable
     public SiteId DEFAULT_SITE = new SiteId("classic");
