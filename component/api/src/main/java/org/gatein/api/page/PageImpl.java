@@ -24,6 +24,7 @@ package org.gatein.api.page;
 
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageState;
+import org.gatein.api.Parameters;
 import org.gatein.api.Util;
 import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.security.Permission;
@@ -131,9 +132,7 @@ public class PageImpl implements Page {
 
     @Override
     public void setAccessPermission(Permission permission) {
-        if (permission == null)
-            throw new IllegalArgumentException(
-                    "Access permission cannot be null. To allow access to everyone use Permission.everyone()");
+        Parameters.requireNonNull(permission, "permission", "To allow access to everyone use Permission.everyone()");
 
         setState(builder().accessPermissions(Util.from(permission)));
     }
@@ -145,9 +144,7 @@ public class PageImpl implements Page {
 
     @Override
     public void setEditPermission(Permission permission) {
-        if (permission == null)
-            throw new IllegalArgumentException(
-                    "Edit permission cannot be null. To allow edit for everyone use Permission.everyone()");
+        Parameters.requireNonNull(permission, "permission", "To allow edit for everyone use Permission.everyone()");
 
         // Only one edit permission (membership) is allowed at this time.
         String[] permissions = Util.from(permission);

@@ -108,8 +108,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
 
     @Override
     public Site getSite(SiteId siteId) {
-        if (siteId == null)
-            throw new IllegalArgumentException("siteId cannot be null");
+        Parameters.requireNonNull(siteId, "siteId");
 
         final SiteKey siteKey = Util.from(siteId);
         PortalConfig pc = execute(new Read<PortalConfig>() {
@@ -196,8 +195,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
 
     @Override
     public Page getPage(PageId pageId) {
-        if (pageId == null)
-            throw new IllegalArgumentException("pageId cannot be null");
+        Parameters.requireNonNull(pageId, "pageId");
 
         PageContext context = pageService.loadPage(Util.from(pageId));
         return (context == null) ? null : new PageImpl(context);

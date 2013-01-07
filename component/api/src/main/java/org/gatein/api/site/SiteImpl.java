@@ -24,6 +24,7 @@ package org.gatein.api.site;
 
 import java.util.Locale;
 
+import org.gatein.api.Parameters;
 import org.gatein.api.common.Attributes;
 import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.internal.ObjectToStringBuilder;
@@ -58,10 +59,7 @@ public class SiteImpl implements Site {
     }
 
     public SiteImpl(SiteId id) {
-        if (id == null)
-            throw new IllegalArgumentException("id cannot be null");
-
-        this.id = id;
+        this.id = Parameters.requireNonNull(id, "id");
         this.attributes = new Attributes();
     }
 

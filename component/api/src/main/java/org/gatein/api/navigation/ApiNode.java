@@ -76,14 +76,16 @@ public class ApiNode implements Node {
     public Node addChild(int index, String childName) {
         checkChildrenLoaded();
 
+        Parameters.requireValidName(childName, "childName");
+
         return context.add(index, childName).getNode();
     }
 
     @Override
     public Node addChild(String childName) {
-        Parameters.requireNonNull(childName, "childName");
-
         checkChildrenLoaded();
+
+        Parameters.requireValidName(childName, "childName");
 
         if (hasChild(childName)) {
             throw new EntityAlreadyExistsException("child " + childName + " already exists");

@@ -24,6 +24,7 @@ package org.gatein.api.navigation;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
+import org.gatein.api.Parameters;
 import org.gatein.api.Util;
 import org.gatein.api.page.PageId;
 
@@ -34,11 +35,7 @@ public class NodeVisitorScope implements Scope {
     private final NodeVisitor visitor;
 
     public NodeVisitorScope(NodeVisitor visitor) {
-        if (visitor == null) {
-            throw new IllegalArgumentException("visitor cannot be null");
-        }
-
-        this.visitor = visitor;
+        this.visitor = Parameters.requireNonNull(visitor, "visitor");
     }
 
     @Override
