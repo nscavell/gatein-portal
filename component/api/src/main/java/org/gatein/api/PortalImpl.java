@@ -81,9 +81,6 @@ public class PortalImpl extends DataStorageContext implements Portal {
 
     static final Logger log = LoggerFactory.getLogger("org.gatein.api");
 
-    // TODO: should be configurable
-    public SiteId DEFAULT_SITE = new SiteId("classic");
-
     private final PageService pageService;
     private final NavigationService navigationService;
     private final DescriptionService descriptionService;

@@ -182,8 +182,6 @@ public class NavigationImpl implements Navigation {
 
     String resolve(NodeContext<ApiNode> ctx) {
         if (i18nResolver == null) {
-            // TODO: Allow PortalRequest implementations to cache things like current node and site; hence, making the following
-            // logic make sense
             PortalRequest request = PortalRequest.getInstance();
             Site site;
             if (request.getSiteId().equals(siteId)) {
