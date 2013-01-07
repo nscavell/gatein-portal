@@ -31,16 +31,11 @@ import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.gatein.api.common.Pagination;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class DataStorageContext {
-    // TODO: Do we want a better name for loggeer ? Probably need to standardize our logging for api
-    static final Logger log = LoggerFactory.getLogger("org.gatein.api.datastorage");
-
     protected final DataStorage dataStorage;
 
     protected DataStorageContext(DataStorage dataStorage) {
@@ -51,8 +46,7 @@ public class DataStorageContext {
         try {
             return callback.read(dataStorage);
         } catch (Exception e) {
-            log.error(e);
-            throw new ApiException("Exception reading internal data storage. See logs for details.", e);
+            throw new ApiException("Exception reading internal data storage", e);
         }
     }
 
@@ -61,8 +55,7 @@ public class DataStorageContext {
             callback.modify(data, dataStorage);
             dataStorage.save();
         } catch (Exception e) {
-            log.error(e);
-            throw new ApiException("Exception saving to internal data storage. See logs for details.", e);
+            throw new ApiException("Exception saving to internal data storage", e);
         }
     }
 
@@ -74,8 +67,7 @@ public class DataStorageContext {
         try {
             return dataStorage.find(query, comparator).getAll();
         } catch (Exception e) {
-            log.error(e);
-            throw new ApiException("Exception querying internal data storage. See logs for details.", e);
+            throw new ApiException("Exception querying internal data storage", e);
         }
     }
 
@@ -97,8 +89,7 @@ public class DataStorageContext {
                 return dataStorage.find(query, comparator).getAll();
             }
         } catch (Exception e) {
-            log.error(e);
-            throw new ApiException("Exception querying internal data storage. See logs for details.", e);
+            throw new ApiException("Exception querying internal data storage", e);
         }
     }
 
