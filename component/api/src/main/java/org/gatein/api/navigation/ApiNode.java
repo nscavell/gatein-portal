@@ -44,7 +44,6 @@ import org.gatein.api.Parameters;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.Util;
-import org.gatein.api.common.Filter;
 import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.internal.ObjectToStringBuilder;
 import org.gatein.api.navigation.Visibility.Status;
@@ -95,10 +94,8 @@ public class ApiNode implements Node {
     }
 
     @Override
-    public Node filter(Filter<Node> filter) {
-        Parameters.requireNonNull(filter, "filter");
-
-        return new FilteredNode(navigation, context, filter);
+    public FilteredNode filter() {
+        return new ApiFilteredNode(navigation, context);
     }
 
     @Override

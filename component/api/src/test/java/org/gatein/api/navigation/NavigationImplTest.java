@@ -36,59 +36,20 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import junit.framework.AssertionFailedError;
-
-import org.exoplatform.component.test.ConfigurationUnit;
-import org.exoplatform.component.test.ConfiguredBy;
-import org.exoplatform.component.test.ContainerScope;
-import org.exoplatform.component.test.KernelLifeCycle;
-import org.exoplatform.container.PortalContainer;
-import org.exoplatform.container.component.RequestLifeCycle;
-import org.exoplatform.portal.config.DataStorage;
-import org.exoplatform.portal.config.model.PortalConfig;
-import org.exoplatform.portal.mop.SiteKey;
-import org.exoplatform.portal.mop.SiteType;
-import org.exoplatform.portal.mop.navigation.NavigationContext;
-import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.portal.mop.navigation.NavigationState;
-import org.exoplatform.portal.mop.page.PageContext;
-import org.exoplatform.portal.mop.page.PageKey;
-import org.exoplatform.portal.mop.page.PageService;
-import org.exoplatform.portal.mop.page.PageState;
-import org.gatein.api.BasicPortalRequest;
+import org.gatein.api.AbstractApiTest;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.EntityNotFoundException;
-import org.gatein.api.Portal;
-import org.gatein.api.Util;
 import org.gatein.api.common.i18n.LocalizedString;
-import org.gatein.api.security.Permission;
-import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-@ConfiguredBy({
-        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.test.jcr-configuration.xml"),
-        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.identity-configuration.xml"),
-        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.portal-configuration.xml"),
-        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.resources-configuration.xml"),
-        @ConfigurationUnit(scope = ContainerScope.PORTAL, path = "conf/exo.portal.component.api-configuration.xml") })
-public class NavigationImplTest {
-    @ClassRule
-    public static KernelLifeCycle kernelLifeCycle = new KernelLifeCycle();
-
-    private PortalContainer container;
+public class NavigationImplTest extends AbstractApiTest {
 
     private Navigation navigation;
-
-    private Portal portal;
-
-    private SiteId siteId;
 
     @Test
     public void addChild() {
@@ -121,29 +82,11 @@ public class NavigationImplTest {
         node.getChild("parent").addChild("child");
     }
 
-    @After
-    public void after() {
-        deleteSite(SiteType.PORTAL, "classic");
-        BasicPortalRequest.setInstance(null);
-    }
-
     @Before
-    public void before() {
-        container = kernelLifeCycle.getContainer();
-        portal = (Portal) container.getComponentInstanceOfType(Portal.class);
-        assertNotNull("Portal component not found in container", portal);
+    public void before() throws Exception {
+        super.before();
 
-        RequestLifeCycle.begin(container);
-        createSite(SiteType.PORTAL, "classic");
-        RequestLifeCycle.end();
-
-        RequestLifeCycle.begin(container);
-
-        siteId = new SiteId("classic");
         navigation = portal.getNavigation(siteId);
-
-        BasicPortalRequest
-                .setInstance(new BasicPortalRequest(new User("john"), siteId, NodePath.root(), Locale.ENGLISH, portal));
     }
 
     @Test
@@ -520,39 +463,4 @@ public class NavigationImplTest {
     }
 
     // TODO: Add more serialization tests like moving/removing nodes, displayName, etc
-
-    void createSite(SiteType type, String name) {
-        try {
-            DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
-            NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
-            PageService pageService = (PageService) container.getComponentInstanceOfType(PageService.class);
-
-            PortalConfig config = new PortalConfig(type.getName(), name);
-            config.setAccessPermissions(Util.from(Permission.everyone()));
-
-            dataStorage.create(config);
-
-            NavigationContext nav = new NavigationContext(new SiteKey(type, name), new NavigationState(null));
-            navService.saveNavigation(nav);
-
-            pageService.savePage(new PageContext(new PageKey(new SiteKey(type, name), "homepage"), new PageState("displayName",
-                    "description", false, null, null, null)));
-        } catch (Exception e) {
-            AssertionFailedError afe = new AssertionFailedError();
-            afe.initCause(e);
-            throw afe;
-        }
-    }
-
-    void deleteSite(SiteType type, String name) {
-        try {
-            DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
-            dataStorage.remove(new PortalConfig(type.getName(), name));
-        } catch (Exception e) {
-            AssertionFailedError afe = new AssertionFailedError();
-            afe.initCause(e);
-            throw afe;
-        }
-    }
-
 }

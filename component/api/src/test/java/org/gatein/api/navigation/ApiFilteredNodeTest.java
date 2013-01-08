@@ -22,24 +22,33 @@
 package org.gatein.api.navigation;
 
 import static org.gatein.api.navigation.ApiNodeTest.assertIterator;
-import static org.gatein.api.navigation.ApiNodeTest.createRoot;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
+
+import org.gatein.api.AbstractApiTest;
 import org.gatein.api.common.Filter;
+import org.gatein.api.navigation.Visibility.Status;
+import org.gatein.api.page.Page;
+import org.gatein.api.page.PageId;
+import org.gatein.api.security.Group;
+import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class FilteredNodeTest {
+public class ApiFilteredNodeTest extends AbstractApiTest {
     private Filter<Node> filter;
-    private Node filtered;
-    private ApiNode root;
+    private FilteredNode filtered;
+    private Node root;
+    private Navigation navigation;
 
     @Test
     public void addChild() {
@@ -80,7 +89,11 @@ public class FilteredNodeTest {
 
     @Before
     public void before() throws Exception {
-        root = createRoot(true);
+        super.before();
+
+        navigation = portal.getNavigation(siteId);
+
+        root = navigation.getRootNode(Nodes.visitAll());
         root.addChild("child0");
         root.addChild("child1");
         root.addChild("child2");
@@ -94,20 +107,20 @@ public class FilteredNodeTest {
             }
         };
 
-        filtered = root.filter(filter);
+        filtered = root.filter().show(filter);
     }
 
     @Test
     public void getChild() {
         assertNotNull(filtered.getChild("child0"));
-        assertTrue(filtered.getChild("child0") instanceof FilteredNode);
+        assertTrue(filtered.getChild("child0") instanceof ApiFilteredNode);
         assertNull(filtered.getChild("child1"));
     }
 
     @Test
     public void getChild_Index() {
         assertEquals("child0", filtered.getChild(0).getName());
-        assertTrue(filtered.getChild(0) instanceof FilteredNode);
+        assertTrue(filtered.getChild(0) instanceof ApiFilteredNode);
         assertEquals("child2", filtered.getChild(1).getName());
     }
 
@@ -127,7 +140,7 @@ public class FilteredNodeTest {
         root.getChild("child1").addChild("child1-0");
 
         assertNotNull(filtered.getNode(NodePath.path("child0", "child0-0")));
-        assertTrue(filtered.getNode(NodePath.path("child0", "child0-0")) instanceof FilteredNode);
+        assertTrue(filtered.getNode(NodePath.path("child0", "child0-0")) instanceof ApiFilteredNode);
         assertNull(filtered.getNode(NodePath.path("child1")));
         assertNull(filtered.getNode(NodePath.path("child1", "child0-0")));
     }
@@ -148,7 +161,7 @@ public class FilteredNodeTest {
     @Test
     public void iterator() {
         assertIterator(filtered.iterator(), "child0", "child2", "child4");
-        assertTrue(filtered.iterator().next() instanceof FilteredNode);
+        assertTrue(filtered.iterator().next() instanceof ApiFilteredNode);
     }
 
     @Test
@@ -193,9 +206,67 @@ public class FilteredNodeTest {
         assertIterator(root.getChild("parent0").iterator(), "child0", "child1", "child5", "child2");
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void show_NullFilter() {
+        root.filter().show(null);
+    }
+
+    @Test
+    public void showAll() {
+        assertIterator(filtered.iterator(), "child0", "child2", "child4");
+        filtered = filtered.showAll();
+        assertIterator(filtered.iterator(), "child0", "child1", "child2", "child3", "child4");
+    }
+
+    @Test
+    public void showDefault() {
+        root.getChild("child1").setVisibility(false);
+
+        Page page = portal.getPage(new PageId(siteId, "homepage"));
+        page.setAccessPermission(new Permission("*", new Group("platform", "administrators")));
+        portal.savePage(page);
+
+        root.getChild("child2").setPageId(page.getId());
+
+        assertIterator(root.filter().showDefault().iterator(), "child0", "child3", "child4");
+    }
+
+    @Test
+    public void showVisible() {
+        root.getChild("child1").setVisibility(false);
+        root.getChild("child2").setVisibility(new Visibility(Status.SYSTEM));
+        root.getChild("child3").setVisibility(PublicationDate.endingOn(new Date()));
+
+        filtered = root.filter().showVisible();
+
+        assertIterator(filtered.iterator(), "child0", "child4");
+    }
+
+    @Test
+    public void showHasAccess() {
+        Page page = portal.getPage(new PageId(siteId, "homepage"));
+        page.setAccessPermission(new Permission("*", new Group("platform", "administrators")));
+        portal.savePage(page);
+
+        root.getChild("child1").setPageId(page.getId());
+
+        assertIterator(root.filter().showHasAccess(new User("a")).iterator(), "child0", "child2", "child3", "child4");
+        assertIterator(root.filter().showHasAccess(new User("root")).iterator(), "child0", "child1", "child2", "child3",
+                "child4");
+    }
+
+    @Test
+    public void showHasEdit() {
+        root.getChild("child1").setPageId(new PageId(siteId, "homepage"));
+
+        assertIterator(root.filter().showHasEdit(new User("a")).iterator(), "child0", "child2", "child3", "child4");
+        assertIterator(root.filter().showHasEdit(new User("root")).iterator(), "child0", "child1", "child2", "child3",
+                "child4");
+    }
+
     @Test
     public void sourceNotChanged() {
-        root.filter(filter);
+        root.filter().show(filter);
 
         assertEquals(5, root.getChildCount());
         assertNotNull(root.getChild("child1"));

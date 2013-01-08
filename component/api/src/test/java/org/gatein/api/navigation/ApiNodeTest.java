@@ -31,40 +31,20 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import org.exoplatform.portal.mop.navigation.NodeContextAccessor;
+import org.gatein.api.AbstractApiTest;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.navigation.Visibility.Status;
 import org.gatein.api.page.PageId;
-import org.gatein.api.site.SiteId;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class ApiNodeTest {
-    public static void assertIterator(Iterator<Node> itr, String... expected) {
-        for (String e : expected) {
-            assertTrue(itr.hasNext());
-            assertEquals(e, itr.next().getName());
-        }
-        assertFalse(itr.hasNext());
-    }
+public class ApiNodeTest extends AbstractApiTest {
 
-    public static void assertVisibility(boolean expectedVisible, Status expectedFlag, PublicationDate expectedDate,
-            Node actualNode) {
-        assertEquals(expectedVisible, actualNode.isVisible());
-        assertEquals(expectedFlag, actualNode.getVisibility().getStatus());
-        assertEquals(expectedDate, actualNode.getVisibility().getPublicationDate());
-    }
-
-    public static ApiNode createRoot(boolean expanded) {
-        NavigationImpl navigation = new NavigationImpl(new SiteId("classic"));
-
-        return NodeContextAccessor.createRootNodeContext(new ApiNodeModel(navigation), expanded).getNode();
-    }
-
-    ApiNode root;
+    private Navigation navigation;
+    private Node root;
 
     @Test
     public void addChild() {
@@ -89,7 +69,7 @@ public class ApiNodeTest {
 
     @Test(expected = IllegalStateException.class)
     public void addChild_NotLoaded() {
-        createRoot(false).addChild("child");
+        getRoot(false).addChild("child");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -99,12 +79,15 @@ public class ApiNodeTest {
 
     @Before
     public void before() throws Exception {
-        root = createRoot(true);
+        super.before();
+        
+        navigation = portal.getNavigation(siteId);
+        root = getRoot(true);
     }
 
     @Test(expected = IllegalStateException.class)
     public void getChild_NotLoaded() {
-        createRoot(false).getChild("0");
+        getRoot(false).getChild("0");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -114,7 +97,7 @@ public class ApiNodeTest {
 
     @Test(expected = IllegalStateException.class)
     public void getChildCount_NotLoaded() {
-        createRoot(false).getChildCount();
+        getRoot(false).getChildCount();
     }
 
     @Test
@@ -130,7 +113,7 @@ public class ApiNodeTest {
 
     @Test(expected = IllegalStateException.class)
     public void getNode_NotLoaded() {
-        createRoot(false).getNode(NodePath.path("0"));
+        getRoot(false).getNode(NodePath.path("0"));
     }
 
     @Test
@@ -143,7 +126,7 @@ public class ApiNodeTest {
 
     @Test(expected = IllegalStateException.class)
     public void hasChild_NotLoaded() {
-        createRoot(false).hasChild("0");
+        getRoot(false).hasChild("0");
     }
 
     @Test
@@ -156,7 +139,7 @@ public class ApiNodeTest {
 
     @Test(expected = IllegalStateException.class)
     public void indexOf_NotLoaded() {
-        createRoot(false).indexOf("0");
+        getRoot(false).indexOf("0");
     }
 
     @Test
@@ -231,7 +214,7 @@ public class ApiNodeTest {
         Node parent0 = root.addChild("parent0");
         Node child = parent0.addChild("0");
 
-        child.moveTo(createRoot(true));
+        child.moveTo(getRoot(true));
     }
 
     @Test
@@ -280,7 +263,7 @@ public class ApiNodeTest {
 
     @Test(expected = IllegalStateException.class)
     public void removeChild_NotLoaded() {
-        createRoot(false).removeChild("0");
+        getRoot(false).removeChild("0");
     }
 
     @Test
@@ -310,12 +293,12 @@ public class ApiNodeTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void root_moveToParent() {
-        root.moveTo(createRoot(true));
+        root.moveTo(getRoot(true));
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void root_moveToParentIndex() {
-        root.moveTo(0, createRoot(true));
+        root.moveTo(0, getRoot(true));
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -398,11 +381,6 @@ public class ApiNodeTest {
         root.sort(null);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void filter_NullFilter() {
-        root.filter(null);
-    }
-
     @Test
     public void visibility() {
         Node c = root.addChild("child");
@@ -417,5 +395,24 @@ public class ApiNodeTest {
 
         c.setVisibility(new Visibility(Status.SYSTEM));
         assertVisibility(true, Status.SYSTEM, null, c);
+    }
+
+    public Node getRoot(boolean expanded) {
+        return navigation.getRootNode(expanded ? Nodes.visitChildren() : Nodes.visitNone());
+    }
+
+    public static void assertIterator(Iterator<Node> itr, String... expected) {
+        for (String e : expected) {
+            assertTrue(itr.hasNext());
+            assertEquals(e, itr.next().getName());
+        }
+        assertFalse(itr.hasNext());
+    }
+
+    public static void assertVisibility(boolean expectedVisible, Status expectedFlag, PublicationDate expectedDate,
+            Node actualNode) {
+        assertEquals(expectedVisible, actualNode.isVisible());
+        assertEquals(expectedFlag, actualNode.getVisibility().getStatus());
+        assertEquals(expectedDate, actualNode.getVisibility().getPublicationDate());
     }
 }
