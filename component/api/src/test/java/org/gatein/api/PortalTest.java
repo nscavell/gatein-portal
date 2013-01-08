@@ -265,19 +265,25 @@ public class PortalTest extends AbstractApiTest {
 
     @Test
     public void siteQuery_NonHidden() {
-        portal.saveSite(new SiteImpl("test-site"));
+        createSite(new SiteId("test-site"), false);
 
         List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
         assertTrue(sites.isEmpty());
     }
 
     @Test
-    public void addSite() {
-        // TODO Should use portal.createSite when added
-        portal.saveSite(new SiteImpl("newsite"));
+    public void createSite() {
+        Site site = portal.createSite(new SiteId("newsite"));
+        portal.saveSite(site);
 
         assertNotNull(portal.getSite(new SiteId("newsite")));
         assertNull(portal.getSite(new SiteId("xxx")));
+    }
+
+    @Test(expected = EntityAlreadyExistsException.class)
+    public void createSite_SiteExists() {
+        createSite();
+        portal.createSite(new SiteId("newsite"));
     }
 
     @Test
@@ -347,15 +353,10 @@ public class PortalTest extends AbstractApiTest {
         assertNotNull(portal.getPage(new PageId("create-page", "baz")));
     }
 
-    @Test
+    @Test(expected = EntityAlreadyExistsException.class)
     public void createPage_PageExists() {
         createSite(new SiteId("create-page-exists"), "bar");
-        try {
-            portal.createPage(new PageId("create-page-exists", "bar"));
-            fail("EntityAlreadyExistsException should be thrown");
-        } catch (EntityAlreadyExistsException e) {
-            // success
-        }
+        portal.createPage(new PageId("create-page-exists", "bar"));
     }
 
     @Test

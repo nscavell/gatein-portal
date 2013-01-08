@@ -101,6 +101,10 @@ public class AbstractApiTest {
     }
 
     protected void createSite(SiteId siteId, String... pages) {
+        createSite(siteId, true, pages);
+    }
+
+    protected void createSite(SiteId siteId, boolean createNav, String... pages) {
         try {
             DataStorage dataStorage = (DataStorage) container.getComponentInstanceOfType(DataStorage.class);
             NavigationService navService = (NavigationService) container.getComponentInstanceOfType(NavigationService.class);
@@ -112,9 +116,11 @@ public class AbstractApiTest {
 
             dataStorage.create(config);
 
-            NavigationContext nav = new NavigationContext(new SiteKey(siteKey.getTypeName(), siteKey.getName()),
-                    new NavigationState(null));
-            navService.saveNavigation(nav);
+            if (createNav) {
+                NavigationContext nav = new NavigationContext(new SiteKey(siteKey.getTypeName(), siteKey.getName()),
+                        new NavigationState(null));
+                navService.saveNavigation(nav);
+            }
 
             createPage(siteId, pages);
         } catch (Exception e) {

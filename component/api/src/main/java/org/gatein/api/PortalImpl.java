@@ -37,6 +37,7 @@ import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
+import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.mop.page.PageServiceImpl;
@@ -60,6 +61,7 @@ import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.gatein.api.site.Site;
 import org.gatein.api.site.SiteId;
+import org.gatein.api.site.SiteImpl;
 import org.gatein.api.site.SiteQuery;
 import org.gatein.api.site.SiteType;
 import org.gatein.common.logging.Logger;
@@ -118,6 +120,15 @@ public class PortalImpl extends DataStorageContext implements Portal {
     }
 
     @Override
+    public Site createSite(SiteId siteId) throws IllegalArgumentException, EntityAlreadyExistsException {
+        if (getSite(siteId) != null) {
+            throw new EntityAlreadyExistsException("Cannot create site. Site " + siteId + " already exists.");
+        }
+
+        return new SiteImpl(siteId);
+    }
+
+    @Override
     public List<Site> findSites(SiteQuery query) {
         Pagination pagination = query.getPagination();
         if (pagination != null && query.getSiteTypes().size() > 1) {
@@ -157,7 +168,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
     }
 
     @Override
-    public void saveSite(Site site) {
+    public void saveSite(final Site site) {
         execute(Util.from(site), new Modify<PortalConfig>() {
             @Override
             public void modify(PortalConfig data, DataStorage dataStorage) throws Exception {
@@ -165,9 +176,13 @@ public class PortalImpl extends DataStorageContext implements Portal {
                     dataStorage.save(data);
                 } else {
                     dataStorage.create(data);
+                    
+                    NavigationContext nav = new NavigationContext(Util.from(site.getId()), new NavigationState(null));
+                    navigationService.saveNavigation(nav);
                 }
             }
         });
+
     }
 
     @Override
