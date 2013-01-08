@@ -86,7 +86,9 @@ public class NavigationImplTest extends AbstractApiTest {
     public void before() throws Exception {
         super.before();
 
-        navigation = portal.getNavigation(siteId);
+        createSite(defaultSiteId);
+
+        navigation = portal.getNavigation(defaultSiteId);
     }
 
     @Test
@@ -98,7 +100,7 @@ public class NavigationImplTest extends AbstractApiTest {
 
         navigation.saveNode(node);
 
-        navigation = portal.getNavigation(siteId);
+        navigation = portal.getNavigation(defaultSiteId);
         node = navigation.getRootNode(Nodes.visitAll());
 
         assertEquals(1, node.getChildCount());
@@ -110,10 +112,10 @@ public class NavigationImplTest extends AbstractApiTest {
     public void createNavigationEmpty() {
         navigation.setPriority(10);
 
-        navigation = portal.getNavigation(siteId);
+        navigation = portal.getNavigation(defaultSiteId);
 
         assertEquals(10, navigation.getPriority());
-        assertEquals(siteId, navigation.getSiteId());
+        assertEquals(defaultSiteId, navigation.getSiteId());
         assertEquals(0, navigation.getRootNode(Nodes.visitAll()).getChildCount());
     }
 

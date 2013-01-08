@@ -33,10 +33,7 @@ import java.util.Date;
 import org.gatein.api.AbstractApiTest;
 import org.gatein.api.common.Filter;
 import org.gatein.api.navigation.Visibility.Status;
-import org.gatein.api.page.Page;
 import org.gatein.api.page.PageId;
-import org.gatein.api.security.Group;
-import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.junit.Before;
 import org.junit.Test;
@@ -91,7 +88,9 @@ public class ApiFilteredNodeTest extends AbstractApiTest {
     public void before() throws Exception {
         super.before();
 
-        navigation = portal.getNavigation(siteId);
+        createSite(defaultSiteId);
+
+        navigation = portal.getNavigation(defaultSiteId);
 
         root = navigation.getRootNode(Nodes.visitAll());
         root.addChild("child0");
@@ -220,13 +219,11 @@ public class ApiFilteredNodeTest extends AbstractApiTest {
 
     @Test
     public void showDefault() {
+        createPage(defaultSiteId, "page1");
+        setPermission(new PageId(defaultSiteId, "page1"), "Everyone", "*:/platform/administrators");
+
         root.getChild("child1").setVisibility(false);
-
-        Page page = portal.getPage(new PageId(siteId, "homepage"));
-        page.setAccessPermission(new Permission("*", new Group("platform", "administrators")));
-        portal.savePage(page);
-
-        root.getChild("child2").setPageId(page.getId());
+        root.getChild("child2").setPageId(new PageId(defaultSiteId, "page1"));
 
         assertIterator(root.filter().showDefault().iterator(), "child0", "child3", "child4");
     }
@@ -235,7 +232,7 @@ public class ApiFilteredNodeTest extends AbstractApiTest {
     public void showVisible() {
         root.getChild("child1").setVisibility(false);
         root.getChild("child2").setVisibility(new Visibility(Status.SYSTEM));
-        root.getChild("child3").setVisibility(PublicationDate.endingOn(new Date()));
+        root.getChild("child3").setVisibility(PublicationDate.endingOn(new Date(System.currentTimeMillis() - 1000)));
 
         filtered = root.filter().showVisible();
 
@@ -244,11 +241,14 @@ public class ApiFilteredNodeTest extends AbstractApiTest {
 
     @Test
     public void showHasAccess() {
-        Page page = portal.getPage(new PageId(siteId, "homepage"));
-        page.setAccessPermission(new Permission("*", new Group("platform", "administrators")));
-        portal.savePage(page);
+        createPage(defaultSiteId, "page1");
+        setPermission(new PageId(defaultSiteId, "page1"), "Everyone", "*:/platform/administrators");
 
-        root.getChild("child1").setPageId(page.getId());
+        createPage(defaultSiteId, "page2");
+        setPermission(new PageId(defaultSiteId, "page2"), "Everyone", "Everyone");
+
+        root.getChild("child1").setPageId(new PageId(defaultSiteId, "page1"));
+        root.getChild("child2").setPageId(new PageId(defaultSiteId, "page2"));
 
         assertIterator(root.filter().showHasAccess(new User("a")).iterator(), "child0", "child2", "child3", "child4");
         assertIterator(root.filter().showHasAccess(new User("root")).iterator(), "child0", "child1", "child2", "child3",
@@ -257,7 +257,14 @@ public class ApiFilteredNodeTest extends AbstractApiTest {
 
     @Test
     public void showHasEdit() {
-        root.getChild("child1").setPageId(new PageId(siteId, "homepage"));
+        createPage(defaultSiteId, "page1");
+        setPermission(new PageId(defaultSiteId, "page1"), "*:/platform/administrators", "Everyone");
+
+        createPage(defaultSiteId, "page2");
+        setPermission(new PageId(defaultSiteId, "page2"), "Everyone", "Everyone");
+
+        root.getChild("child1").setPageId(new PageId(defaultSiteId, "page1"));
+        root.getChild("child2").setPageId(new PageId(defaultSiteId, "page2"));
 
         assertIterator(root.filter().showHasEdit(new User("a")).iterator(), "child0", "child2", "child3", "child4");
         assertIterator(root.filter().showHasEdit(new User("root")).iterator(), "child0", "child1", "child2", "child3",

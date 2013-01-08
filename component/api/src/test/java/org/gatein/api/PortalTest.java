@@ -22,6 +22,13 @@
 
 package org.gatein.api;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -39,17 +46,18 @@ import org.gatein.api.site.SiteId;
 import org.gatein.api.site.SiteImpl;
 import org.gatein.api.site.SiteQuery;
 import org.gatein.api.site.SiteType;
+import org.junit.Test;
 
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class PortalTestCase extends AbstractAPITestCase {
-    public void testGetSites() {
-        cleanup();
+public class PortalTest extends AbstractApiTest {
+    @Test
+    public void getSites() {
+        createSite(defaultSiteId);
 
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "classic");
         List<Site> sites = portal.findSites(new SiteQuery.Builder().withAllSiteTypes().build());
 
         assertNotNull(sites);
@@ -59,13 +67,12 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertNotNull(portal.getSite(new SiteId("classic")));
     }
 
-    public void testNaturalOrdering() {
-        cleanup();
-
-        portal.saveSite(new SiteImpl("z"));
-        portal.saveSite(new SiteImpl("a"));
-        portal.saveSite(new SiteImpl("f"));
-        portal.saveSite(new SiteImpl("b"));
+    @Test
+    public void naturalOrdering() {
+        createSite(new SiteId("z"));
+        createSite(new SiteId("a"));
+        createSite(new SiteId("f"));
+        createSite(new SiteId("b"));
 
         List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).build());
         assertEquals(4, sites.size());
@@ -75,9 +82,8 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertEquals("b", sites.get(3).getId().getName());
     }
 
-    public void testSortedSiteQuery_comparator() {
-        cleanup();
-
+    @Test
+    public void sortedSiteQuery_comparator() {
         Site site = new SiteImpl("b");
         site.setDisplayName("Toyota");
         portal.saveSite(site);
@@ -111,11 +117,10 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertEquals("c", sites.get(3).getId().getName());
     }
 
-    public void testPagedSiteQuery() {
-        cleanup();
-
+    @Test
+    public void pagedSiteQuery() {
         for (int i = 0; i < 10; i++) {
-            createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "site" + (i + 1));
+            createSite(new SiteId("site" + (i + 1)));
         }
 
         SiteQuery query = new SiteQuery.Builder().includeEmptySites(true).withPagination(0, 5).build();
@@ -147,22 +152,21 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertEquals("site10", sites.get(2).getName());
     }
 
-    public void testPagedSiteQuery_WithMultipleSiteTypes() {
-        cleanup();
-
+    @Test
+    public void pagedSiteQuery_WithMultipleSiteTypes() {
         // Add more sites and check
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "site1");
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "site2");
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "site3");
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "site4");
+        createSite(new SiteId("site1"));
+        createSite(new SiteId("site2"));
+        createSite(new SiteId("site3"));
+        createSite(new SiteId("site4"));
 
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "/platform/users");
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "/foo/bar");
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "blah");
+        createSite(new SiteId(new Group("/platform/users")));
+        createSite(new SiteId(new Group("/foo/bar")));
+        createSite(new SiteId(new Group("blah")));
 
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "root");
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "john");
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "mary");
+        createSite(new SiteId(new User("root")));
+        createSite(new SiteId(new User("john")));
+        createSite(new SiteId(new User("mary")));
 
         List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withAllSiteTypes().build());
         assertEquals(10, sites.size());
@@ -237,13 +241,12 @@ public class PortalTestCase extends AbstractAPITestCase {
                                 .withNextPage().build()).size());
     }
 
-    public void testFilteredSiteQuery() {
-        cleanup();
-
-        portal.saveSite(new SiteImpl("c"));
-        portal.saveSite(new SiteImpl("a"));
-        portal.saveSite(new SiteImpl("d"));
-        portal.saveSite(new SiteImpl("b"));
+    @Test
+    public void filteredSiteQuery() {
+        createSite(new SiteId("c"));
+        createSite(new SiteId("a"));
+        createSite(new SiteId("d"));
+        createSite(new SiteId("b"));
 
         List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withFilter(new Filter<Site>() {
             @Override
@@ -260,24 +263,28 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertEquals("b", site.getId().getName());
     }
 
-    public void testSiteQuery_NonHidden() {
+    @Test
+    public void siteQuery_NonHidden() {
         portal.saveSite(new SiteImpl("test-site"));
 
         List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
         assertTrue(sites.isEmpty());
     }
 
-    public void testAddSite() {
+    @Test
+    public void addSite() {
+        // TODO Should use portal.createSite when added
         portal.saveSite(new SiteImpl("newsite"));
 
         assertNotNull(portal.getSite(new SiteId("newsite")));
         assertNull(portal.getSite(new SiteId("xxx")));
     }
 
-    public void testRemoveSite() {
-        portal.saveSite(new SiteImpl("test1"));
-        portal.saveSite(new SiteImpl("test2"));
-        portal.saveSite(new SiteImpl("test3"));
+    @Test
+    public void removeSite() {
+        createSite(new SiteId("test1"));
+        createSite(new SiteId("test2"));
+        createSite(new SiteId("test3"));
 
         assertNotNull(portal.getSite(new SiteId("test1")));
         assertNotNull(portal.getSite(new SiteId("test2")));
@@ -294,24 +301,26 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertNull(portal.getSite(new SiteId("te")));
         assertNull(portal.getSite(new SiteId("test2")));
         assertNotNull(portal.getSite(new SiteId("test3")));
-
     }
 
-    public void testGetSpace() {
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "/platform/something");
+    @Test
+    public void getSpace() {
+        createSite(new SiteId(new Group("/platform/something")));
 
         Site space = portal.getSite(new SiteId(new Group("platform", "something")));
         assertNotNull(space);
     }
 
-    public void testGetDashboard() {
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "user10");
+    @Test
+    public void getDashboard() {
+        createSite(new SiteId(new User("user10")));
         Site dashboard = portal.getSite(new SiteId(new User("user10")));
         assertNotNull(dashboard);
     }
 
-    public void testGetPage() {
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "get-page", "bar");
+    @Test
+    public void getPage() {
+        createSite(new SiteId("get-page"), "bar");
 
         assertNotNull(portal.getPage(new PageId("get-page", "bar")));
         assertNull(portal.getPage(new PageId("get-page", "blah")));
@@ -325,8 +334,9 @@ public class PortalTestCase extends AbstractAPITestCase {
         }
     }
 
-    public void testCreatePage() {
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "create-page", "bar");
+    @Test
+    public void createPage() {
+        createSite(new SiteId("create-page"), "bar");
 
         Page page = portal.createPage(new PageId("create-page", "baz"));
         assertNotNull(page);
@@ -337,8 +347,9 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertNotNull(portal.getPage(new PageId("create-page", "baz")));
     }
 
-    public void testCreatePage_PageExists() {
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "create-page-exists", "bar");
+    @Test
+    public void createPage_PageExists() {
+        createSite(new SiteId("create-page-exists"), "bar");
         try {
             portal.createPage(new PageId("create-page-exists", "bar"));
             fail("EntityAlreadyExistsException should be thrown");
@@ -347,20 +358,18 @@ public class PortalTestCase extends AbstractAPITestCase {
         }
     }
 
-    public void testFindPages() {
-        cleanup();
-
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page3", "page1", "page5", "page2", "page4");
+    @Test
+    public void findPages() {
+        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
 
         List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build());
         assertNotNull(pages);
         assertEquals(5, pages.size());
     }
 
-    public void testFindPages_ByTitle() {
-        cleanup();
-
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page3", "page1", "page5", "page2", "page4");
+    @Test
+    public void findPages_ByTitle() {
+        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
         Page page = portal.getPage(new PageId("find-pages", "page1"));
         page.setDisplayName("FooTitle");
         portal.savePage(page);
@@ -377,12 +386,11 @@ public class PortalTestCase extends AbstractAPITestCase {
         }
     }
 
-    public void testFindPages_BySiteType() {
-        cleanup();
-
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page1", "page2");
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "find-pages", "page3");
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "find-pages", "page4", "page5", "page6");
+    @Test
+    public void findPages_BySiteType() {
+        createSite(new SiteId("find-pages"), "page1", "page2");
+        createSite(new SiteId(new Group("find-pages")), "page3");
+        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
 
         PageQuery query = new PageQuery.Builder().withSiteType(SiteType.SITE).build();
         List<Page> pages = portal.findPages(query);
@@ -397,35 +405,31 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertEquals(3, pages.size());
     }
 
-    public void testFindPages_BySiteName() {
-        cleanup();
-
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page1", "page2");
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "find-pages", "page3");
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "find-pages", "page4", "page5", "page6");
+    @Test
+    public void findPages_BySiteName() {
+        createSite(new SiteId("find-pages"), "page1", "page2");
+        createSite(new SiteId(new Group("find-pages")), "page3");
+        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
 
         PageQuery query = new PageQuery.Builder().withSiteName("find-pages").build();
         List<Page> pages = portal.findPages(query);
         assertEquals(6, pages.size());
     }
 
-    public void testFindPages_BySiteType_And_SiteName() {
-        cleanup();
-
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page1", "page2");
-        createSite(org.exoplatform.portal.mop.SiteType.GROUP, "find-pages", "page3");
-        createSite(org.exoplatform.portal.mop.SiteType.USER, "find-pages", "page4", "page5", "page6");
+    @Test
+    public void findPages_BySiteType_And_SiteName() {
+        createSite(new SiteId("find-pages"), "page1", "page2");
+        createSite(new SiteId(new Group("find-pages")), "find-pages", "page3");
+        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
 
         PageQuery query = new PageQuery.Builder().withSiteType(SiteType.DASHBOARD).withSiteName("find-pages").build();
         List<Page> pages = portal.findPages(query);
         assertEquals(3, pages.size());
     }
 
-    public void testFindPages_Pagination() {
-        cleanup();
-
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "find-pages", "page1", "page2", "page3", "page4", "page5",
-                "page6", "page7");
+    @Test
+    public void findPages_Pagination() {
+        createSite(new SiteId("find-pages"), "page1", "page2", "page3", "page4", "page5", "page6", "page7");
 
         PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withPagination(0, 5).build();
         List<Page> pages = portal.findPages(query);
@@ -435,12 +439,12 @@ public class PortalTestCase extends AbstractAPITestCase {
         assertEquals(2, pages.size());
     }
 
-    public void testHasPermission() {
-        createSite(org.exoplatform.portal.mop.SiteType.PORTAL, "permissions", "page");
+    @Test
+    public void hasPermission() {
+        createSite(new SiteId("permissions"), "page");
         PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("permissions")).build();
 
-        setPermission(org.exoplatform.portal.mop.SiteType.PORTAL, "permissions", "page", "*:/platform/administrators",
-                "Everyone");
+        setPermission(new PageId(new SiteId("permissions"), "page"), "*:/platform/administrators", "Everyone");
 
         Page page = portal.findPages(query).get(0);
 
@@ -449,12 +453,5 @@ public class PortalTestCase extends AbstractAPITestCase {
 
         assertTrue(portal.hasPermission(User.anonymous(), page.getAccessPermission()));
         assertFalse(portal.hasPermission(User.anonymous(), page.getEditPermission()));
-    }
-
-    // Just remove all sites
-    void cleanup() {
-        for (Site site : portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withAllSiteTypes().build())) {
-            portal.removeSite(site.getId());
-        }
     }
 }

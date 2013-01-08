@@ -81,7 +81,9 @@ public class ApiNodeTest extends AbstractApiTest {
     public void before() throws Exception {
         super.before();
         
-        navigation = portal.getNavigation(siteId);
+        createSite(defaultSiteId);
+
+        navigation = portal.getNavigation(defaultSiteId);
         root = getRoot(true);
     }
 
@@ -394,7 +396,7 @@ public class ApiNodeTest extends AbstractApiTest {
         assertVisibility(true, Status.PUBLICATION, d, c);
 
         c.setVisibility(new Visibility(Status.SYSTEM));
-        assertVisibility(true, Status.SYSTEM, null, c);
+        assertVisibility(false, Status.SYSTEM, null, c);
     }
 
     public Node getRoot(boolean expanded) {
