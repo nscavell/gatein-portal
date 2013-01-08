@@ -176,7 +176,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
                     dataStorage.save(data);
                 } else {
                     dataStorage.create(data);
-                    
+
                     NavigationContext nav = new NavigationContext(Util.from(site.getId()), new NavigationState(null));
                     navigationService.saveNavigation(nav);
                 }
@@ -217,10 +217,6 @@ public class PortalImpl extends DataStorageContext implements Portal {
         if (getPage(pageId) != null) {
             throw new EntityAlreadyExistsException("Cannot create page. Page " + pageId + " already exists.");
         }
-
-        // TODO: Provide valid defaults for creating a page i.e. permissions, etc.
-        // TODO: Do we want to support page template ?
-        // TODO: We can also ask for more information in API during page creation.
 
         Permission access = Permission.everyone();
         Permission edit = Permission.any("platform", "administrators");
