@@ -121,7 +121,7 @@ public class SiteImpl implements Site {
 
     @Override
     public String getDisplayName() {
-        // TODO: Resolve display name should also take care of group name if site is a group site
+        // TODO: For sites of type SiteType.SPACE this should return the label of the group
         return (displayName == null) ? getName() : displayName.getValue();
     }
 
