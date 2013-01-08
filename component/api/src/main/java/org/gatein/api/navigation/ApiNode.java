@@ -76,7 +76,7 @@ public class ApiNode implements Node {
     public Node addChild(int index, String childName) {
         checkChildrenLoaded();
 
-        Parameters.requireValidName(childName, "childName");
+        Parameters.requireNonNull(childName, "childName");
 
         return context.add(index, childName).getNode();
     }
@@ -85,7 +85,7 @@ public class ApiNode implements Node {
     public Node addChild(String childName) {
         checkChildrenLoaded();
 
-        Parameters.requireValidName(childName, "childName");
+        Parameters.requireNonNull(childName, "childName");
 
         if (hasChild(childName)) {
             throw new EntityAlreadyExistsException("child " + childName + " already exists");
@@ -422,11 +422,6 @@ public class ApiNode implements Node {
 
     boolean isDisplayNameChanged() {
         return displayNameChanged;
-    }
-
-    void setDisplayNameInternal(LocalizedString displayName) {
-        this.displayName = displayName;
-        this.resolvedDisplayName = null;
     }
 
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
