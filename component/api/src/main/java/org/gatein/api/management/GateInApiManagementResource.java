@@ -297,7 +297,7 @@ public class GateInApiManagementResource {
     }
 
     private void setCurrentPortalRequest(OperationContext context) {
-        ManagedUser user = context.getUser();
+        ManagedUser managedUser = context.getUser();
         PathAddress address = context.getAddress();
         SiteType siteType = null;
         StringBuilder sb = null;
@@ -330,6 +330,7 @@ public class GateInApiManagementResource {
         SiteId siteId = (siteName == null) ? null : new SiteId(siteType, siteName);
         Locale locale = context.getLocale();
 
-        BasicPortalRequest.setInstance(new BasicPortalRequest(new User(user.getUserName()), siteId, nodePath, locale, portal));
+        User user = (managedUser == null || managedUser.getUserName() == null) ? User.anonymous() : new User(managedUser.getUserName());
+        BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal));
     }
 }
