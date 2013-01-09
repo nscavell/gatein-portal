@@ -118,9 +118,10 @@ public class PageManagementResource {
     private void populateModel(Page page, ModelObject model) {
         model.set("name", page.getName());
         model.set("displayName", page.getDisplayName());
+        model.set("description", page.getDescription());
         // Uncomment below when page's support localized values (description service)
         // populate("displayNames", page.getDisplayNames(), model);
-        populate("description", page.getDescription(), model);
+        // populate("description", page.getDescription(), model);
         populate("edit-permissions", page.getEditPermission(), model);
         populate("access-permissions", page.getAccessPermission(), model);
     }

@@ -26,7 +26,6 @@ import java.util.Locale;
 
 import org.gatein.api.Parameters;
 import org.gatein.api.common.Attributes;
-import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.internal.ObjectToStringBuilder;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.Permission;
@@ -38,8 +37,8 @@ import org.gatein.api.security.User;
 public class SiteImpl implements Site {
     private final SiteId id;
 
-    private LocalizedString displayName;
-    private LocalizedString description;
+    private String displayName;
+    private String description;
     private Locale locale;
     private String skin;
     private Attributes attributes;
@@ -79,50 +78,25 @@ public class SiteImpl implements Site {
     }
 
     @Override
-    public LocalizedString getDescription() {
+    public String getDescription() {
         return description;
     }
 
     @Override
     public void setDescription(String description) {
-        setDescription(new LocalizedString(description));
-    }
-
-    @Override
-    public void setDescription(LocalizedString description) {
-        if (description != null && description.isLocalized())
-            throw new IllegalArgumentException("Localized description is not supported");
-
         this.description = description;
     }
 
-    @Override
-    public String resolveDescription() {
-        return (description == null) ? null : description.getValue();
-    }
-
-    @Override
-    public LocalizedString getDisplayNames() {
-        return displayName;
-    }
 
     @Override
     public void setDisplayName(String displayName) {
-        setDisplayNames(new LocalizedString(displayName));
-    }
-
-    @Override
-    public void setDisplayNames(LocalizedString displayName) {
-        if (displayName != null && displayName.isLocalized())
-            throw new IllegalArgumentException("Localized displayName is not supported");
-
         this.displayName = displayName;
     }
 
     @Override
     public String getDisplayName() {
         // TODO: For sites of type SiteType.SPACE this should return the label of the group
-        return (displayName == null) ? getName() : displayName.getValue();
+        return displayName;
     }
 
     @Override
@@ -178,7 +152,7 @@ public class SiteImpl implements Site {
     @Override
     public String toString() {
         return ObjectToStringBuilder.toStringBuilder(getClass()).add("type", getType().getName()).add("name", getName())
-                .add("displayName", getDisplayNames()).add("description", getDescription()).add("locale", getLocale())
+                .add("displayName", displayName).add("description", getDescription()).add("locale", getLocale())
                 .add("skin", getSkin()).add("attributes", getAttributes()).add("editPermission", getEditPermission())
                 .add("accessPermission", getAccessPermission()).toString();
     }

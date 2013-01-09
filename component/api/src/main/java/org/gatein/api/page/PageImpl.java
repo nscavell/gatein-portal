@@ -26,7 +26,6 @@ import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Parameters;
 import org.gatein.api.Util;
-import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.security.Permission;
 import org.gatein.api.site.SiteId;
 
@@ -36,19 +35,8 @@ import org.gatein.api.site.SiteId;
 public class PageImpl implements Page {
     private final transient PageContext pageContext;
 
-    private LocalizedString description;
-    private String resolvedDescription;
-    private LocalizedString displayName;
-    private String resolvedDisplayName;
-
     public PageImpl(PageContext pageContext) {
         this.pageContext = pageContext;
-        if (pageContext.getState().getDescription() != null) {
-            this.description = new LocalizedString(pageContext.getState().getDescription());
-        }
-        if (pageContext.getState().getDisplayName() != null) {
-            this.displayName = new LocalizedString(pageContext.getState().getDisplayName());
-        }
     }
 
     @Override
@@ -67,62 +55,23 @@ public class PageImpl implements Page {
     }
 
     @Override
-    public LocalizedString getDescription() {
-        return description;
+    public String getDescription() {
+        return pageContext.getState().getDescription();
     }
 
     @Override
     public void setDescription(String description) {
-        setDescription((description == null) ? null : new LocalizedString(description));
-    }
-
-    @Override
-    public void setDescription(LocalizedString description) {
-        if (description != null && description.isLocalized())
-            throw new IllegalArgumentException("Localized description is not supported");
-
-        if (description != null) {
-            setState(builder().description(description.getValue()));
-        } else {
-            setState(builder().description(null));
-        }
-        this.description = description;
-    }
-
-    @Override
-    public String resolveDescription() {
-        return (description == null) ? null : description.getValue();
-    }
-
-    @Override
-    public LocalizedString getDisplayNames() {
-        return displayName;
+       setState(builder().description(description));
     }
 
     @Override
     public void setDisplayName(String displayName) {
-        setDisplayNames((displayName == null) ? null : new LocalizedString(displayName));
-    }
-
-    @Override
-    public void setDisplayNames(LocalizedString displayName) {
-        if (displayName != null && displayName.isLocalized())
-            throw new IllegalArgumentException("Localized displayName is not supported");
-
-        if (displayName != null) {
-            setState(builder().displayName(displayName.getValue()));
-        } else {
-            setState(builder().displayName(null));
-        }
-
-        this.displayName = displayName;
+       setState(builder().displayName(displayName));
     }
 
     @Override
     public String getDisplayName() {
-        // TODO: Determine how to create the BasicI18NResolver by finding the appropriate resource bundle and locale, i.e.
-        // PortalRequestContext#getTitle()
-        return (displayName == null) ? null : displayName.getValue();
+        return pageContext.getState().getDisplayName();
     }
 
     @Override

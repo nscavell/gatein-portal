@@ -74,11 +74,11 @@ public class Util {
 
         SiteKey siteKey = from(site.getId());
         PortalConfig portalConfig = new PortalConfig(siteKey.getTypeName(), siteKey.getName());
-        if (site.getDisplayNames() != null) {
-            portalConfig.setLabel(site.getDisplayNames().getValue());
+        if (site.getDisplayName() != null) {
+            portalConfig.setLabel(site.getDisplayName());
         }
         if (site.getDescription() != null) {
-            portalConfig.setDescription(site.getDescription().getValue());
+            portalConfig.setDescription(site.getDescription());
         }
         if (site.getLocale() != null) {
             portalConfig.setLocale(site.getLocale().getLanguage());

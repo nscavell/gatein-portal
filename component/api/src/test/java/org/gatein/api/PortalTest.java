@@ -383,7 +383,7 @@ public class PortalTest extends AbstractApiTest {
                 .withDisplayName("FooTitle").build());
         assertEquals(2, pages.size());
         for (Page p : pages) {
-            assertEquals("FooTitle", p.getDisplayNames().getValue());
+            assertEquals("FooTitle", p.getDisplayName());
         }
     }
 
