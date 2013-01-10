@@ -30,7 +30,6 @@ import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.portal.mop.navigation.NavigationServiceException;
 import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.navigation.NodeChangeListener;
 import org.exoplatform.portal.mop.navigation.NodeContext;
@@ -217,7 +216,7 @@ public class NavigationImpl implements Navigation {
     private NodeContext<ApiNode> loadNodeContext(Scope scope, NodeChangeListener<NodeContext<ApiNode>> listener) {
         try {
             return navigationService.loadNode(model, navCtx, scope, listener);
-        } catch (NavigationServiceException e) {
+        } catch (Throwable e) {
             throw new ApiException("Failed to load node", e);
         }
     }
@@ -225,7 +224,7 @@ public class NavigationImpl implements Navigation {
     void rebaseNodeContext(NodeContext<ApiNode> ctx, Scope scope, NodeChangeListener<NodeContext<ApiNode>> listener) {
         try {
             navigationService.rebaseNode(ctx, scope, listener);
-        } catch (NavigationServiceException e) {
+        } catch (Throwable e) {
             throw new ApiException("Failed to refresh node", e);
         }
     }
@@ -233,7 +232,7 @@ public class NavigationImpl implements Navigation {
     private void saveNodeContext(NodeContext<ApiNode> ctx, NodeChangeListener<NodeContext<ApiNode>> listener) {
         try {
             navigationService.saveNode(ctx, listener);
-        } catch (NavigationServiceException e) {
+        } catch (Throwable e) {
             throw new ApiException("Failed to save node", e);
         }
     }
@@ -241,7 +240,7 @@ public class NavigationImpl implements Navigation {
     private void save(NavigationContext ctx) {
         try {
             navigationService.saveNavigation(ctx);
-        } catch (NavigationServiceException e) {
+        } catch (Throwable e) {
             throw new ApiException("Failed to save navigation", e);
         }
     }
@@ -268,7 +267,7 @@ public class NavigationImpl implements Navigation {
     private void updateNavigationContext() {
         try {
             navCtx = navigationService.loadNavigation(siteKey);
-        } catch (NavigationServiceException e) {
+        } catch (Throwable e) {
             throw new ApiException("Failed to load navigation", e);
         }
 

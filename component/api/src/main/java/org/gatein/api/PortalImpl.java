@@ -25,9 +25,11 @@ package org.gatein.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
+import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.UserACL;
@@ -74,7 +76,7 @@ import org.gatein.common.logging.LoggerFactory;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class PortalImpl extends DataStorageContext implements Portal {
+public class PortalImpl implements Portal {
     private static final Query<PortalConfig> SITES = new Query<PortalConfig>(
             org.exoplatform.portal.mop.SiteType.PORTAL.getName(), null, PortalConfig.class);
     private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(
@@ -84,6 +86,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
 
     static final Logger log = LoggerFactory.getLogger("org.gatein.api");
 
+    private final DataStorage dataStorage;
     private final PageService pageService;
     private final NavigationService navigationService;
     private final DescriptionService descriptionService;
@@ -95,7 +98,7 @@ public class PortalImpl extends DataStorageContext implements Portal {
     public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService,
             DescriptionService descriptionService, ResourceBundleManager bundleManager, Authenticator authenticator,
             IdentityRegistry identityRegistry, UserACL acl) {
-        super(dataStorage);
+        this.dataStorage = dataStorage;
         this.pageService = pageService;
         this.navigationService = navigationService;
         this.descriptionService = descriptionService;
@@ -108,16 +111,13 @@ public class PortalImpl extends DataStorageContext implements Portal {
     @Override
     public Site getSite(SiteId siteId) {
         Parameters.requireNonNull(siteId, "siteId");
+        SiteKey siteKey = Util.from(siteId);
 
-        final SiteKey siteKey = Util.from(siteId);
-        PortalConfig pc = execute(new Read<PortalConfig>() {
-            @Override
-            public PortalConfig read(DataStorage dataStorage) throws Exception {
-                return dataStorage.getPortalConfig(siteKey.getTypeName(), siteKey.getName());
-            }
-        });
-
-        return Util.from(pc);
+        try {
+            return Util.from(dataStorage.getPortalConfig(siteKey.getTypeName(), siteKey.getName()));
+        } catch (Throwable e) {
+            throw new ApiException("Failed to get site", e);
+        }
     }
 
     @Override
@@ -126,14 +126,18 @@ public class PortalImpl extends DataStorageContext implements Portal {
             throw new EntityAlreadyExistsException("Cannot create site. Site " + siteId + " already exists.");
         }
 
-        return new SiteImpl(siteId);
+        SiteImpl s = new SiteImpl(siteId);
+        s.setCreate(true);
+        return s;
     }
 
     @Override
     public List<Site> findSites(SiteQuery query) {
+        Parameters.requireNonNull(query, "query");
+
         Pagination pagination = query.getPagination();
         if (pagination != null && query.getSiteTypes().size() > 1) {
-            pagination = null; // set it to null so the internal DataStorageContext.find method doesn't use it, and we manually
+            pagination = null; // set it to null so the internal DataStorage doesn't use it, and we manually
                                // page later.
             log.warn("Pagination is not supported internally for SiteQuery's with multiple site types. Therefore this query has the possibility to perform poorly.");
         }
@@ -143,13 +147,13 @@ public class PortalImpl extends DataStorageContext implements Portal {
             List<PortalConfig> internalSites;
             switch (type) {
                 case SITE:
-                    internalSites = find(pagination, SITES, Comparators.site(query.getSorting()));
+                    internalSites = findSites(pagination, SITES, Comparators.site(query.getSorting()));
                     break;
                 case SPACE:
-                    internalSites = find(pagination, SPACES, Comparators.site(query.getSorting()));
+                    internalSites = findSites(pagination, SPACES, Comparators.site(query.getSorting()));
                     break;
                 case DASHBOARD:
-                    internalSites = find(pagination, DASHBOARDS, Comparators.site(query.getSorting()));
+                    internalSites = findSites(pagination, DASHBOARDS, Comparators.site(query.getSorting()));
                     break;
                 default:
                     throw new AssertionError();
@@ -168,36 +172,70 @@ public class PortalImpl extends DataStorageContext implements Portal {
         return sites;
     }
 
-    @Override
-    public void saveSite(final Site site) {
-        execute(Util.from(site), new Modify<PortalConfig>() {
-            @Override
-            public void modify(PortalConfig data, DataStorage dataStorage) throws Exception {
-                if (dataStorage.getPortalConfig(data.getType(), data.getName()) != null) {
-                    dataStorage.save(data);
+    private <T> List<T> findSites(Pagination pagination, Query<T> query, Comparator<T> comparator) {
+        try {
+            if (pagination != null) {
+                ListAccess<T> access = dataStorage.find2(query, comparator);
+                int size = access.getSize();
+                int offset = pagination.getOffset();
+                int limit = pagination.getLimit();
+                if (offset >= size) {
+                    return Collections.emptyList();
+                } else if (offset + limit > size) {
+                    return Arrays.asList(access.load(offset, size - offset));
                 } else {
-                    dataStorage.create(data);
-
-                    NavigationContext nav = new NavigationContext(Util.from(site.getId()), new NavigationState(null));
-                    navigationService.saveNavigation(nav);
+                    return Arrays.asList(access.load(offset, limit));
                 }
+            } else {
+                return dataStorage.find(query, comparator).getAll();
             }
-        });
+        } catch (Throwable e) {
+            throw new ApiException("Failed to query for sites", e);
+        }
+    }
 
+    @Override
+    public void saveSite(Site site) {
+        Parameters.requireNonNull(site, "site");
+
+        PortalConfig data = Util.from(site);
+        boolean create = ((SiteImpl) site).isCreate();
+
+        try {
+            if (create) {
+                dataStorage.create(data);
+            } else {
+                dataStorage.save(data);
+            }
+        } catch (Throwable e) {
+            if (e.getMessage() != null
+                    && e.getMessage().equals("Cannot create portal " + site.getName() + " that already exist")) {
+                throw new EntityAlreadyExistsException("Cannot create site. Site " + site.getId() + " already exists.");
+            }
+
+            throw new ApiException("Failed to save site", e);
+        }
+
+        if (create) {
+            try {
+                NavigationContext nav = new NavigationContext(Util.from(site.getId()), new NavigationState(null));
+                navigationService.saveNavigation(nav);
+            } catch (Throwable e) {
+                throw new ApiException("Failed to default navigation for site", e);
+            }
+        }
     }
 
     @Override
     public boolean removeSite(SiteId siteId) {
-        SiteKey siteKey = Util.from(siteId);
-
-        execute(new PortalConfig(siteKey.getTypeName(), siteKey.getName()), new Modify<PortalConfig>() {
-            @Override
-            public void modify(PortalConfig data, DataStorage dataStorage) throws Exception {
-                dataStorage.remove(data);
-            }
-        });
-
-        return true;
+        SiteKey siteKey = Util.from(Parameters.requireNonNull(siteId, "siteId"));
+        PortalConfig data = new PortalConfig(siteKey.getTypeName(), siteKey.getName());
+        try {
+            dataStorage.remove(data);
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     @Override
@@ -209,8 +247,12 @@ public class PortalImpl extends DataStorageContext implements Portal {
     public Page getPage(PageId pageId) {
         Parameters.requireNonNull(pageId, "pageId");
 
-        PageContext context = pageService.loadPage(Util.from(pageId));
-        return (context == null) ? null : new PageImpl(context);
+        try {
+            PageContext context = pageService.loadPage(Util.from(pageId));
+            return (context == null) ? null : new PageImpl(context);
+        } catch (Throwable e) {
+            throw new ApiException("Failed to get page", e);
+        }
     }
 
     @Override
@@ -224,7 +266,9 @@ public class PortalImpl extends DataStorageContext implements Portal {
         PageState pageState = new PageState(pageId.getPageName(), null, false, null, Arrays.asList(Util.from(access)),
                 Util.from(edit)[0]);
 
-        return new PageImpl(new PageContext(Util.from(pageId), pageState));
+        PageImpl p = new PageImpl(new PageContext(Util.from(pageId), pageState));
+        p.setCreate(true);
+        return p;
     }
 
     @Override
@@ -262,13 +306,26 @@ public class PortalImpl extends DataStorageContext implements Portal {
 
     @Override
     public void savePage(Page page) {
+        Parameters.requireNonNull(page, "page");
+
+        if (((PageImpl) page).isCreate() && getPage(page.getId()) != null) {
+            // There is still a small chance someone else creates the page, but this is currently the best we can do
+            throw new EntityAlreadyExistsException("Cannot create page. Page " + page.getId() + " already exists.");
+        }
+
         PageContext context = ((PageImpl) page).getPageContext();
         pageService.savePage(context);
     }
 
     @Override
     public boolean removePage(PageId pageId) {
-        return pageService.destroyPage(Util.from(pageId));
+        Parameters.requireNonNull(pageId, "pageId");
+
+        try {
+            return pageService.destroyPage(Util.from(pageId));
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     @Override

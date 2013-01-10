@@ -22,28 +22,28 @@
 
 package org.gatein.api;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.gatein.api.Assert.assertEquals;
+import static org.gatein.api.Assert.assertFalse;
+import static org.gatein.api.Assert.assertNotNull;
+import static org.gatein.api.Assert.assertNull;
+import static org.gatein.api.Assert.assertTrue;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
+import org.exoplatform.container.component.RequestLifeCycle;
+import org.gatein.api.common.Attributes;
 import org.gatein.api.common.Filter;
 import org.gatein.api.common.Pagination;
 import org.gatein.api.page.Page;
 import org.gatein.api.page.PageId;
 import org.gatein.api.page.PageQuery;
 import org.gatein.api.security.Group;
+import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.gatein.api.site.Site;
 import org.gatein.api.site.SiteId;
-import org.gatein.api.site.SiteImpl;
 import org.gatein.api.site.SiteQuery;
 import org.gatein.api.site.SiteType;
 import org.junit.Test;
@@ -54,8 +54,149 @@ import org.junit.Test;
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class PortalTest extends AbstractApiTest {
+
     @Test
-    public void getSites() {
+    public void createPage() {
+        createSite(new SiteId("create-page"));
+
+        Page page = portal.createPage(new PageId("create-page", "baz"));
+        assertNotNull(page);
+        assertNull(portal.getPage(new PageId("create-page", "baz")));
+    }
+    
+    @Test(expected = ApiException.class)
+    public void createPage_Faulty() {
+        createSite(new SiteId("create-page-exists"), "bar");
+
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                portal.createPage(new PageId("create-page-exists", "bar"));
+            }
+        });
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createPage_NullPageId() {
+        portal.createPage(null);
+    }
+
+    @Test(expected = EntityAlreadyExistsException.class)
+    public void createPage_PageExists() {
+        createSite(new SiteId("create-page-exists"), "bar");
+        portal.createPage(new PageId("create-page-exists", "bar"));
+    }
+
+    @Test
+    public void createSite() {
+        portal.createSite(new SiteId("newsite"));
+        assertNull(portal.getSite(new SiteId("newsite")));
+    }
+
+    @Test(expected = ApiException.class)
+    public void createSite_Faulty() {
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                portal.createSite(new SiteId("newsite"));
+            }
+        });
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createSite_NullSiteId() {
+        portal.createSite(null);
+    }
+
+    @Test(expected = EntityAlreadyExistsException.class)
+    public void createSite_SiteExists() {
+        saveSite();
+        portal.createSite(new SiteId("newsite"));
+    }
+
+    @Test
+    public void findPages() {
+        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
+
+        List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build());
+        assertNotNull(pages);
+        assertEquals(5, pages.size());
+    }
+
+    @Test
+    public void findPages_BySiteName() {
+        createSite(new SiteId("find-pages"), "page1", "page2");
+        createSite(new SiteId(new Group("find-pages")), "page3");
+        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
+
+        PageQuery query = new PageQuery.Builder().withSiteName("find-pages").build();
+        List<Page> pages = portal.findPages(query);
+        assertEquals(6, pages.size());
+    }
+
+    @Test
+    public void findPages_BySiteType() {
+        createSite(new SiteId("find-pages"), "page1", "page2");
+        createSite(new SiteId(new Group("find-pages")), "page3");
+        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
+
+        PageQuery query = new PageQuery.Builder().withSiteType(SiteType.SITE).build();
+        List<Page> pages = portal.findPages(query);
+        assertEquals(2, pages.size());
+
+        query = new PageQuery.Builder().withSiteType(SiteType.SPACE).build();
+        pages = portal.findPages(query);
+        assertEquals(1, pages.size());
+
+        query = new PageQuery.Builder().withSiteType(SiteType.DASHBOARD).build();
+        pages = portal.findPages(query);
+        assertEquals(3, pages.size());
+    }
+
+    @Test
+    public void findPages_BySiteType_And_SiteName() {
+        createSite(new SiteId("find-pages"), "page1", "page2");
+        createSite(new SiteId(new Group("find-pages")), "find-pages", "page3");
+        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
+
+        PageQuery query = new PageQuery.Builder().withSiteType(SiteType.DASHBOARD).withSiteName("find-pages").build();
+        List<Page> pages = portal.findPages(query);
+        assertEquals(3, pages.size());
+    }
+
+    @Test
+    public void findPages_ByTitle() {
+        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
+        Page page = portal.getPage(new PageId("find-pages", "page1"));
+        page.setDisplayName("FooTitle");
+        portal.savePage(page);
+
+        page = portal.getPage(new PageId("find-pages", "page4"));
+        page.setDisplayName("FooTitle");
+        portal.savePage(page);
+
+        List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages"))
+                .withDisplayName("FooTitle").build());
+        assertEquals(2, pages.size());
+        for (Page p : pages) {
+            assertEquals("FooTitle", p.getDisplayName());
+        }
+    }
+
+    @Test
+    public void findPages_Pagination() {
+        createSite(new SiteId("find-pages"), "page1", "page2", "page3", "page4", "page5", "page6", "page7");
+
+        PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withPagination(0, 5).build();
+        List<Page> pages = portal.findPages(query);
+        assertEquals(5, pages.size());
+
+        pages = portal.findPages(query.nextPage());
+        assertEquals(2, pages.size());
+    }
+
+    @Test
+    public void findSites() {
         createSite(defaultSiteId);
 
         List<Site> sites = portal.findSites(new SiteQuery.Builder().withAllSiteTypes().build());
@@ -63,12 +204,59 @@ public class PortalTest extends AbstractApiTest {
         assertNotNull(sites);
         assertEquals(1, sites.size());
         assertEquals("classic", sites.get(0).getId().getName());
-
-        assertNotNull(portal.getSite(new SiteId("classic")));
     }
 
     @Test
-    public void naturalOrdering() {
+    public void findSites_Ascending() {
+        createSite(new SiteId("z"));
+        createSite(new SiteId("a"));
+        createSite(new SiteId("f"));
+        createSite(new SiteId("b"));
+
+        List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).ascending().build());
+        assertEquals(4, sites.size());
+        assertEquals("a", sites.get(0).getId().getName());
+        assertEquals("b", sites.get(1).getId().getName());
+        assertEquals("f", sites.get(2).getId().getName());
+        assertEquals("z", sites.get(3).getId().getName());
+    }
+
+    @Test(expected = ApiException.class)
+    public void findSites_Faulty() {
+        createSite(defaultSiteId);
+
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                portal.findSites(new SiteQuery.Builder().withAllSiteTypes().build());
+            }
+        });
+    }
+
+    @Test
+    public void findSites_Filtered() {
+        createSite(new SiteId("c"));
+        createSite(new SiteId("a"));
+        createSite(new SiteId("d"));
+        createSite(new SiteId("b"));
+
+        List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withFilter(new Filter<Site>() {
+            @Override
+            public boolean accept(Site site) {
+                return site.getName().equals("a") || site.getName().equals("b");
+            }
+        }).build());
+
+        Iterator<Site> iter = sites.iterator();
+        assertEquals(2, sites.size());
+        Site site = iter.next();
+        assertEquals("a", site.getId().getName());
+        site = iter.next();
+        assertEquals("b", site.getId().getName());
+    }
+
+    @Test
+    public void findSites_NaturalOrdering() {
         createSite(new SiteId("z"));
         createSite(new SiteId("a"));
         createSite(new SiteId("f"));
@@ -83,42 +271,28 @@ public class PortalTest extends AbstractApiTest {
     }
 
     @Test
-    public void sortedSiteQuery_comparator() {
-        Site site = new SiteImpl("b");
-        site.setDisplayName("Toyota");
-        portal.saveSite(site);
+    public void findSites_NonHidden() {
+        createSite(new SiteId("test-site"), false);
 
-        site = new SiteImpl("a");
-        site.setDisplayName("Chevy");
-        portal.saveSite(site);
-
-        site = new SiteImpl("c");
-        site.setDisplayName("Volvo");
-        portal.saveSite(site);
-
-        site = new SiteImpl("d");
-        site.setDisplayName("Ford");
-        portal.saveSite(site);
-
-        List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).build());
-
-        Comparator<Site> c = new Comparator<Site>() {
-            @Override
-            public int compare(Site o1, Site o2) {
-                return o1.getDisplayName().compareTo(o2.getDisplayName());
-            }
-        };
-        Collections.sort(sites, c);
-
-        assertEquals(4, sites.size());
-        assertEquals("a", sites.get(0).getId().getName());
-        assertEquals("d", sites.get(1).getId().getName());
-        assertEquals("b", sites.get(2).getId().getName());
-        assertEquals("c", sites.get(3).getId().getName());
+        List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
+        assertTrue(sites.isEmpty());
     }
 
     @Test
-    public void pagedSiteQuery() {
+    public void findSites_NoResults() {
+        List<Site> sites = portal.findSites(new SiteQuery.Builder().withAllSiteTypes().build());
+
+        assertNotNull(sites);
+        assertEquals(0, sites.size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void findSites_NullQuery() {
+        portal.findSites(null);
+    }
+
+    @Test
+    public void findSites_Paged() {
         for (int i = 0; i < 10; i++) {
             createSite(new SiteId("site" + (i + 1)));
         }
@@ -153,7 +327,7 @@ public class PortalTest extends AbstractApiTest {
     }
 
     @Test
-    public void pagedSiteQuery_WithMultipleSiteTypes() {
+    public void findSites_PagedWithMultipleSiteTypes() {
         // Add more sites and check
         createSite(new SiteId("site1"));
         createSite(new SiteId("site2"));
@@ -242,75 +416,55 @@ public class PortalTest extends AbstractApiTest {
     }
 
     @Test
-    public void filteredSiteQuery() {
-        createSite(new SiteId("c"));
-        createSite(new SiteId("a"));
-        createSite(new SiteId("d"));
-        createSite(new SiteId("b"));
+    public void getPage() {
+        createSite(new SiteId("get-page"), "bar");
 
-        List<Site> sites = portal.findSites(new SiteQuery.Builder().includeEmptySites(true).withFilter(new Filter<Site>() {
+        assertNotNull(portal.getPage(new PageId("get-page", "bar")));
+    }
+
+    @Test(expected = ApiException.class)
+    public void getPage_Faulty() {
+        createSite(new SiteId("get-page"), "bar");
+
+        runWithFault(new Runnable() {
             @Override
-            public boolean accept(Site site) {
-                return site.getName().equals("a") || site.getName().equals("b");
+            public void run() {
+                portal.getPage(new PageId("get-page", "bar"));
             }
-        }).build());
-
-        Iterator<Site> iter = sites.iterator();
-        assertEquals(2, sites.size());
-        Site site = iter.next();
-        assertEquals("a", site.getId().getName());
-        site = iter.next();
-        assertEquals("b", site.getId().getName());
+        });
     }
 
     @Test
-    public void siteQuery_NonHidden() {
-        createSite(new SiteId("test-site"), false);
+    public void getPage_NonExisting() {
+        assertNull(portal.getPage(new PageId("get-page", "blah")));
+    }
 
-        List<Site> sites = portal.findSites(new SiteQuery.Builder().withSiteTypes(SiteType.SITE).build());
-        assertTrue(sites.isEmpty());
+    @Test(expected = IllegalArgumentException.class)
+    public void getPage_Null() {
+        portal.getPage(null);
     }
 
     @Test
-    public void createSite() {
-        Site site = portal.createSite(new SiteId("newsite"));
-        portal.saveSite(site);
+    public void getSite() {
+        createSite(defaultSiteId);
 
-        assertNotNull(portal.getSite(new SiteId("newsite")));
-        assertNull(portal.getSite(new SiteId("xxx")));
+        assertNotNull(portal.getSite(new SiteId("classic")));
     }
 
-    @Test(expected = EntityAlreadyExistsException.class)
-    public void createSite_SiteExists() {
-        createSite();
-        portal.createSite(new SiteId("newsite"));
-    }
+    @Test(expected = ApiException.class)
+    public void getSite_Faulty() {
+        createSite(defaultSiteId);
 
-    @Test
-    public void removeSite() {
-        createSite(new SiteId("test1"));
-        createSite(new SiteId("test2"));
-        createSite(new SiteId("test3"));
-
-        assertNotNull(portal.getSite(new SiteId("test1")));
-        assertNotNull(portal.getSite(new SiteId("test2")));
-        assertNotNull(portal.getSite(new SiteId("test3")));
-
-        portal.removeSite(new SiteId("test1"));
-
-        assertNull(portal.getSite((new SiteId("test1"))));
-        assertNotNull(portal.getSite(new SiteId("test2")));
-        assertNotNull(portal.getSite(new SiteId("test3")));
-
-        portal.removeSite(new SiteId(SiteType.SITE, "test2"));
-
-        assertNull(portal.getSite(new SiteId("te")));
-        assertNull(portal.getSite(new SiteId("test2")));
-        assertNotNull(portal.getSite(new SiteId("test3")));
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                portal.getSite(new SiteId("classic"));
+            }
+        });
     }
 
     @Test
-    public void getSpace() {
+    public void getSite_Group() {
         createSite(new SiteId(new Group("/platform/something")));
 
         Site space = portal.getSite(new SiteId(new Group("platform", "something")));
@@ -318,126 +472,20 @@ public class PortalTest extends AbstractApiTest {
     }
 
     @Test
-    public void getDashboard() {
+    public void getSite_NonExisting() {
+        assertNull(portal.getSite(new SiteId("nosuch")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getSite_NullSiteId() {
+        portal.getSite(null);
+    }
+
+    @Test
+    public void getSite_User() {
         createSite(new SiteId(new User("user10")));
         Site dashboard = portal.getSite(new SiteId(new User("user10")));
         assertNotNull(dashboard);
-    }
-
-    @Test
-    public void getPage() {
-        createSite(new SiteId("get-page"), "bar");
-
-        assertNotNull(portal.getPage(new PageId("get-page", "bar")));
-        assertNull(portal.getPage(new PageId("get-page", "blah")));
-        assertNull(portal.getPage(new PageId("get-page", "foo")));
-
-        try {
-            portal.getPage(null);
-            fail("IllegalArgumentException should be thrown");
-        } catch (IllegalArgumentException e) {
-            // success
-        }
-    }
-
-    @Test
-    public void createPage() {
-        createSite(new SiteId("create-page"), "bar");
-
-        Page page = portal.createPage(new PageId("create-page", "baz"));
-        assertNotNull(page);
-        assertNull(portal.getPage(new PageId("create-page", "baz")));
-
-        // save it
-        portal.savePage(page);
-        assertNotNull(portal.getPage(new PageId("create-page", "baz")));
-    }
-
-    @Test(expected = EntityAlreadyExistsException.class)
-    public void createPage_PageExists() {
-        createSite(new SiteId("create-page-exists"), "bar");
-        portal.createPage(new PageId("create-page-exists", "bar"));
-    }
-
-    @Test
-    public void findPages() {
-        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
-
-        List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build());
-        assertNotNull(pages);
-        assertEquals(5, pages.size());
-    }
-
-    @Test
-    public void findPages_ByTitle() {
-        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
-        Page page = portal.getPage(new PageId("find-pages", "page1"));
-        page.setDisplayName("FooTitle");
-        portal.savePage(page);
-
-        page = portal.getPage(new PageId("find-pages", "page4"));
-        page.setDisplayName("FooTitle");
-        portal.savePage(page);
-
-        List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages"))
-                .withDisplayName("FooTitle").build());
-        assertEquals(2, pages.size());
-        for (Page p : pages) {
-            assertEquals("FooTitle", p.getDisplayName());
-        }
-    }
-
-    @Test
-    public void findPages_BySiteType() {
-        createSite(new SiteId("find-pages"), "page1", "page2");
-        createSite(new SiteId(new Group("find-pages")), "page3");
-        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
-
-        PageQuery query = new PageQuery.Builder().withSiteType(SiteType.SITE).build();
-        List<Page> pages = portal.findPages(query);
-        assertEquals(2, pages.size());
-
-        query = new PageQuery.Builder().withSiteType(SiteType.SPACE).build();
-        pages = portal.findPages(query);
-        assertEquals(1, pages.size());
-
-        query = new PageQuery.Builder().withSiteType(SiteType.DASHBOARD).build();
-        pages = portal.findPages(query);
-        assertEquals(3, pages.size());
-    }
-
-    @Test
-    public void findPages_BySiteName() {
-        createSite(new SiteId("find-pages"), "page1", "page2");
-        createSite(new SiteId(new Group("find-pages")), "page3");
-        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
-
-        PageQuery query = new PageQuery.Builder().withSiteName("find-pages").build();
-        List<Page> pages = portal.findPages(query);
-        assertEquals(6, pages.size());
-    }
-
-    @Test
-    public void findPages_BySiteType_And_SiteName() {
-        createSite(new SiteId("find-pages"), "page1", "page2");
-        createSite(new SiteId(new Group("find-pages")), "find-pages", "page3");
-        createSite(new SiteId(new User("find-pages")), "page4", "page5", "page6");
-
-        PageQuery query = new PageQuery.Builder().withSiteType(SiteType.DASHBOARD).withSiteName("find-pages").build();
-        List<Page> pages = portal.findPages(query);
-        assertEquals(3, pages.size());
-    }
-
-    @Test
-    public void findPages_Pagination() {
-        createSite(new SiteId("find-pages"), "page1", "page2", "page3", "page4", "page5", "page6", "page7");
-
-        PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withPagination(0, 5).build();
-        List<Page> pages = portal.findPages(query);
-        assertEquals(5, pages.size());
-
-        pages = portal.findPages(query.nextPage());
-        assertEquals(2, pages.size());
     }
 
     @Test
@@ -454,5 +502,287 @@ public class PortalTest extends AbstractApiTest {
 
         assertTrue(portal.hasPermission(User.anonymous(), page.getAccessPermission()));
         assertFalse(portal.hasPermission(User.anonymous(), page.getEditPermission()));
+    }
+
+    @Test
+    public void removePage() {
+        createSite(new SiteId("removePage"), "page1", "page2");
+
+        assertNotNull(portal.getPage(new PageId("removePage", "page1")));
+        assertNotNull(portal.getPage(new PageId("removePage", "page2")));
+
+        assertTrue(portal.removePage(new PageId("removePage", "page1")));
+
+        assertNull(portal.getPage(new PageId("removePage", "page1")));
+        assertNotNull(portal.getPage(new PageId("removePage", "page2")));
+
+        assertTrue(portal.removePage(new PageId("removePage", "page2")));
+
+        assertNull(portal.getPage(new PageId("removePage", "page1")));
+        assertNull(portal.getPage(new PageId("removePage", "page2")));
+    }
+
+    @Test
+    public void removePage_Faulty() {
+        createSite(new SiteId("test1"), "page1");
+
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                assertFalse(portal.removePage(new PageId("removePage", "page1")));
+            }
+        });
+    }
+
+    @Test
+    public void removePage_NonExisting() {
+        createSite(new SiteId("test1"), "page1");
+
+        assertFalse(portal.removePage(new PageId("removePage", "page1")));
+    }
+
+    @Test
+    public void removePage_SiteNonExisting() {
+        createSite(new SiteId("test1"), "page1");
+
+        assertFalse(portal.removePage(new PageId("test2", "page1")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void removePage_NullSiteId() {
+        portal.removePage(null);
+    }
+
+    @Test
+    public void removeSite() {
+        createSite(new SiteId("test1"));
+        createSite(new SiteId("test2"));
+        createSite(new SiteId("test3"));
+
+        assertNotNull(portal.getSite(new SiteId("test1")));
+        assertNotNull(portal.getSite(new SiteId("test2")));
+        assertNotNull(portal.getSite(new SiteId("test3")));
+
+        assertTrue(portal.removeSite(new SiteId("test1")));
+
+        assertNull(portal.getSite((new SiteId("test1"))));
+        assertNotNull(portal.getSite(new SiteId("test2")));
+        assertNotNull(portal.getSite(new SiteId("test3")));
+
+        assertTrue(portal.removeSite(new SiteId(SiteType.SITE, "test2")));
+
+        assertNull(portal.getSite(new SiteId("te")));
+        assertNull(portal.getSite(new SiteId("test2")));
+        assertNotNull(portal.getSite(new SiteId("test3")));
+    }
+
+    @Test
+    public void removeSite_Faulty() {
+        createSite(new SiteId("test1"));
+
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                assertFalse(portal.removeSite(new SiteId("test1")));
+            }
+        });
+    }
+
+    @Test
+    public void removeSite_NonExisting() {
+        assertFalse(portal.removeSite(new SiteId("test1")));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void removeSite_NullSiteId() {
+        portal.removeSite(null);
+    }
+
+    @Test
+    public void savePage() {
+        createSite(new SiteId("create-page"));
+
+        Permission access = new Permission("*", new Group("access"));
+        Permission edit = new Permission("*", new Group("edit"));
+
+        Page page = portal.createPage(new PageId("create-page", "baz"));
+        page.setAccessPermission(access);
+        page.setDescription("description");
+        page.setDisplayName("displayName");
+        page.setEditPermission(edit);
+
+        portal.savePage(page);
+
+        page = portal.getPage(new PageId("create-page", "baz"));
+        assertNotNull(page);
+        assertEquals(access, page.getAccessPermission());
+        assertEquals("description", page.getDescription());
+        assertEquals("displayName", page.getDisplayName());
+        assertEquals(edit, page.getEditPermission());
+        assertEquals(new PageId("create-page", "baz"), page.getId());
+        assertEquals("baz", page.getName());
+        assertEquals(new SiteId("create-page"), page.getSiteId());
+    }
+
+    @Test(expected = EntityAlreadyExistsException.class)
+    public void savePage_Exists() {
+        createSite(new SiteId("create-page"));
+
+        Page pageA = portal.createPage(new PageId("create-page", "baz"));
+        Page pageB = portal.createPage(new PageId("create-page", "baz"));
+
+        portal.savePage(pageA);
+        portal.savePage(pageB);
+    }
+
+    @Test(expected = ApiException.class)
+    public void savePage_Faulty() {
+        createSite(new SiteId("create-page"));
+
+        final Page page = portal.createPage(new PageId("create-page", "baz"));
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                portal.savePage(page);
+            }
+        });
+    }
+
+    @Test
+    public void savePage_Modify() {
+        savePage();
+
+        Permission access = new Permission("*", new Group("newAccess"));
+        Permission edit = new Permission("*", new Group("newEdit"));
+
+        Page page = portal.getPage(new PageId("create-page", "baz"));
+        page.setAccessPermission(access);
+        page.setDescription("newDescription");
+        page.setDisplayName("newDisplayName");
+        page.setEditPermission(edit);
+
+        portal.savePage(page);
+
+        page = portal.getPage(new PageId("create-page", "baz"));
+        assertNotNull(page);
+        assertEquals(access, page.getAccessPermission());
+        assertEquals("newDescription", page.getDescription());
+        assertEquals("newDisplayName", page.getDisplayName());
+        assertEquals(edit, page.getEditPermission());
+        assertEquals(new PageId("create-page", "baz"), page.getId());
+        assertEquals("baz", page.getName());
+        assertEquals(new SiteId("create-page"), page.getSiteId());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void savePage_Null() {
+        portal.savePage(null);
+    }
+
+    @Test
+    public void saveSite() {
+        Permission access = new Permission("*", new Group("access"));
+        Permission edit = new Permission("*", new Group("edit"));
+        
+        Site site = portal.createSite(new SiteId("newsite"));
+        site.setAccessPermission(access);
+        site.setDisplayName("displayName");
+        site.setDescription("description");
+        site.setEditPermission(edit);
+        site.setLocale(Locale.ENGLISH);
+        site.setSkin("skin");
+
+        site.getAttributes().put(Attributes.key("attributeKey", String.class), "attributeValue");
+
+        portal.saveSite(site);
+
+        site = portal.getSite(new SiteId("newsite"));
+        assertNotNull(site);
+        assertEquals("displayName", site.getDisplayName());
+        assertEquals("description", site.getDescription());
+        assertEquals(access, site.getAccessPermission());
+        assertEquals(edit, site.getEditPermission());
+        assertEquals(new SiteId("newsite"), site.getId());
+        assertEquals(Locale.ENGLISH, site.getLocale());
+        assertEquals("newsite", site.getName());
+        assertEquals("skin", site.getSkin());
+        assertEquals(SiteType.SITE, site.getType());
+
+        assertEquals(1, site.getAttributes().size());
+        assertEquals("attributeValue", site.getAttributes().get(Attributes.key("attributeKey", String.class)));
+
+        assertNull(portal.getSite(new SiteId("xxx")));
+    }
+
+    @Test(expected = EntityAlreadyExistsException.class)
+    public void saveSite_Exists() {
+        Site siteA = portal.createSite(new SiteId("newsite"));
+        Site siteB = portal.createSite(new SiteId("newsite"));
+
+        portal.saveSite(siteA);
+        portal.saveSite(siteB);
+    }
+
+    @Test(expected = ApiException.class)
+    public void saveSite_Faulty() {
+        final Site site = portal.createSite(new SiteId("newsite"));
+        runWithFault(new Runnable() {
+            @Override
+            public void run() {
+                portal.saveSite(site);
+            }
+        });
+    }
+
+    @Test
+    public void saveSite_Modify() {
+        saveSite();
+
+        Permission access = new Permission("*", new Group("newAccess"));
+        Permission edit = new Permission("*", new Group("newEdit"));
+
+        Site site = portal.getSite(new SiteId("newsite"));
+        site.setAccessPermission(access);
+        site.setDisplayName("newDisplayName");
+        site.setDescription("newDescription");
+        site.setEditPermission(edit);
+        site.setLocale(Locale.SIMPLIFIED_CHINESE);
+        site.setSkin("newSkin");
+
+        site.getAttributes().put(Attributes.key("attributeKey", String.class), "newAttributeValue");
+        site.getAttributes().put(Attributes.key("attributeKey2", String.class), "attributeValue2");
+
+        portal.saveSite(site);
+
+        site = portal.getSite(new SiteId("newsite"));
+
+        assertNotNull(site);
+        assertEquals("newDisplayName", site.getDisplayName());
+        assertEquals("newDescription", site.getDescription());
+        assertEquals(access, site.getAccessPermission());
+        assertEquals(edit, site.getEditPermission());
+        assertEquals(new SiteId("newsite"), site.getId());
+        assertEquals(Locale.SIMPLIFIED_CHINESE, site.getLocale());
+        assertEquals("newsite", site.getName());
+        assertEquals("newSkin", site.getSkin());
+        assertEquals(SiteType.SITE, site.getType());
+
+        assertEquals(2, site.getAttributes().size());
+        assertEquals("newAttributeValue", site.getAttributes().get(Attributes.key("attributeKey", String.class)));
+        assertEquals("attributeValue2", site.getAttributes().get(Attributes.key("attributeKey2", String.class)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void saveSite_Null() {
+        portal.saveSite(null);
+    }
+
+    private void runWithFault(Runnable r) {
+        RequestLifeCycle.end();
+        try {
+            r.run();
+        } finally {
+            RequestLifeCycle.begin(container);
+        }
     }
 }

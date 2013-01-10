@@ -200,6 +200,11 @@ public class NavigationImplTest extends AbstractApiTest {
         assertNull(node);
     }
 
+    @Test
+    public void getNavigation() {
+        portal.getNavigation(defaultSiteId).getRootNode(Nodes.visitAll());
+    }
+
     @Test(expected = EntityNotFoundException.class)
     public void getNavigation_InvalidSite() {
         portal.getNavigation(new SiteId("invalid")).getRootNode(Nodes.visitAll());

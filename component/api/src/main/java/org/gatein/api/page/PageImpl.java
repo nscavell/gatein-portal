@@ -35,6 +35,8 @@ import org.gatein.api.site.SiteId;
 public class PageImpl implements Page {
     private final transient PageContext pageContext;
 
+    private boolean create;
+
     public PageImpl(PageContext pageContext) {
         this.pageContext = pageContext;
     }
@@ -101,6 +103,14 @@ public class PageImpl implements Page {
             throw new IllegalArgumentException("Invalid permission. Only one membership is allowed for an edit permission");
 
         setState(builder().editPermission(permissions[0]));
+    }
+
+    public boolean isCreate() {
+        return create;
+    }
+
+    public void setCreate(boolean create) {
+        this.create = create;
     }
 
     @Override

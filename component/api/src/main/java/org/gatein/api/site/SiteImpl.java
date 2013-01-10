@@ -45,6 +45,8 @@ public class SiteImpl implements Site {
     private Permission accessPermission;
     private Permission editPermission;
 
+    private boolean create;
+
     public SiteImpl(String name) {
         this(new SiteId(name));
     }
@@ -142,6 +144,14 @@ public class SiteImpl implements Site {
     @Override
     public void setEditPermission(Permission permission) {
         this.editPermission = permission;
+    }
+
+    public boolean isCreate() {
+        return create;
+    }
+
+    public void setCreate(boolean create) {
+        this.create = create;
     }
 
     @Override

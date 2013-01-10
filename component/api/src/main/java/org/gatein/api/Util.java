@@ -27,11 +27,14 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.exoplatform.portal.config.model.PortalConfig;
+import org.exoplatform.portal.config.model.Properties;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.page.PageKey;
+import org.gatein.api.common.Attributes;
 import org.gatein.api.page.PageId;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.Membership;
@@ -60,11 +63,17 @@ public class Util {
             site.setDescription(portalConfig.getDescription());
         }
         if (portalConfig.getLocale() != null) {
-            site.setLocale(new Locale(portalConfig.getLocale()));
+            site.setLocale(Locale.forLanguageTag(portalConfig.getLocale()));
         }
+        if (portalConfig.getSkin() != null) {
+            site.setSkin(portalConfig.getSkin());
+        }
+
         site.setAccessPermission(from(portalConfig.getAccessPermissions()));
         site.setEditPermission(from(portalConfig.getEditPermission()));
 
+        site.getAttributes().putAll(portalConfig.getProperties());
+        
         return site;
     }
 
@@ -81,7 +90,10 @@ public class Util {
             portalConfig.setDescription(site.getDescription());
         }
         if (site.getLocale() != null) {
-            portalConfig.setLocale(site.getLocale().getLanguage());
+            portalConfig.setLocale(site.getLocale().toLanguageTag());
+        }
+        if (site.getSkin() != null) {
+            portalConfig.setSkin(site.getSkin());
         }
         portalConfig.setAccessPermissions(from(site.getAccessPermission()));
         String[] editPermission = from(site.getEditPermission());
@@ -89,7 +101,31 @@ public class Util {
             portalConfig.setEditPermission(editPermission[0]); // edit permissions currently only support one permission
         }
 
+        portalConfig.setProperties(Util.from(site.getAttributes()));
+
         return portalConfig;
+    }
+
+    public static Properties from(Attributes attributes) {
+        if (attributes == null) {
+            return null;
+        }
+
+        Properties properties = new Properties();
+        properties.putAll(attributes);
+        return properties;
+    }
+
+    public static Attributes from(Properties properties) {
+        if (properties == null) {
+            return null;
+        }
+
+        Attributes attributes = new Attributes();
+        for (Entry<String, String> e : properties.entrySet()) {
+            attributes.put(Attributes.key(e.getKey(), String.class), e.getValue().toString());
+        }
+        return attributes;
     }
 
     public static PageId from(PageKey pageKey) {
