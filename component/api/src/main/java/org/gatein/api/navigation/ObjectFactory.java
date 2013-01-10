@@ -78,19 +78,23 @@ public class ObjectFactory {
     public static Visibility createVisibility(NodeState nodeState) {
         Status flag = createFlag(nodeState.getVisibility());
 
-        long start = nodeState.getStartPublicationTime();
-        long end = nodeState.getEndPublicationTime();
+        if (flag == Status.PUBLICATION) {
+            long start = nodeState.getStartPublicationTime();
+            long end = nodeState.getEndPublicationTime();
 
-        PublicationDate publicationDate = null;
-        if (start != -1 && end != -1) {
-            publicationDate = PublicationDate.between(new Date(start), new Date(end));
-        } else if (start != -1) {
-            publicationDate = PublicationDate.startingOn(new Date(start));
-        } else if (end != -1) {
-            publicationDate = PublicationDate.endingOn(new Date(end));
+            PublicationDate publicationDate = null;
+            if (start != -1 && end != -1) {
+                publicationDate = PublicationDate.between(new Date(start), new Date(end));
+            } else if (start != -1) {
+                publicationDate = PublicationDate.startingOn(new Date(start));
+            } else if (end != -1) {
+                publicationDate = PublicationDate.endingOn(new Date(end));
+            }
+
+            return new Visibility(publicationDate);
         }
 
-        return new Visibility(flag, publicationDate);
+        return new Visibility(flag);
     }
 
     private static Status createFlag(org.exoplatform.portal.mop.Visibility visibility) {
