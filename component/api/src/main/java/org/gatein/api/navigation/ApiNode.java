@@ -199,7 +199,7 @@ public class ApiNode implements Node {
     @Override
     public URI getURI() {
         if (resolvedURI == null) {
-            resolvedURI = URIResolver.resolveURI(this);
+            resolvedURI = PortalRequest.getInstance().getURIResolver().resolveURI(siteId, getNodePath());
         }
 
         return resolvedURI;

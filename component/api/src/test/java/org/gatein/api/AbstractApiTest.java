@@ -24,6 +24,7 @@ package org.gatein.api;
 
 import static org.junit.Assert.assertNotNull;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -97,7 +98,7 @@ public class AbstractApiTest {
         RequestLifeCycle.begin(container);
 
         BasicPortalRequest.setInstance(new BasicPortalRequest(new User("john"), defaultSiteId, NodePath.root(), Locale.ENGLISH,
-                portal));
+                portal, new URI("http://localhost:8080/portal")));
     }
 
     protected void createSite(SiteId siteId, String... pages) {

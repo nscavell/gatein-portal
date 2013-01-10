@@ -527,11 +527,11 @@ public class PortalTest extends AbstractApiTest {
         createSite(new SiteId("permissions"));
 
         Page page = portal.createPage(new PageId("permissions", "page1"));
-        page.setAccessPermission(new Permission(new User("mary")));
+        page.setAccessPermission(new Permission(new User("root")));
         portal.savePage(page);
 
-        assertTrue(portal.hasPermission(new User("mary"), page.getAccessPermission()));
-        assertTrue(portal.hasPermission(new User("john"), page.getAccessPermission()));
+        assertTrue(portal.hasPermission(new User("root"), page.getAccessPermission()));
+        assertFalse(portal.hasPermission(new User("john"), page.getAccessPermission()));
     }
 
     @Test

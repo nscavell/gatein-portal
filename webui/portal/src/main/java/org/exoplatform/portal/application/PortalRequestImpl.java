@@ -22,14 +22,20 @@
 
 package org.exoplatform.portal.application;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Locale;
+
+import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.web.url.navigation.NavigationResource;
+import org.exoplatform.web.url.navigation.NodeURL;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.Util;
+import org.gatein.api.common.URIResolver;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
-
-import java.util.Locale;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -40,6 +46,7 @@ public class PortalRequestImpl extends PortalRequest {
     private final SiteId siteId;
     private final NodePath nodePath;
     private final Portal portal;
+    private final URIResolver uriResolver;
 
     private PortalRequestImpl(PortalRequestContext context) {
         this.context = context;
@@ -49,6 +56,8 @@ public class PortalRequestImpl extends PortalRequest {
         this.siteId = Util.from(context.getSiteKey());
         this.nodePath = NodePath.fromString(context.getNodePath());
         this.portal = getPortalApi(context);
+
+        uriResolver = new RequestContextURIResolver();
     }
 
     @Override
@@ -76,6 +85,11 @@ public class PortalRequestImpl extends PortalRequest {
         return portal;
     }
 
+    @Override
+    public URIResolver getURIResolver() {
+        return uriResolver;
+    }
+
     private static Portal getPortalApi(PortalRequestContext context) {
         return (Portal) context.getApplication().getApplicationServiceContainer().getComponentInstanceOfType(Portal.class);
     }
@@ -87,5 +101,19 @@ public class PortalRequestImpl extends PortalRequest {
 
     static void clearInstance() {
         PortalRequest.setInstance(null);
+    }
+
+    public class RequestContextURIResolver implements org.gatein.api.common.URIResolver {
+        public URI resolveURI(SiteId siteId, NodePath path) {
+            try {
+                SiteKey siteKey = Util.from(siteId);
+                NavigationResource navResource = new NavigationResource(siteKey, path.toString().substring(1));
+                NodeURL nodeURL = context.createURL(NodeURL.TYPE, navResource);
+                nodeURL.setSchemeUse(true);
+                return new URI(nodeURL.toString());
+            } catch (URISyntaxException e) {
+                return null;
+            }
+        }
     }
 }

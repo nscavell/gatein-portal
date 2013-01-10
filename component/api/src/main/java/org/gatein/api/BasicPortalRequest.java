@@ -22,8 +22,10 @@
 
 package org.gatein.api;
 
+import java.net.URI;
 import java.util.Locale;
 
+import org.gatein.api.common.URIResolver;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
@@ -39,13 +41,16 @@ public class BasicPortalRequest extends PortalRequest {
     private final NodePath nodePath;
     private final Locale locale;
     private final Portal portal;
+    private final URIResolver uriResolver;
 
-    public BasicPortalRequest(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal) {
+    public BasicPortalRequest(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal, URI portalURI) {
         this.user = user;
         this.siteId = siteId;
         this.nodePath = nodePath;
         this.locale = locale;
         this.portal = portal;
+
+        uriResolver = new BasicURIResolver(portalURI);
     }
 
     @Override
@@ -71,6 +76,23 @@ public class BasicPortalRequest extends PortalRequest {
     @Override
     public Portal getPortal() {
         return portal;
+    }
+
+    @Override
+    public URIResolver getURIResolver() {
+        return uriResolver;
+    }
+
+    public class BasicURIResolver implements org.gatein.api.common.URIResolver {
+        private final URI portalURI;
+
+        public BasicURIResolver(URI portalURI) {
+            this.portalURI = portalURI;
+        }
+
+        public URI resolveURI(SiteId siteId, NodePath path) {
+            return portalURI.resolve(siteId.getName() + path.toString());
+        }
     }
 
     public static void setInstance(BasicPortalRequest request) {

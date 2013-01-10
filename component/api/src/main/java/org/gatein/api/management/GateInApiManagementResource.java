@@ -332,6 +332,7 @@ public class GateInApiManagementResource {
         Locale locale = context.getLocale();
 
         User user = (managedUser == null || managedUser.getUserName() == null) ? User.anonymous() : new User(managedUser.getUserName());
-        BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal));
+        // TODO Set base URI
+        BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal, null));
     }
 }

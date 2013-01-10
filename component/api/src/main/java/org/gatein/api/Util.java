@@ -73,7 +73,7 @@ public class Util {
         site.setEditPermission(from(portalConfig.getEditPermission()));
 
         site.getAttributes().putAll(portalConfig.getProperties());
-        
+
         return site;
     }
 
@@ -235,9 +235,7 @@ public class Util {
             String[] permissions = new String[permission.getMemberships().size()];
             Iterator<Membership> memberships = permission.getMemberships().iterator();
             for (int i = 0; i < permissions.length; i++) {
-                // Membership.toString gives us this, however it's safer to not rely on it.
-                Membership membership = memberships.next();
-                permissions[i] = membership.getMembershipType() + ":" + membership.getGroup().getId();
+                permissions[i] = memberships.next().toString();
             }
 
             return permissions;
