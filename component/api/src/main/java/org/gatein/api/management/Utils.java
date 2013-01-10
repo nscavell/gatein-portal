@@ -22,21 +22,53 @@
 
 package org.gatein.api.management;
 
-import java.util.Date;
-
+import org.gatein.api.Portal;
+import org.gatein.api.PortalRequest;
 import org.gatein.api.common.i18n.Localized;
 import org.gatein.api.common.i18n.LocalizedString;
+import org.gatein.api.navigation.Node;
+import org.gatein.api.page.Page;
 import org.gatein.api.security.Membership;
 import org.gatein.api.security.Permission;
+import org.gatein.api.security.User;
+import org.gatein.api.site.Site;
 import org.gatein.common.xml.stax.writer.WritableValueTypes;
+import org.gatein.management.api.exceptions.NotAuthorizedException;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
+import org.gatein.management.api.operation.OperationContext;
+
+import java.util.Date;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class ModelUtils {
-    private ModelUtils() {
+class Utils {
+    private Utils() {
+    }
+
+    public static void verifyAccess(Site site, OperationContext context) throws NotAuthorizedException {
+        if (!hasPermission(site.getAccessPermission())) {
+            throw new NotAuthorizedException(context.getUser(), context.getOperationName());
+        }
+    }
+
+    public static void verifyAccess(Page page, OperationContext context) throws NotAuthorizedException {
+        if (!hasPermission(page.getAccessPermission())) {
+            throw new NotAuthorizedException(context.getUser(), context.getOperationName());
+        }
+    }
+
+    public static void verifyAccess(Node node, OperationContext context) throws NotAuthorizedException {
+        //TODO: Implement
+    }
+
+    public static boolean hasPermission(Permission permission) {
+        PortalRequest request = PortalRequest.getInstance();
+        Portal portal = request.getPortal();
+        User user = request.getUser();
+
+        return portal.hasPermission(user, permission);
     }
 
     public static void populate(String fieldName, LocalizedString string, ModelObject model) {

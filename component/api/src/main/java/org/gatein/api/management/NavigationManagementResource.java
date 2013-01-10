@@ -22,10 +22,6 @@
 
 package org.gatein.api.management;
 
-import static org.gatein.api.management.GateInApiManagementResource.getPagesAddress;
-
-import java.util.Date;
-
 import org.gatein.api.Portal;
 import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.Node;
@@ -39,6 +35,7 @@ import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.ManagedRole;
 import org.gatein.management.api.annotations.MappedAttribute;
 import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.OperationException;
@@ -48,7 +45,12 @@ import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
+import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationNames;
+
+import java.util.Date;
+
+import static org.gatein.api.management.GateInApiManagementResource.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -65,7 +67,9 @@ public class NavigationManagementResource {
     }
 
     @Managed
-    public ModelObject getNavigation(@ManagedContext PathAddress address, @MappedAttribute("scope") String scopeAttribute) {
+    public ModelObject getNavigation(@ManagedContext OperationContext context,
+                                     @MappedAttribute("scope") String scopeAttribute,
+                                     @MappedAttribute("showAll") String showAllAttribute) {
         // Populate the model
         ModelObject model = modelProvider.newModel(ModelObject.class);
 
@@ -77,14 +81,19 @@ public class NavigationManagementResource {
         }
 
         Node node = getNode(NodePath.root(), true, visitor);
-        populateNavigationModel(node, scope, model, address);
+        boolean showAll = showAllAttribute != null && Boolean.parseBoolean(showAllAttribute);
+        if (!showAll || !context.isUserInRole("administrators")) {
+            node = node.filter().showDefault();
+        }
+
+        populateNavigationModel(node, scope, model, context);
 
         return model;
     }
 
     @Managed("{path: .*}")
     public ModelObject getNode(@MappedPath("path") String path, @MappedAttribute("scope") String scopeAttribute,
-            @ManagedContext PathAddress address) {
+                               @MappedAttribute("showAll") String showAllAttribute, @ManagedContext OperationContext context) {
         NodeVisitor visitor = Nodes.visitChildren();
         int scope = 0;
         if (scopeAttribute != null) {
@@ -92,15 +101,22 @@ public class NavigationManagementResource {
             visitor = Nodes.visitNodes(scope);
         }
         Node node = getNode(path, true, visitor);
+        boolean showAll = showAllAttribute != null && Boolean.parseBoolean(showAllAttribute);
+        if (showAll && context.isUserInRole("administrators")) {
+            node = node.filter().showDefault();
+        } else {
+            node = node.filter().showDefault();
+        }
 
         // Populate the model
         ModelObject model = modelProvider.newModel(ModelObject.class);
-        populateNode(node, scope, model, address);
+        populateNode(node, scope, model, context.getAddress());
 
         return model;
     }
 
     @Managed("{path: .*}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the navigation node")
     public void removeNode(@MappedPath("path") String path) {
         Node node = getNode(path, true);
@@ -111,6 +127,7 @@ public class NavigationManagementResource {
     }
 
     @Managed("{path: .*}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the navigation node")
     public ModelObject addNode(@MappedPath("path") String path, @ManagedContext PathAddress address) {
         NodePath nodePath = NodePath.fromString(path);
@@ -133,6 +150,7 @@ public class NavigationManagementResource {
     }
 
     @Managed("{path: .*}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Updates the navigation node")
     public ModelObject updateNode(@MappedPath("path") String path, @ManagedContext ModelObject nodeModel) {
         // TODO: Implement
@@ -160,7 +178,10 @@ public class NavigationManagementResource {
         return node;
     }
 
-    private void populateNavigationModel(Node rootNode, int scope, ModelObject model, PathAddress address) {
+    private void populateNavigationModel(Node rootNode, int scope, ModelObject model, OperationContext context) {
+        PathAddress address = context.getAddress();
+
+        // Populate navigation fields
         model.set("priority", navigation.getPriority());
         model.set("siteType", navigation.getSiteId().getType().getName());
         model.set("siteName", navigation.getSiteId().getName());
@@ -182,14 +203,14 @@ public class NavigationManagementResource {
 
     private void populateNode(Node node, int scope, ModelObject model, PathAddress address) {
         model.set("name", node.getName());
-        ModelUtils.set("uri", node.getURI(), model);
+        Utils.set("uri", node.getURI(), model);
         model.set("isVisible", node.isVisible());
         populateVisibility(node.getVisibility(), model.get("visibility", ModelObject.class));
         model.set("iconName", node.getIconName());
 
         // Display name
         model.set("displayName", node.getDisplayName());
-        ModelUtils.populate("displayNames", node.getDisplayNames(), model);
+        Utils.populate("displayNames", node.getDisplayNames(), model);
 
         // Children nodes
         ModelList children = model.get("children", ModelList.class);
@@ -218,13 +239,13 @@ public class NavigationManagementResource {
 
     private void populateVisibility(Visibility visibility, ModelObject model) {
         if (visibility != null) {
-            ModelUtils.set("status", visibility.getStatus(), model);
+            Utils.set("status", visibility.getStatus(), model);
             if (visibility.getPublicationDate() != null) {
                 ModelObject pubDateModel = model.get("publication-date", ModelObject.class);
                 Date start = visibility.getPublicationDate().getStart();
                 Date end = visibility.getPublicationDate().getEnd();
-                ModelUtils.set("start", start, pubDateModel);
-                ModelUtils.set("end", end, pubDateModel);
+                Utils.set("start", start, pubDateModel);
+                Utils.set("end", end, pubDateModel);
             }
         }
     }

@@ -22,19 +22,11 @@
 
 package org.gatein.api.management;
 
-import java.util.List;
-import java.util.Locale;
-
 import org.gatein.api.BasicPortalRequest;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
-import org.gatein.api.navigation.Navigation;
-import org.gatein.api.navigation.Node;
 import org.gatein.api.navigation.NodePath;
-import org.gatein.api.navigation.Nodes;
-import org.gatein.api.page.Page;
-import org.gatein.api.page.PageQuery;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.User;
 import org.gatein.api.site.Site;
@@ -50,6 +42,7 @@ import org.gatein.management.api.annotations.ManagedAfter;
 import org.gatein.management.api.annotations.ManagedBefore;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.ManagedRole;
 import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
@@ -58,6 +51,11 @@ import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationNames;
+
+import java.util.List;
+import java.util.Locale;
+
+import static org.gatein.api.management.Utils.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -113,16 +111,17 @@ public class GateInApiManagementResource {
     }
 
     @Managed("/sites/{site-name}")
-    public ModelObject getSite(@MappedPath("site-name") String siteName, @ManagedContext PathAddress address) {
+    public ModelObject getSite(@MappedPath("site-name") String siteName, @ManagedContext OperationContext context) {
         SiteId id = new SiteId(siteName);
 
         ModelObject siteModel = modelProvider.newModel(ModelObject.class);
-        populateModel(id, siteModel, address);
+        populateModel(id, siteModel, context);
 
         return siteModel;
     }
 
     @Managed("/sites/{site-name}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given site")
     public void removeSite(@MappedPath("site-name") String siteName) {
         SiteId id = new SiteId(siteName);
@@ -156,14 +155,15 @@ public class GateInApiManagementResource {
     }
 
     @Managed("/spaces/{group-name: .*}")
-    public ModelObject getSpace(@MappedPath("group-name") String groupName, @ManagedContext PathAddress address) {
+    public ModelObject getSpace(@MappedPath("group-name") String groupName, @ManagedContext OperationContext context) {
         ModelObject siteModel = modelProvider.newModel(ModelObject.class);
-        populateModel(new SiteId(new Group(groupName)), siteModel, address);
+        populateModel(new SiteId(new Group(groupName)), siteModel, context);
 
         return siteModel;
     }
 
     @Managed("/spaces/{group-name: .*}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given space")
     public void removeSpace(@MappedPath("group-name") String groupName) {
         SiteId id = new SiteId(new Group(groupName));
@@ -197,14 +197,15 @@ public class GateInApiManagementResource {
     }
 
     @Managed("/dashboards/{user-name}")
-    public ModelObject getDashboard(@MappedPath("user-name") String userName, @ManagedContext PathAddress address) {
+    public ModelObject getDashboard(@MappedPath("user-name") String userName, @ManagedContext OperationContext context) {
         ModelObject siteModel = modelProvider.newModel(ModelObject.class);
-        populateModel(new SiteId(new User(userName)), siteModel, address);
+        populateModel(new SiteId(new User(userName)), siteModel, context);
 
         return siteModel;
     }
 
     @Managed("/dashboards/{user-name}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given dashboard")
     public void removeDashboard(@MappedPath("user-name") String userName) {
         SiteId id = new SiteId(new User(userName));
@@ -224,6 +225,12 @@ public class GateInApiManagementResource {
     @Managed("/dashboards/{user-name}/navigation")
     public NavigationManagementResource getDashboardNavigation(@MappedPath("user-name") String userName) {
         return new NavigationManagementResource(portal, modelProvider, new SiteId(new User(userName)));
+    }
+
+    private User getUser(ManagedUser managedUser) {
+        if (managedUser == null) return User.anonymous();
+
+        return new User(managedUser.getUserName());
     }
 
     static PathAddress getSiteAddress(SiteId siteId) {
@@ -261,38 +268,32 @@ public class GateInApiManagementResource {
         return site;
     }
 
-    private void populateModel(SiteId id, ModelObject siteModel, PathAddress address) {
+    private void populateModel(SiteId id, ModelObject siteModel, OperationContext context) {
         Site site = getSite(id, true);
+        verifyAccess(site, context);
 
         siteModel.set("name", site.getId().getName());
         siteModel.set("type", site.getId().getType().name().toLowerCase());
 
+        PathAddress address = context.getAddress();
+
         // Pages
-        ModelList pagesList = siteModel.get("pages", ModelList.class);
-        List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(id).build());
-        for (Page page : pages) {
-            ModelReference pageRef = pagesList.add().asValue(ModelReference.class);
-            pageRef.set("name", page.getName());
-            pageRef.set(address.append("pages").append(page.getName()));
-        }
+        ModelReference pagesRef = siteModel.get("pages", ModelReference.class);
+        pagesRef.set(address.append("pages"));
 
         // Navigation
-        Navigation navigation = portal.getNavigation(id);
-        Node node = navigation.getRootNode(Nodes.visitChildren());
-        ModelList navList = siteModel.get("navigation", ModelList.class);
-        for (Node child : node) {
-            ModelReference navRef = navList.add().asValue(ModelReference.class);
-            navRef.set("name", child.getName());
-            navRef.set(address.append("navigation").append(child.getName()));
-        }
+        ModelReference navigationRef = siteModel.get("navigation", ModelReference.class);
+        navigationRef.set(address.append("navigation"));
     }
 
     private void populateModel(List<Site> sites, ModelList list, PathAddress address) {
         for (Site site : sites) {
-            ModelReference siteRef = list.add().asValue(ModelReference.class);
-            siteRef.set("name", site.getName());
-            siteRef.set("type", site.getType().getName());
-            siteRef.set(address.append(site.getName()));
+            if (hasPermission(site.getAccessPermission())) {
+                ModelReference siteRef = list.add().asValue(ModelReference.class);
+                siteRef.set("name", site.getName());
+                siteRef.set("type", site.getType().getName());
+                siteRef.set(address.append(site.getName()));
+            }
         }
     }
 

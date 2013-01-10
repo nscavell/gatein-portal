@@ -22,15 +22,13 @@
 
 package org.gatein.api.management;
 
-import static org.gatein.api.management.ModelUtils.populate;
-
-import java.util.List;
-
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
+import org.gatein.api.PortalRequest;
 import org.gatein.api.page.Page;
 import org.gatein.api.page.PageId;
 import org.gatein.api.page.PageQuery;
+import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
@@ -43,6 +41,10 @@ import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationNames;
+
+import java.util.List;
+
+import static org.gatein.api.management.Utils.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -64,7 +66,7 @@ public class PageManagementResource {
     public ModelList getPages(@ManagedContext PathAddress address) {
         // Populate model
         ModelList list = modelProvider.newModel(ModelList.class);
-        populateModel(portal.findPages(new PageQuery.Builder().build()), list, address);
+        populateModel(portal.findPages(new PageQuery.Builder().withSiteId(siteId).build()), list, address);
 
         return list;
     }
@@ -106,19 +108,24 @@ public class PageManagementResource {
     }
 
     private void populateModel(List<Page> pages, ModelList list, PathAddress address) {
+        PortalRequest request = PortalRequest.getInstance();
+        Portal portal = request.getPortal();
+        User user = request.getUser();
+
         for (Page page : pages) {
-            ModelReference pageRef = list.add().asValue(ModelReference.class);
-            pageRef.set("name", page.getName());
-            pageRef.set("siteType", page.getId().getSiteId().getType().name().toLowerCase());
-            pageRef.set("siteName", page.getId().getSiteId().getName());
-            pageRef.set(address.append(page.getName()));
+            if (portal.hasPermission(user, page.getAccessPermission())) {
+                ModelReference pageRef = list.add().asValue(ModelReference.class);
+                pageRef.set("name", page.getName());
+                pageRef.set("siteType", page.getId().getSiteId().getType().name().toLowerCase());
+                pageRef.set("siteName", page.getId().getSiteId().getName());
+                pageRef.set(address.append(page.getName()));
+            }
         }
     }
 
     private void populateModel(Page page, ModelObject model) {
         model.set("name", page.getName());
         model.set("displayName", page.getDisplayName());
-        model.set("description", page.getDescription());
         // Uncomment below when page's support localized values (description service)
         // populate("displayNames", page.getDisplayNames(), model);
         // populate("description", page.getDescription(), model);
