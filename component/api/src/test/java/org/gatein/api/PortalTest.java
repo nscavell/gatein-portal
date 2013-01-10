@@ -63,7 +63,7 @@ public class PortalTest extends AbstractApiTest {
         assertNotNull(page);
         assertNull(portal.getPage(new PageId("create-page", "baz")));
     }
-    
+
     @Test(expected = ApiException.class)
     public void createPage_Faulty() {
         createSite(new SiteId("create-page-exists"), "bar");
@@ -121,6 +121,22 @@ public class PortalTest extends AbstractApiTest {
         List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).build());
         assertNotNull(pages);
         assertEquals(5, pages.size());
+    }
+
+    @Test
+    public void findPages_Filter() {
+        createSite(new SiteId("find-pages"), "page3", "page1", "page5", "page2", "page4");
+
+        Filter<Page> filter = new Filter<Page>() {
+            public boolean accept(Page element) {
+                return element.getName().equals("page1") || element.getName().equals("page4");
+            }
+        };
+
+        List<Page> pages = portal.findPages(new PageQuery.Builder().withSiteId(new SiteId("find-pages")).withFilter(filter)
+                .build());
+        assertNotNull(pages);
+        assertEquals(2, pages.size());
     }
 
     @Test
@@ -490,18 +506,32 @@ public class PortalTest extends AbstractApiTest {
 
     @Test
     public void hasPermission() {
-        createSite(new SiteId("permissions"), "page");
-        PageQuery query = new PageQuery.Builder().withSiteId(new SiteId("permissions")).build();
+        createSite(new SiteId("permissions"));
 
-        setPermission(new PageId(new SiteId("permissions"), "page"), "*:/platform/administrators", "Everyone");
+        Page page = portal.createPage(new PageId("permissions", "page1"));
+        page.setAccessPermission(Permission.everyone());
+        page.setEditPermission(new Permission("*", new Group("/platform/administrators")));
+        portal.savePage(page);
 
-        Page page = portal.findPages(query).get(0);
+        page = portal.getPage(page.getId());
 
         assertTrue(portal.hasPermission(new User("root"), page.getAccessPermission()));
         assertTrue(portal.hasPermission(new User("root"), page.getEditPermission()));
 
         assertTrue(portal.hasPermission(User.anonymous(), page.getAccessPermission()));
         assertFalse(portal.hasPermission(User.anonymous(), page.getEditPermission()));
+    }
+
+    @Test
+    public void hasPermission_User() {
+        createSite(new SiteId("permissions"));
+
+        Page page = portal.createPage(new PageId("permissions", "page1"));
+        page.setAccessPermission(new Permission(new User("mary")));
+        portal.savePage(page);
+
+        assertTrue(portal.hasPermission(new User("mary"), page.getAccessPermission()));
+        assertTrue(portal.hasPermission(new User("john"), page.getAccessPermission()));
     }
 
     @Test
@@ -683,7 +713,7 @@ public class PortalTest extends AbstractApiTest {
     public void saveSite() {
         Permission access = new Permission("*", new Group("access"));
         Permission edit = new Permission("*", new Group("edit"));
-        
+
         Site site = portal.createSite(new SiteId("newsite"));
         site.setAccessPermission(access);
         site.setDisplayName("displayName");
