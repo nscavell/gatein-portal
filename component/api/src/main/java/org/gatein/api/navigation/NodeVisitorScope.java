@@ -24,8 +24,8 @@ package org.gatein.api.navigation;
 import org.exoplatform.portal.mop.navigation.NodeState;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.portal.mop.navigation.VisitMode;
-import org.gatein.api.Parameters;
 import org.gatein.api.Util;
+import org.gatein.api.internal.Parameters;
 import org.gatein.api.page.PageId;
 
 /**

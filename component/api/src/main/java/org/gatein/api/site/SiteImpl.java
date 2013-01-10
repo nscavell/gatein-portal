@@ -24,9 +24,9 @@ package org.gatein.api.site;
 
 import java.util.Locale;
 
-import org.gatein.api.Parameters;
 import org.gatein.api.common.Attributes;
 import org.gatein.api.internal.ObjectToStringBuilder;
+import org.gatein.api.internal.Parameters;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;

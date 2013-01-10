@@ -30,10 +30,10 @@ import java.util.NoSuchElementException;
 import java.util.WeakHashMap;
 
 import org.exoplatform.portal.mop.navigation.NodeContext;
-import org.gatein.api.Parameters;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.common.Filter;
+import org.gatein.api.internal.Parameters;
 import org.gatein.api.page.Page;
 import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;

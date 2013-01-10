@@ -24,8 +24,8 @@ package org.gatein.api.page;
 
 import org.exoplatform.portal.mop.page.PageContext;
 import org.exoplatform.portal.mop.page.PageState;
-import org.gatein.api.Parameters;
 import org.gatein.api.Util;
+import org.gatein.api.internal.Parameters;
 import org.gatein.api.security.Permission;
 import org.gatein.api.site.SiteId;
 

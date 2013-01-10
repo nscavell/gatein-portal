@@ -50,6 +50,7 @@ import org.exoplatform.services.security.IdentityConstants;
 import org.exoplatform.services.security.IdentityRegistry;
 import org.gatein.api.common.Filter;
 import org.gatein.api.common.Pagination;
+import org.gatein.api.internal.Parameters;
 import org.gatein.api.internal.StringJoiner;
 import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.NavigationImpl;

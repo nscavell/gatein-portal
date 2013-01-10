@@ -39,9 +39,9 @@ import org.exoplatform.services.resources.ResourceBundleManager;
 import org.gatein.api.AbstractI18NResolver;
 import org.gatein.api.ApiException;
 import org.gatein.api.EntityNotFoundException;
-import org.gatein.api.Parameters;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.Util;
+import org.gatein.api.internal.Parameters;
 import org.gatein.api.site.Site;
 import org.gatein.api.site.SiteId;
 
