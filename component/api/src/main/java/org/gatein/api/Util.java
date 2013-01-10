@@ -26,10 +26,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.LocaleUtils;
 import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.config.model.Properties;
 import org.exoplatform.portal.mop.SiteKey;
@@ -63,7 +63,7 @@ public class Util {
             site.setDescription(portalConfig.getDescription());
         }
         if (portalConfig.getLocale() != null) {
-            site.setLocale(Locale.forLanguageTag(portalConfig.getLocale()));
+            site.setLocale(LocaleUtils.toLocale(portalConfig.getLocale()));
         }
         if (portalConfig.getSkin() != null) {
             site.setSkin(portalConfig.getSkin());
@@ -90,7 +90,7 @@ public class Util {
             portalConfig.setDescription(site.getDescription());
         }
         if (site.getLocale() != null) {
-            portalConfig.setLocale(site.getLocale().toLanguageTag());
+            portalConfig.setLocale(site.getLocale().toString());
         }
         if (site.getSkin() != null) {
             portalConfig.setSkin(site.getSkin());
