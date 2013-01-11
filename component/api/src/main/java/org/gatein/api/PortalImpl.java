@@ -201,6 +201,10 @@ public class PortalImpl implements Portal {
         PortalConfig data = Util.from(site);
         boolean create = ((SiteImpl) site).isCreate();
 
+        if (create && getSite(site.getId()) != null) {
+            throw new EntityAlreadyExistsException("Cannot create site. Site " + site.getId() + " already exists.");
+        }
+
         try {
             if (create) {
                 dataStorage.create(data);
@@ -208,11 +212,6 @@ public class PortalImpl implements Portal {
                 dataStorage.save(data);
             }
         } catch (Throwable e) {
-            if (e.getMessage() != null
-                    && e.getMessage().equals("Cannot create portal " + site.getName() + " that already exist")) {
-                throw new EntityAlreadyExistsException("Cannot create site. Site " + site.getId() + " already exists.");
-            }
-
             throw new ApiException("Failed to save site", e);
         }
 
@@ -259,6 +258,10 @@ public class PortalImpl implements Portal {
     public Page createPage(PageId pageId) throws EntityAlreadyExistsException {
         if (getPage(pageId) != null) {
             throw new EntityAlreadyExistsException("Cannot create page. Page " + pageId + " already exists.");
+        }
+
+        if (getSite(pageId.getSiteId()) == null) {
+            throw new EntityNotFoundException("Site " + pageId.getSiteId() + " doesn't exist");
         }
 
         Permission access = Permission.everyone();
@@ -308,13 +311,22 @@ public class PortalImpl implements Portal {
     public void savePage(Page page) {
         Parameters.requireNonNull(page, "page");
 
+        if (getSite(page.getSiteId()) == null) {
+            throw new EntityNotFoundException("Site " + page.getSiteId() + " doesn't exist");
+        }
+
         if (((PageImpl) page).isCreate() && getPage(page.getId()) != null) {
             // There is still a small chance someone else creates the page, but this is currently the best we can do
             throw new EntityAlreadyExistsException("Cannot create page. Page " + page.getId() + " already exists.");
         }
 
         PageContext context = ((PageImpl) page).getPageContext();
-        pageService.savePage(context);
+
+        try {
+            pageService.savePage(context);
+        } catch (Throwable t) {
+            throw new ApiException("Failed to save page");
+        }
     }
 
     @Override
@@ -336,7 +348,11 @@ public class PortalImpl implements Portal {
         if (user == User.anonymous()) {
             identity = new Identity(IdentityConstants.ANONIM);
         } else {
-            identity = identityRegistry.getIdentity(user.getId());
+            try {
+                identity = identityRegistry.getIdentity(user.getId());
+            } catch (Throwable t) {
+                throw new ApiException("Failed top retrieve identity", t);
+            }
         }
 
         if (identity == null) {
@@ -350,10 +366,18 @@ public class PortalImpl implements Portal {
                 throw new EntityNotFoundException("User not found");
             }
 
-            identityRegistry.register(identity);
+            try {
+                identityRegistry.register(identity);
+            } catch (Throwable t) {
+                throw new ApiException("Failed to register identity", t);
+            }
         }
 
-        return acl.hasPermission(identity, expPerm);
+        try {
+            return acl.hasPermission(identity, expPerm);
+        } catch (Throwable t) {
+            throw new ApiException("Failed to check permissions", t);
+        }
     }
 
     private static <T> void filter(List<T> list, Filter<T> filter) {
@@ -385,7 +409,11 @@ public class PortalImpl implements Portal {
         for (PortalConfig internalSite : internalSites) {
             NavigationContext ctx = null;
             if (!includeAllSites) {
-                ctx = service.loadNavigation(new SiteKey(internalSite.getType(), internalSite.getName()));
+                try {
+                    ctx = service.loadNavigation(new SiteKey(internalSite.getType(), internalSite.getName()));
+                } catch (Throwable t) {
+                    throw new ApiException("Failed to find sites", t);
+                }
             }
 
             if (includeAllSites || ctx != null) {

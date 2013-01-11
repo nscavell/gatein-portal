@@ -87,6 +87,11 @@ public class PortalImplTest extends AbstractApiTest {
         portal.createPage(new PageId("create-page-exists", "bar"));
     }
 
+    @Test(expected = EntityNotFoundException.class)
+    public void createPage_NoSite() {
+        portal.createPage(new PageId("no-site", "baz"));
+    }
+
     @Test
     public void createSite() {
         portal.createSite(new SiteId("newsite"));
@@ -654,6 +659,18 @@ public class PortalImplTest extends AbstractApiTest {
         assertEquals(new SiteId("create-page"), page.getSiteId());
     }
 
+    @Test(expected = EntityNotFoundException.class)
+    public void savePage_NoSite() {
+        Site site = portal.createSite(new SiteId("save-page"));
+        portal.saveSite(site);
+
+        Page page = portal.createPage(new PageId("no-site", "baz"));
+
+        portal.removeSite(site.getId());
+
+        portal.savePage(page);
+    }
+
     @Test(expected = EntityAlreadyExistsException.class)
     public void savePage_Exists() {
         createSite(new SiteId("create-page"));
@@ -809,6 +826,8 @@ public class PortalImplTest extends AbstractApiTest {
 
     @Test
     public void serializePage() throws Exception {
+        createSite(new SiteId("classic"));
+
         Permission access = Permission.any("/platform/administrators");
         Permission edit = Permission.everyone();
 

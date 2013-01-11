@@ -22,7 +22,10 @@
 
 package org.gatein.api.page;
 
+import java.io.Serializable;
+
 import org.exoplatform.portal.mop.page.PageContext;
+import org.exoplatform.portal.mop.page.PageKey;
 import org.exoplatform.portal.mop.page.PageState;
 import org.gatein.api.Util;
 import org.gatein.api.internal.Parameters;
@@ -32,33 +35,35 @@ import org.gatein.api.site.SiteId;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class PageImpl implements Page {
-    private final transient PageContext pageContext;
+public class PageImpl implements Page, Serializable {
+    private PageKey key;
+    private PageState state;
 
     private boolean create;
 
     public PageImpl(PageContext pageContext) {
-        this.pageContext = pageContext;
+        this.key = pageContext.getKey();
+        this.state = pageContext.getState();
     }
 
     @Override
     public PageId getId() {
-        return Util.from(pageContext.getKey());
+        return Util.from(key);
     }
 
     @Override
     public SiteId getSiteId() {
-        return Util.from(pageContext.getKey().getSite());
+        return Util.from(key.getSite());
     }
 
     @Override
     public String getName() {
-        return pageContext.getKey().getName();
+        return key.getName();
     }
 
     @Override
     public String getDescription() {
-        return pageContext.getState().getDescription();
+        return state.getDescription();
     }
 
     @Override
@@ -73,12 +78,12 @@ public class PageImpl implements Page {
 
     @Override
     public String getDisplayName() {
-        return pageContext.getState().getDisplayName();
+        return state.getDisplayName();
     }
 
     @Override
     public Permission getAccessPermission() {
-        return Util.from(pageContext.getState().getAccessPermissions());
+        return Util.from(state.getAccessPermissions());
     }
 
     @Override
@@ -90,7 +95,7 @@ public class PageImpl implements Page {
 
     @Override
     public Permission getEditPermission() {
-        return Util.from(pageContext.getState().getEditPermission());
+        return Util.from(state.getEditPermission());
     }
 
     @Override
@@ -119,14 +124,14 @@ public class PageImpl implements Page {
     }
 
     public PageContext getPageContext() {
-        return pageContext;
+        return new PageContext(key, state);
     }
 
     private PageState.Builder builder() {
-        return pageContext.getState().builder();
+        return state.builder();
     }
 
     private void setState(PageState.Builder builder) {
-        pageContext.setState(builder.build());
+        this.state = builder.build();
     }
 }

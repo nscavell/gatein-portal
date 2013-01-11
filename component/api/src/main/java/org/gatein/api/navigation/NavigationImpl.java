@@ -176,7 +176,11 @@ public class NavigationImpl implements Navigation {
     }
 
     Map<Locale, Described.State> loadDescriptions(String id) {
-        return descriptionService.getDescriptions(id);
+        try {
+            return descriptionService.getDescriptions(id);
+        } catch (Throwable t) {
+            throw new ApiException("Failed to retrieve descriptions", t);
+        }
     }
 
     String resolve(NodeContext<ApiNode> ctx) {
@@ -249,18 +253,26 @@ public class NavigationImpl implements Navigation {
         ApiNode node = ctx.getNode();
         if (node != null && node.isDisplayNameChanged()) {
             if (!node.getDisplayNames().isLocalized()) {
-                Map<Locale, Described.State> descriptions = descriptionService.getDescriptions(ctx.getId());
+                Map<Locale, Described.State> descriptions = loadDescriptions(ctx.getId());
                 if (descriptions != null) {
-                    descriptionService.setDescriptions(ctx.getId(), null);
+                    setDescriptions(ctx.getId(), null);
                 }
             } else {
                 Map<Locale, State> descriptions = ObjectFactory.createDescriptions(node.getDisplayNames());
-                descriptionService.setDescriptions(ctx.getId(), descriptions);
+                setDescriptions(ctx.getId(), descriptions);
             }
         }
 
         for (NodeContext<ApiNode> c = ctx.getFirst(); c != null; c = c.getNext()) {
             saveDisplayNames(c);
+        }
+    }
+
+    private void setDescriptions(String id, Map<Locale, Described.State> descriptions) {
+        try {
+            descriptionService.setDescriptions(id, descriptions);
+        } catch (Throwable t) {
+            throw new ApiException("Failed to set descriptions", t);
         }
     }
 

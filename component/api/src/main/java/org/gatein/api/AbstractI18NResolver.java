@@ -69,7 +69,12 @@ public abstract class AbstractI18NResolver {
         } else if (descriptionId != null) {
             Locale userLocale = getUserLocale();
             Locale siteLocale = getSiteLocale();
-            Described.State described = service.resolveDescription(descriptionId, siteLocale, userLocale);
+            Described.State described;
+            try {
+                described = service.resolveDescription(descriptionId, siteLocale, userLocale);
+            } catch (Throwable t) {
+                throw new ApiException("Failed to resolve description", t);
+            }
             if (described != null) {
                 resolved = (nameFlag) ? described.getName() : described.getDescription();
             }
