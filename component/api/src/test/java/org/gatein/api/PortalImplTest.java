@@ -807,6 +807,43 @@ public class PortalImplTest extends AbstractApiTest {
         portal.saveSite(null);
     }
 
+    @Test
+    public void serializePage() throws Exception {
+        Permission access = Permission.any("/platform/administrators");
+        Permission edit = Permission.everyone();
+
+        Page page = portal.createPage(new PageId("classic", "page1"));
+        page.setAccessPermission(access);
+        page.setDescription("description");
+        page.setDisplayName("displayName");
+        page.setEditPermission(edit);
+
+        Page serialized = SerializationUtils.serializeDeserialize(page);
+
+        assertNotNull(serialized);
+        assertEquals(access, serialized.getAccessPermission());
+        assertEquals("description", serialized.getDescription());
+        assertEquals("displayName", serialized.getDisplayName());
+        assertEquals(edit, serialized.getEditPermission());
+        assertEquals(new PageId("classic", "page1"), serialized.getId());
+        assertEquals("page1", serialized.getName());
+        assertEquals(new SiteId("classic"), serialized.getSiteId());
+
+        portal.savePage(page);
+
+        Page saved = portal.getPage(page.getId());
+
+        Page savedSerialized = SerializationUtils.serializeDeserialize(saved);
+        assertNotNull(savedSerialized);
+        assertEquals(access, savedSerialized.getAccessPermission());
+        assertEquals("description", savedSerialized.getDescription());
+        assertEquals("displayName", savedSerialized.getDisplayName());
+        assertEquals(edit, savedSerialized.getEditPermission());
+        assertEquals(new PageId("classic", "page1"), savedSerialized.getId());
+        assertEquals("page1", savedSerialized.getName());
+        assertEquals(new SiteId("classic"), savedSerialized.getSiteId());
+    }
+
     private void runWithFault(Runnable r) {
         RequestLifeCycle.end();
         try {

@@ -28,10 +28,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +35,7 @@ import java.util.Map;
 import org.gatein.api.AbstractApiTest;
 import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.EntityNotFoundException;
+import org.gatein.api.SerializationUtils;
 import org.gatein.api.common.i18n.LocalizedString;
 import org.gatein.api.site.SiteId;
 import org.junit.Before;
@@ -478,7 +475,7 @@ public class NavigationImplTest extends AbstractApiTest {
         child.addChild("foo");
         child.setIconName("iconName");
 
-        Node parentNode = serializeDeserialize(parent);
+        Node parentNode = SerializationUtils.serializeDeserialize(parent);
 
         // test deserialized node
         assertEquals("parent", parentNode.getName());
@@ -515,7 +512,7 @@ public class NavigationImplTest extends AbstractApiTest {
 
         node.getChild("extended").setDisplayNames(localizedString);
 
-        Node serialized = serializeDeserialize(node);
+        Node serialized = SerializationUtils.serializeDeserialize(node);
 
         assertEquals("simple", serialized.getChild("simple").getDisplayName());
         assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
@@ -525,7 +522,7 @@ public class NavigationImplTest extends AbstractApiTest {
 
         Node saved = navigation.getRootNode(Nodes.visitAll());
 
-        serialized = serializeDeserialize(saved);
+        serialized = SerializationUtils.serializeDeserialize(saved);
 
         assertEquals("simple", serialized.getChild("simple").getDisplayName());
         assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
@@ -544,7 +541,7 @@ public class NavigationImplTest extends AbstractApiTest {
         assertEquals(0, parent.getChildCount());
         assertEquals(2, root.getChildCount());
 
-        Node parentNode = serializeDeserialize(parent);
+        Node parentNode = SerializationUtils.serializeDeserialize(parent);
         assertEquals(0, parentNode.getChildCount());
         assertEquals(2, root.getChildCount());
     }
@@ -561,7 +558,7 @@ public class NavigationImplTest extends AbstractApiTest {
 
         navigation.saveNode(root);
 
-        Node rootNode = serializeDeserialize(root);
+        Node rootNode = SerializationUtils.serializeDeserialize(root);
         assertNotNull(rootNode.getNode("parent", "foo", "bar"));
         assertNotNull(rootNode.getNode("parent", "child", "another-child"));
     }
@@ -575,7 +572,7 @@ public class NavigationImplTest extends AbstractApiTest {
 
         assertEquals(0, parent.getChildCount());
 
-        Node parentNode = serializeDeserialize(parent);
+        Node parentNode = SerializationUtils.serializeDeserialize(parent);
         assertEquals(0, parentNode.getChildCount());
     }
 
@@ -593,25 +590,9 @@ public class NavigationImplTest extends AbstractApiTest {
         Node child = parent.getChild("child3");
         child.moveTo(0);
 
-        Node parentNode = serializeDeserialize(parent);
+        Node parentNode = SerializationUtils.serializeDeserialize(parent);
         assertEquals("child3", parentNode.getChild(0));
         assertEquals("child", parentNode.getChild(1));
         assertEquals("child2", parentNode.getChild(2));
     }
-
-    private Node serializeDeserialize(Node node) throws Exception {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(baos);
-        out.writeObject(node);
-
-        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        Node result = (Node) in.readObject();
-
-        out.close();
-        in.close();
-
-        return result;
-    }
-
-    // TODO: Add more serialization tests like moving/removing nodes, displayName, etc
 }
