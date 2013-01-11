@@ -130,6 +130,8 @@ public class ApiNode implements Node {
     public Node getNode(NodePath nodePath) {
         checkChildrenLoaded();
 
+        Parameters.requireNonNull(nodePath, "nodePath");
+
         Node node = this;
         for (String name : nodePath) {
             node = node.getChild(name);
@@ -151,7 +153,7 @@ public class ApiNode implements Node {
             String simple = context.getState().getLabel();
             if (simple != null) {
                 displayName = new LocalizedString(simple);
-            } else {
+            } else if (context.getId() != null) {
                 Map<Locale, Described.State> descriptions = navigation.loadDescriptions(context.getId());
                 displayName = ObjectFactory.createLocalizedString(descriptions);
             }
@@ -217,12 +219,13 @@ public class ApiNode implements Node {
 
     @Override
     public boolean hasChild(String childName) {
-        return context.get(childName) != null;
+        return getChild(childName) != null;
     }
 
     @Override
     public int indexOf(String childName) {
-        return context.get(childName).getIndex();
+        ApiNode node = (ApiNode) getChild(childName);
+        return node == null ? -1 : node.context.getIndex();
     }
 
     @Override
@@ -290,7 +293,7 @@ public class ApiNode implements Node {
         checkChildrenLoaded();
 
         if (!hasChild(childName)) {
-            throw new EntityNotFoundException("Node " + getNodePath().append(childName) + " not found for site " + siteId);
+            throw new EntityNotFoundException("Cannot remove child '" + childName + "' because it does not exist for parent node " + getNodePath());
         }
 
         return context.removeNode(childName);
@@ -480,7 +483,7 @@ public class ApiNode implements Node {
         }
 
         // serialize uncommitted changes
-        boolean hasChanges = context.hasChanges();
+        boolean hasChanges = context.hasChanges() || displayNameChanged;
         out.writeBoolean(hasChanges);
         if (hasChanges && parent == null) // ensures we only do this once since the changes are for the entire tree
         {

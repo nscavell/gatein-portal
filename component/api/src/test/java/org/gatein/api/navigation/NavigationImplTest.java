@@ -518,18 +518,20 @@ public class NavigationImplTest extends AbstractApiTest {
 
         assertEquals("parent", serialized.getDisplayName());
         assertEquals("simple", serialized.getChild("simple").getDisplayName());
-        assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
-        assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA));
+        assertNotNull(serialized.getChild("extended").getDisplayNames());
+        assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH).getValue());
+        assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA).getValue());
 
         navigation.saveNode(node);
 
         Node saved = navigation.getRootNode(Nodes.visitAll());
 
-        serialized = SerializationUtils.serializeDeserialize(saved);
+        serialized = SerializationUtils.serializeDeserialize(saved).getChild("parent");
 
         assertEquals("simple", serialized.getChild("simple").getDisplayName());
-        assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
-        assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA));
+        assertNotNull(serialized.getChild("extended").getDisplayNames());
+        assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH).getValue());
+        assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA).getValue());
     }
 
     @Test
@@ -544,9 +546,9 @@ public class NavigationImplTest extends AbstractApiTest {
         assertEquals(0, parent.getChildCount());
         assertEquals(2, root.getChildCount());
 
-        Node parentNode = SerializationUtils.serializeDeserialize(parent);
-        assertEquals(0, parentNode.getChildCount());
-        assertEquals(2, root.getChildCount());
+        Node serialized = SerializationUtils.serializeDeserialize(root);
+        assertEquals(0, serialized.getChild("parent").getChildCount());
+        assertEquals(2, serialized.getChildCount());
     }
 
     @Test
@@ -594,8 +596,8 @@ public class NavigationImplTest extends AbstractApiTest {
         child.moveTo(0);
 
         Node parentNode = SerializationUtils.serializeDeserialize(parent);
-        assertEquals("child3", parentNode.getChild(0));
-        assertEquals("child", parentNode.getChild(1));
-        assertEquals("child2", parentNode.getChild(2));
+        assertEquals("child3", parentNode.getChild(0).getName());
+        assertEquals("child", parentNode.getChild(1).getName());
+        assertEquals("child2", parentNode.getChild(2).getName());
     }
 }

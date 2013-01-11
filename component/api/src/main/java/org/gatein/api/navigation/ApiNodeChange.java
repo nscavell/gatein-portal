@@ -27,6 +27,7 @@ import java.io.Serializable;
 import org.exoplatform.portal.mop.navigation.NodeChange;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.NodeState;
+import org.gatein.api.common.i18n.LocalizedString;
 
 /**
  * Used to store uncommitted node changes during serialization, derived from
@@ -36,9 +37,20 @@ import org.exoplatform.portal.mop.navigation.NodeState;
  */
 abstract class ApiNodeChange implements Serializable {
     protected final NodePath target;
+    protected final LocalizedString displayName;
+    protected final boolean displayNameChanged;
 
     protected ApiNodeChange(NodeContext<ApiNode> target) {
-        this.target = target.getNode().getNodePath();
+        ApiNode node = target.getNode();
+        this.target = node.getNodePath();
+        if (node.isDisplayNameChanged()) {
+            this.displayName = node.getDisplayNames();
+            this.displayNameChanged = true;
+        } else {
+            this.displayName = null;
+            this.displayNameChanged = false;
+        }
+
     }
 
     public abstract void apply(ApiNode root);
@@ -81,11 +93,16 @@ abstract class ApiNodeChange implements Serializable {
             if (!node.isChildrenLoaded()) {
                 node.navigation.refreshNode(node, Nodes.visitChildren());
             }
+
+            Node child;
             int index = (previous == null) ? 0 : node.indexOf(previous.getLastSegment());
             if (index < 0) {
-                node.addChild(name);
+                child = node.addChild(name);
             } else {
-                node.addChild(index, name);
+                child = node.addChild(index, name);
+            }
+            if (displayNameChanged) {
+                child.setDisplayNames(displayName);
             }
         }
 
@@ -104,16 +121,18 @@ abstract class ApiNodeChange implements Serializable {
 
     public static class Destroyed extends ApiNodeChange {
         private final NodePath parent;
+        private final String name;
 
         protected Destroyed(NodeChange.Destroyed<NodeContext<ApiNode>> destroyed) {
             super(destroyed.getTarget());
             this.parent = getNodePath(destroyed.getParent());
+            this.name = destroyed.getTarget().getName();
         }
 
         @Override
         public void apply(ApiNode root) {
             Node node = getNode(root, parent);
-            node.removeChild(parent.getLastSegment());
+            node.removeChild(name);
         }
 
         public NodePath getParent() {
@@ -135,6 +154,9 @@ abstract class ApiNodeChange implements Serializable {
         public void apply(ApiNode root) {
             ApiNode node = getNode(root, parent);
             node.context.setName(name);
+            if (displayNameChanged) {
+                node.setDisplayNames(displayName);
+            }
         }
 
         public NodePath getParent() {
@@ -160,14 +182,18 @@ abstract class ApiNodeChange implements Serializable {
 
         @Override
         public void apply(ApiNode root) {
-            ApiNode fromNode = getNode(root, from);
             ApiNode toNode = getNode(root, to);
+            ApiNode node = getNode(root, from.append(target.getLastSegment()));
 
             int index = (previous == null) ? 0 : toNode.indexOf(previous.getLastSegment());
             if (index < 0) {
-                fromNode.moveTo(toNode);
+                node.moveTo(toNode);
             } else {
-                fromNode.moveTo(index, toNode);
+                node.moveTo(index, toNode);
+            }
+
+            if (displayNameChanged) {
+                node.setDisplayNames(displayName);
             }
         }
 
@@ -196,6 +222,9 @@ abstract class ApiNodeChange implements Serializable {
         public void apply(ApiNode root) {
             ApiNode node = getNode(root, target);
             node.context.setState(state);
+            if (displayNameChanged) {
+                node.setDisplayNames(displayName);
+            }
         }
 
         public NodeState getState() {
