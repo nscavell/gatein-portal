@@ -844,6 +844,55 @@ public class PortalImplTest extends AbstractApiTest {
         assertEquals(new SiteId("classic"), savedSerialized.getSiteId());
     }
 
+    @Test
+    public void serializeSite() throws Exception {
+        Permission access = new Permission("*", new Group("access"));
+        Permission edit = new Permission("*", new Group("edit"));
+
+        Site site = portal.createSite(new SiteId("newsite"));
+        site.setAccessPermission(access);
+        site.setDisplayName("displayName");
+        site.setDescription("description");
+        site.setEditPermission(edit);
+        site.setLocale(Locale.ENGLISH);
+        site.setSkin("skin");
+
+        site.getAttributes().put(Attributes.key("attributeKey", String.class), "attributeValue");
+
+        site = SerializationUtils.serializeDeserialize(site);
+        assertNotNull(site);
+        assertEquals("displayName", site.getDisplayName());
+        assertEquals("description", site.getDescription());
+        assertEquals(access, site.getAccessPermission());
+        assertEquals(edit, site.getEditPermission());
+        assertEquals(new SiteId("newsite"), site.getId());
+        assertEquals(Locale.ENGLISH, site.getLocale());
+        assertEquals("newsite", site.getName());
+        assertEquals("skin", site.getSkin());
+        assertEquals(SiteType.SITE, site.getType());
+
+        assertEquals(1, site.getAttributes().size());
+        assertEquals("attributeValue", site.getAttributes().get(Attributes.key("attributeKey", String.class)));
+
+        portal.saveSite(site);
+        site = portal.getSite(new SiteId("newsite"));
+
+        site = SerializationUtils.serializeDeserialize(site);
+        assertNotNull(site);
+        assertEquals("displayName", site.getDisplayName());
+        assertEquals("description", site.getDescription());
+        assertEquals(access, site.getAccessPermission());
+        assertEquals(edit, site.getEditPermission());
+        assertEquals(new SiteId("newsite"), site.getId());
+        assertEquals(Locale.ENGLISH, site.getLocale());
+        assertEquals("newsite", site.getName());
+        assertEquals("skin", site.getSkin());
+        assertEquals(SiteType.SITE, site.getType());
+
+        assertEquals(1, site.getAttributes().size());
+        assertEquals("attributeValue", site.getAttributes().get(Attributes.key("attributeKey", String.class)));
+    }
+
     private void runWithFault(Runnable r) {
         RequestLifeCycle.end();
         try {
