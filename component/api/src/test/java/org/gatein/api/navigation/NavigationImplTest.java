@@ -501,9 +501,11 @@ public class NavigationImplTest extends AbstractApiTest {
 
     @Test
     public void serialization_DisplayName() throws Exception {
-        Node node = navigation.getRootNode(Nodes.visitAll());
+        Node node = navigation.getRootNode(Nodes.visitAll()).addChild("parent");
         node.addChild("simple");
         node.addChild("extended");
+
+        node.setDisplayName("parent");
 
         node.getChild("simple").setDisplayName("simple");
 
@@ -514,6 +516,7 @@ public class NavigationImplTest extends AbstractApiTest {
 
         Node serialized = SerializationUtils.serializeDeserialize(node);
 
+        assertEquals("parent", serialized.getDisplayName());
         assertEquals("simple", serialized.getChild("simple").getDisplayName());
         assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
         assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA));
