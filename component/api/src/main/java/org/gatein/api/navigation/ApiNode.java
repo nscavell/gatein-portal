@@ -248,10 +248,10 @@ public class ApiNode implements Node {
     @Override
     public void moveTo(int index) {
         checkNonRoot();
-
-        NodeContext<ApiNode> parent = context.getParent();
-        context.remove();
-        parent.add(index, context);
+        if (context.getIndex() < index) {
+            index++;
+        }
+        context.getParent().add(index, context);
     }
 
     @Override

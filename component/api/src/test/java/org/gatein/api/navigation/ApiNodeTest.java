@@ -210,6 +210,12 @@ public class ApiNodeTest extends AbstractApiTest {
 
         root.getChild(1).moveTo(0);
         assertIterator(root.iterator(), "0", "1", "2");
+
+        root.getChild(1).moveTo(2);
+        assertIterator(root.iterator(), "0", "2", "1");
+
+        root.getChild(1).moveTo(0);
+        assertIterator(root.iterator(), "2", "0", "1");
     }
 
     @Test(expected = IllegalArgumentException.class)

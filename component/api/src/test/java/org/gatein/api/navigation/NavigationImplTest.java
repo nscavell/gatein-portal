@@ -120,102 +120,6 @@ public class NavigationImplTest extends AbstractApiTest {
     }
 
     @Test
-    public void removeNode() {
-        createNavigationChildren();
-
-        assertTrue(navigation.removeNode(NodePath.path("parent", "child")));
-
-        Node node = navigation.getRootNode(Nodes.visitAll());
-        assertEquals(0, node.getChild("parent").getChildCount());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void removeNode_NullNode() {
-        navigation.removeNode(null);
-    }
-
-    @Test(expected = EntityNotFoundException.class)
-    public void removeNode_NodeNotFound() {
-        navigation.removeNode(NodePath.path("nosuch"));
-    }
-
-    @Test
-    public void getChild() {
-        createNavigationChildren();
-
-        Node node = navigation.getRootNode(Nodes.visitAll());
-        assertNotNull(node);
-        assertTrue(node.isChildrenLoaded());
-        assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
-
-        node = navigation.getRootNode(Nodes.visitChildren());
-        assertNotNull(node);
-        assertTrue(node.isChildrenLoaded());
-        assertFalse(node.getChild("parent").isChildrenLoaded());
-    }
-
-    @Test
-    public void getNode() {
-        createNavigationChildren();
-
-        Node node = navigation.getNode("parent", "child");
-        assertNotNull(node);
-        assertEquals("child", node.getName());
-    }
-
-    @Test
-    public void getNode_With_Visitor() {
-        createNavigationChildren();
-
-        Node node = navigation.getNode(NodePath.path("parent"), Nodes.visitNone());
-        assertNotNull(node);
-        assertFalse(node.isChildrenLoaded());
-
-        node = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
-        assertTrue(node.isChildrenLoaded());
-        assertNotNull(node.getChild("child"));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getNode_EmptyPath() {
-        String[] path = new String[0];
-        navigation.getNode(path);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getNode_NullNodePath() {
-        navigation.getNode((NodePath) null);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getNode_NullVisitor() {
-        navigation.getNode(NodePath.path("parent"), null);
-    }
-
-    @Test
-    public void getNode_Invalid_Path() {
-        createNavigationChildren();
-
-        Node node = navigation.getNode("foo", "child");
-        assertNull(node);
-    }
-
-    @Test
-    public void getNavigation() {
-        portal.getNavigation(defaultSiteId).getRootNode(Nodes.visitAll());
-    }
-
-    @Test(expected = EntityNotFoundException.class)
-    public void getNavigation_InvalidSite() {
-        portal.getNavigation(new SiteId("invalid")).getRootNode(Nodes.visitAll());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void getNavigation_NullSiteId() {
-        portal.getNavigation(null);
-    }
-
-    @Test
     public void displayName_extended() {
         Node node = navigation.getRootNode(Nodes.visitAll());
 
@@ -255,6 +159,105 @@ public class NavigationImplTest extends AbstractApiTest {
         assertFalse(n.getDisplayNames().isLocalized());
     }
 
+    @Test
+    public void displayNames() throws Exception {
+        Node node = navigation.getRootNode(Nodes.visitAll());
+        node.addChild("simple");
+        node.addChild("extended");
+
+        node.getChild("simple").setDisplayName("simple");
+
+        LocalizedString localizedString = new LocalizedString(Locale.ENGLISH, "english");
+        localizedString.setLocalizedValue(Locale.CHINA, "chinese");
+
+        node.getChild("extended").setDisplayNames(localizedString);
+
+        navigation.saveNode(node);
+
+        Node saved = navigation.getRootNode(Nodes.visitAll());
+
+        assertEquals("simple", saved.getChild("simple").getDisplayName());
+        assertNotNull(saved.getChild("extended").getDisplayNames());
+        assertEquals("english", saved.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH).getValue());
+        assertEquals("chinese", saved.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA).getValue());
+    }
+
+    @Test
+    public void getChild() {
+        createNavigationChildren();
+
+        Node node = navigation.getRootNode(Nodes.visitAll());
+        assertNotNull(node);
+        assertTrue(node.isChildrenLoaded());
+        assertTrue(node.getChild("parent").getChild("child").isChildrenLoaded());
+
+        node = navigation.getRootNode(Nodes.visitChildren());
+        assertNotNull(node);
+        assertTrue(node.isChildrenLoaded());
+        assertFalse(node.getChild("parent").isChildrenLoaded());
+    }
+
+    @Test
+    public void getNavigation() {
+        portal.getNavigation(defaultSiteId).getRootNode(Nodes.visitAll());
+    }
+
+    @Test(expected = EntityNotFoundException.class)
+    public void getNavigation_InvalidSite() {
+        portal.getNavigation(new SiteId("invalid")).getRootNode(Nodes.visitAll());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getNavigation_NullSiteId() {
+        portal.getNavigation(null);
+    }
+
+    @Test
+    public void getNode() {
+        createNavigationChildren();
+
+        Node node = navigation.getNode("parent", "child");
+        assertNotNull(node);
+        assertEquals("child", node.getName());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getNode_EmptyPath() {
+        String[] path = new String[0];
+        navigation.getNode(path);
+    }
+
+    @Test
+    public void getNode_Invalid_Path() {
+        createNavigationChildren();
+
+        Node node = navigation.getNode("foo", "child");
+        assertNull(node);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getNode_NullNodePath() {
+        navigation.getNode((NodePath) null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getNode_NullVisitor() {
+        navigation.getNode(NodePath.path("parent"), null);
+    }
+
+    @Test
+    public void getNode_With_Visitor() {
+        createNavigationChildren();
+
+        Node node = navigation.getNode(NodePath.path("parent"), Nodes.visitNone());
+        assertNotNull(node);
+        assertFalse(node.isChildrenLoaded());
+
+        node = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
+        assertTrue(node.isChildrenLoaded());
+        assertNotNull(node.getChild("child"));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void loadNodes_NullVisitor() {
         navigation.getRootNode(null);
@@ -283,6 +286,46 @@ public class NavigationImplTest extends AbstractApiTest {
     }
 
     @Test
+    public void moveNode_ReorderSaved() {
+        Node root = navigation.getRootNode(Nodes.visitChildren());
+        root.addChild("c");
+        root.addChild("b");
+        root.addChild("a");
+
+        navigation.saveNode(root);
+        root = navigation.getRootNode(Nodes.visitChildren());
+
+        root.getChild("a").moveTo(0);
+        root.getChild("c").moveTo(2);
+
+        navigation.saveNode(root);
+        root = navigation.getRootNode(Nodes.visitChildren());
+
+        assertEquals("a", root.getChild(0).getName());
+        assertEquals("b", root.getChild(1).getName());
+        assertEquals("c", root.getChild(2).getName());
+    }
+
+    @Test
+    public void moveNode_ReorderUnsaved() {
+        Node root = navigation.getRootNode(Nodes.visitChildren());
+        root.addChild("c");
+        root.addChild("b");
+        root.addChild("a");
+
+        root.getChild("a").moveTo(0);
+        root.getChild("c").moveTo(2);
+
+        navigation.saveNode(root);
+
+        root = navigation.getRootNode(Nodes.visitChildren());
+
+        assertEquals("a", root.getChild(0).getName());
+        assertEquals("b", root.getChild(1).getName());
+        assertEquals("c", root.getChild(2).getName());
+    }
+
+    @Test
     public void refreshNode() {
         createNavigationChildren();
 
@@ -295,6 +338,21 @@ public class NavigationImplTest extends AbstractApiTest {
         assertNull(nodeB.getChild("childA"));
         navigation.refreshNode(nodeB);
         assertNotNull(nodeB.getChild("childA"));
+    }
+
+    @Test
+    public void refreshNode_LoadChildren() {
+        createNavigationChildren();
+
+        Node n = navigation.getRootNode(Nodes.visitChildren());
+        Node p = n.getChild("parent");
+
+        assertTrue(n.isChildrenLoaded());
+        assertFalse(p.isChildrenLoaded());
+
+        navigation.refreshNode(p, Nodes.visitChildren());
+
+        assertTrue(p.isChildrenLoaded());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -325,18 +383,23 @@ public class NavigationImplTest extends AbstractApiTest {
     }
 
     @Test
-    public void refreshNode_LoadChildren() {
+    public void removeNode() {
         createNavigationChildren();
 
-        Node n = navigation.getRootNode(Nodes.visitChildren());
-        Node p = n.getChild("parent");
+        assertTrue(navigation.removeNode(NodePath.path("parent", "child")));
 
-        assertTrue(n.isChildrenLoaded());
-        assertFalse(p.isChildrenLoaded());
+        Node node = navigation.getRootNode(Nodes.visitAll());
+        assertEquals(0, node.getChild("parent").getChildCount());
+    }
 
-        navigation.refreshNode(p, Nodes.visitChildren());
+    @Test(expected = EntityNotFoundException.class)
+    public void removeNode_NodeNotFound() {
+        navigation.removeNode(NodePath.path("nosuch"));
+    }
 
-        assertTrue(p.isChildrenLoaded());
+    @Test(expected = IllegalArgumentException.class)
+    public void removeNode_NullNode() {
+        navigation.removeNode(null);
     }
 
     @Test
@@ -354,29 +417,6 @@ public class NavigationImplTest extends AbstractApiTest {
         navigation.saveNode(parent);
 
         assertNotNull(navigation.getRootNode(Nodes.visitAll()).getChild("parent").getChild("child2"));
-    }
-
-    @Test
-    public void saveNode_SaveChildSavesParent() {
-        createNavigationChildren();
-
-        Node node = navigation.getRootNode(Nodes.visitAll());
-
-        Node parent = node.getChild("parent");
-        parent.setIconName("new");
-
-        Node child = parent.getNode("child");
-        child.setIconName("new");
-
-        parent.addChild("child2");
-
-        navigation.saveNode(child);
-
-        node = navigation.getRootNode(Nodes.visitAll());
-
-        assertEquals("new", node.getChild("parent").getIconName());
-        assertEquals(2, node.getChild("parent").getChildCount());
-        assertEquals("new", node.getChild("parent").getChild("child").getIconName());
     }
 
     @Test
@@ -404,11 +444,32 @@ public class NavigationImplTest extends AbstractApiTest {
     }
 
     @Test
+    public void saveNode_SaveChildSavesParent() {
+        createNavigationChildren();
+
+        Node node = navigation.getRootNode(Nodes.visitAll());
+
+        Node parent = node.getChild("parent");
+        parent.setIconName("new");
+
+        Node child = parent.getNode("child");
+        child.setIconName("new");
+
+        parent.addChild("child2");
+
+        navigation.saveNode(child);
+
+        node = navigation.getRootNode(Nodes.visitAll());
+
+        assertEquals("new", node.getChild("parent").getIconName());
+        assertEquals(2, node.getChild("parent").getChildCount());
+        assertEquals("new", node.getChild("parent").getChild("child").getIconName());
+    }
+
+    @Test
     public void serialization() throws Exception {
         createNavigationChildren();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(baos);
         Node parent = navigation.getNode(NodePath.path("parent"), Nodes.visitChildren());
         Node child = parent.getChild("child");
         navigation.refreshNode(child, Nodes.visitChildren());
@@ -417,12 +478,7 @@ public class NavigationImplTest extends AbstractApiTest {
         child.addChild("foo");
         child.setIconName("iconName");
 
-        // serialize parent
-        out.writeObject(parent);
-
-        // deserialize parent
-        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        Node parentNode = (Node) in.readObject();
+        Node parentNode = serializeDeserialize(parent);
 
         // test deserialized node
         assertEquals("parent", parentNode.getName());
@@ -447,6 +503,53 @@ public class NavigationImplTest extends AbstractApiTest {
     }
 
     @Test
+    public void serialization_DisplayName() throws Exception {
+        Node node = navigation.getRootNode(Nodes.visitAll());
+        node.addChild("simple");
+        node.addChild("extended");
+
+        node.getChild("simple").setDisplayName("simple");
+
+        LocalizedString localizedString = new LocalizedString(Locale.ENGLISH, "english");
+        localizedString.setLocalizedValue(Locale.CHINA, "chinese");
+
+        node.getChild("extended").setDisplayNames(localizedString);
+
+        Node serialized = serializeDeserialize(node);
+
+        assertEquals("simple", serialized.getChild("simple").getDisplayName());
+        assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
+        assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA));
+
+        navigation.saveNode(node);
+
+        Node saved = navigation.getRootNode(Nodes.visitAll());
+
+        serialized = serializeDeserialize(saved);
+
+        assertEquals("simple", serialized.getChild("simple").getDisplayName());
+        assertEquals("english", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.ENGLISH));
+        assertEquals("chinese", serialized.getChild("extended").getDisplayNames().getLocalizedValue(Locale.CHINA));
+    }
+
+    @Test
+    public void serialization_Move() throws Exception {
+        createNavigationChildren();
+
+        Node root = navigation.getRootNode(Nodes.visitAll());
+        Node parent = root.getChild("parent");
+        Node child = parent.getChild("child");
+        child.moveTo(root);
+
+        assertEquals(0, parent.getChildCount());
+        assertEquals(2, root.getChildCount());
+
+        Node parentNode = serializeDeserialize(parent);
+        assertEquals(0, parentNode.getChildCount());
+        assertEquals(2, root.getChildCount());
+    }
+
+    @Test
     public void serialization_multipath() throws Exception {
         createNavigationChildren();
         Node root = navigation.getRootNode(Nodes.visitAll());
@@ -458,15 +561,56 @@ public class NavigationImplTest extends AbstractApiTest {
 
         navigation.saveNode(root);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(baos);
-        out.writeObject(root);
-
-        // deserialize parent
-        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        Node rootNode = (Node) in.readObject();
+        Node rootNode = serializeDeserialize(root);
         assertNotNull(rootNode.getNode("parent", "foo", "bar"));
         assertNotNull(rootNode.getNode("parent", "child", "another-child"));
+    }
+
+    @Test
+    public void serialization_Remove() throws Exception {
+        createNavigationChildren();
+
+        Node parent = navigation.getNode(NodePath.path("parent"), Nodes.visitAll());
+        parent.removeChild("child");
+
+        assertEquals(0, parent.getChildCount());
+
+        Node parentNode = serializeDeserialize(parent);
+        assertEquals(0, parentNode.getChildCount());
+    }
+
+    @Test
+    public void serialization_Reorder() throws Exception {
+        createNavigationChildren();
+
+        Node parent = navigation.getNode(NodePath.path("parent"), Nodes.visitAll());
+        parent.addChild("child2");
+        parent.addChild("child3");
+
+        navigation.saveNode(parent);
+        navigation.getNode(parent.getNodePath(), Nodes.visitAll());
+
+        Node child = parent.getChild("child3");
+        child.moveTo(0);
+
+        Node parentNode = serializeDeserialize(parent);
+        assertEquals("child3", parentNode.getChild(0));
+        assertEquals("child", parentNode.getChild(1));
+        assertEquals("child2", parentNode.getChild(2));
+    }
+
+    private Node serializeDeserialize(Node node) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(baos);
+        out.writeObject(node);
+
+        ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+        Node result = (Node) in.readObject();
+
+        out.close();
+        in.close();
+
+        return result;
     }
 
     // TODO: Add more serialization tests like moving/removing nodes, displayName, etc
