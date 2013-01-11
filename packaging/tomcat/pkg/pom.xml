@@ -431,6 +431,10 @@
     <!-- GateIn -->
     <dependency>
       <groupId>org.gatein.portal</groupId>
+      <artifactId>exo.portal.component.api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gatein.portal</groupId>
       <artifactId>exo.portal.component.application-registry</artifactId>
     </dependency>
     <dependency>
