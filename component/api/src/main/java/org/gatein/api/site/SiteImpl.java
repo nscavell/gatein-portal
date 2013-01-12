@@ -98,6 +98,9 @@ public class SiteImpl implements Site {
     @Override
     public String getDisplayName() {
         // TODO: For sites of type SiteType.SPACE this should return the label of the group
+        if (displayName == null) {
+            return getName();
+        }
         return displayName;
     }
 

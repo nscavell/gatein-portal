@@ -24,16 +24,15 @@ package org.gatein.api.management;
 
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
-import org.gatein.api.PortalRequest;
 import org.gatein.api.page.Page;
 import org.gatein.api.page.PageId;
 import org.gatein.api.page.PageQuery;
-import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
 import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.MappedAttribute;
 import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
@@ -97,8 +96,9 @@ public class PageManagementResource {
 
     @Managed("{page-name}")
     @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the given page to the portal")
-    public ModelObject addPage(@MappedPath("page-name") String name) {
+    public ModelObject addPage(@MappedPath("page-name") String name, @MappedAttribute("displayName") String displayName) {
         Page page = portal.createPage(new PageId(siteId, name));
+        page.setDisplayName(displayName);
         portal.savePage(page);
 
         ModelObject model = modelProvider.newModel(ModelObject.class);
@@ -108,12 +108,8 @@ public class PageManagementResource {
     }
 
     private void populateModel(List<Page> pages, ModelList list, PathAddress address) {
-        PortalRequest request = PortalRequest.getInstance();
-        Portal portal = request.getPortal();
-        User user = request.getUser();
-
         for (Page page : pages) {
-            if (portal.hasPermission(user, page.getAccessPermission())) {
+            if (Utils.hasPermission(page.getAccessPermission())) {
                 ModelReference pageRef = list.add().asValue(ModelReference.class);
                 pageRef.set("name", page.getName());
                 pageRef.set("siteType", page.getId().getSiteId().getType().name().toLowerCase());
@@ -126,10 +122,7 @@ public class PageManagementResource {
     private void populateModel(Page page, ModelObject model) {
         model.set("name", page.getName());
         model.set("displayName", page.getDisplayName());
-        // Uncomment below when page's support localized values (description service)
-        // populate("displayNames", page.getDisplayNames(), model);
-        // populate("description", page.getDescription(), model);
-        populate("edit-permissions", page.getEditPermission(), model);
         populate("access-permissions", page.getAccessPermission(), model);
+        populate("edit-permissions", page.getEditPermission(), model);
     }
 }

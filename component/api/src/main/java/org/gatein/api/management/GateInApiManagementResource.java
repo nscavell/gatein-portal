@@ -26,6 +26,7 @@ import org.gatein.api.BasicPortalRequest;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
+import org.gatein.api.common.Attributes;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.User;
@@ -102,22 +103,21 @@ public class GateInApiManagementResource {
     // ------------------------------------------------- Portal Sites --------------------------------------------------//
     @Managed("/sites")
     public ModelList getSites(@ManagedContext PathAddress address) {
-        List<Site> sites = portal.findSites(SITE_QUERY);
-
-        ModelList list = modelProvider.newModel(ModelList.class);
-        populateModel(sites, list, address);
-
-        return list;
+        return _getSites(SITE_QUERY, address);
     }
 
     @Managed("/sites/{site-name}")
     public ModelObject getSite(@MappedPath("site-name") String siteName, @ManagedContext OperationContext context) {
         SiteId id = new SiteId(siteName);
+        return _getSite(id, context);
+    }
 
-        ModelObject siteModel = modelProvider.newModel(ModelObject.class);
-        populateModel(id, siteModel, context);
-
-        return siteModel;
+    @Managed("/sites/{site-name}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds a given site")
+    public ModelObject addSite(@MappedPath("site-name") String siteName, @ManagedContext PathAddress address) {
+        SiteId siteId = new SiteId(siteName);
+        return _addSite(address, siteId);
     }
 
     @Managed("/sites/{site-name}")
@@ -125,12 +125,7 @@ public class GateInApiManagementResource {
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given site")
     public void removeSite(@MappedPath("site-name") String siteName) {
         SiteId id = new SiteId(siteName);
-        try {
-            portal.removeSite(id);
-        } catch (EntityNotFoundException e) {
-            log.error(e.getMessage());
-            throw new ResourceNotFoundException("Cannot remove site " + id + " because site does not exist.");
-        }
+        _removeSite(id);
     }
 
     @Managed("/sites/{site-name}/pages")
@@ -146,20 +141,21 @@ public class GateInApiManagementResource {
     // --------------------------------------------- Group Sites (Spaces) ----------------------------------------------//
     @Managed("/spaces")
     public ModelList getSpaces(@ManagedContext PathAddress address) {
-        List<Site> sites = portal.findSites(SPACE_QUERY);
-
-        ModelList list = modelProvider.newModel(ModelList.class);
-        populateModel(sites, list, address);
-
-        return list;
+        return _getSites(SPACE_QUERY, address);
     }
 
     @Managed("/spaces/{group-name: .*}")
     public ModelObject getSpace(@MappedPath("group-name") String groupName, @ManagedContext OperationContext context) {
-        ModelObject siteModel = modelProvider.newModel(ModelObject.class);
-        populateModel(new SiteId(new Group(groupName)), siteModel, context);
+        SiteId id = new SiteId(new Group(groupName));
+        return _getSite(id, context);
+    }
 
-        return siteModel;
+    @Managed("/spaces/{group-name: .*}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds a given site")
+    public ModelObject addSpace(@MappedPath("group-name") String groupName, @ManagedContext PathAddress address) {
+        SiteId siteId = new SiteId(new Group(groupName));
+        return _addSite(address, siteId);
     }
 
     @Managed("/spaces/{group-name: .*}")
@@ -167,12 +163,7 @@ public class GateInApiManagementResource {
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given space")
     public void removeSpace(@MappedPath("group-name") String groupName) {
         SiteId id = new SiteId(new Group(groupName));
-        try {
-            portal.removeSite(id);
-        } catch (EntityNotFoundException e) {
-            log.error(e.getMessage());
-            throw new ResourceNotFoundException("Could not remove site for " + id + " because site does not exist.");
-        }
+        _removeSite(id);
     }
 
     @Managed("/spaces/{group-name: .*}/pages")
@@ -188,20 +179,21 @@ public class GateInApiManagementResource {
     // -------------------------------------------- User Sites (Dashboard) ---------------------------------------------//
     @Managed("/dashboards")
     public ModelList getDashboards(@ManagedContext PathAddress address) {
-        List<Site> sites = portal.findSites(DASHBOARD_QUERY);
-
-        ModelList list = modelProvider.newModel(ModelList.class);
-        populateModel(sites, list, address);
-
-        return list;
+        return _getSites(DASHBOARD_QUERY, address);
     }
 
     @Managed("/dashboards/{user-name}")
     public ModelObject getDashboard(@MappedPath("user-name") String userName, @ManagedContext OperationContext context) {
-        ModelObject siteModel = modelProvider.newModel(ModelObject.class);
-        populateModel(new SiteId(new User(userName)), siteModel, context);
+        SiteId id = new SiteId(new User(userName));
+        return _getSite(id, context);
+    }
 
-        return siteModel;
+    @Managed("/dashboards/{user-name}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds a given site")
+    public ModelObject addDashboard(@MappedPath("user-name") String userName, @ManagedContext PathAddress address) {
+        SiteId siteId = new SiteId(new User(userName));
+        return _addSite(address, siteId);
     }
 
     @Managed("/dashboards/{user-name}")
@@ -209,12 +201,7 @@ public class GateInApiManagementResource {
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given dashboard")
     public void removeDashboard(@MappedPath("user-name") String userName) {
         SiteId id = new SiteId(new User(userName));
-        try {
-            portal.removeSite(id);
-        } catch (EntityNotFoundException e) {
-            log.error(e.getMessage());
-            throw new ResourceNotFoundException("Cannot remove site " + id + " because site does not exist.");
-        }
+        _removeSite(id);
     }
 
     @Managed("/dashboards/{user-name}/pages")
@@ -227,55 +214,61 @@ public class GateInApiManagementResource {
         return new NavigationManagementResource(portal, modelProvider, new SiteId(new User(userName)));
     }
 
-    private User getUser(ManagedUser managedUser) {
-        if (managedUser == null) return User.anonymous();
+    private ModelList _getSites(SiteQuery query, PathAddress address) {
+        List<Site> sites = portal.findSites(DASHBOARD_QUERY);
+        ModelList list = modelProvider.newModel(ModelList.class);
+        populateModel(sites, list, address);
 
-        return new User(managedUser.getUserName());
+        return list;
     }
 
-    static PathAddress getSiteAddress(SiteId siteId) {
-        PathAddress address = PathAddress.pathAddress("api");
-        switch (siteId.getType()) {
-            case SITE:
-                address = address.append("sites");
-                break;
-            case SPACE:
-                address = address.append("spaces");
-                break;
-            case DASHBOARD:
-                address = address.append("dashboards");
-                break;
-            default:
-                throw new AssertionError();
-        }
-
-        return address.append(siteId.getName());
-    }
-
-    static PathAddress getPagesAddress(SiteId siteId) {
-        return getSiteAddress(siteId).append("pages");
-    }
-
-    static PathAddress getNavigationAddress(SiteId siteId) {
-        return getSiteAddress(siteId).append("navigation");
-    }
-
-    private Site getSite(SiteId id, boolean require) {
+    private ModelObject _getSite(SiteId id, OperationContext context) {
         Site site = portal.getSite(id);
-        if (require && site == null)
-            throw new ResourceNotFoundException("Site not found for " + id);
+        if (site == null) throw new ResourceNotFoundException("Site not found for " + id);
 
-        return site;
-    }
-
-    private void populateModel(SiteId id, ModelObject siteModel, OperationContext context) {
-        Site site = getSite(id, true);
+        // Verify current user has access to site
         verifyAccess(site, context);
 
+        // Populate site model
+        ModelObject siteModel = modelProvider.newModel(ModelObject.class);
+        populateModel(site, siteModel, context.getAddress());
+
+        return siteModel;
+    }
+
+    private ModelObject _addSite(PathAddress address, SiteId siteId) {
+        Site site = portal.createSite(siteId);
+        portal.saveSite(site);
+
+        // Populate model
+        ModelObject siteModel = modelProvider.newModel(ModelObject.class);
+        populateModel(site, siteModel, address);
+
+        return siteModel;
+    }
+
+    private void _removeSite(SiteId id) {
+        try {
+            portal.removeSite(id);
+        } catch (EntityNotFoundException e) {
+            log.error(e.getMessage());
+            throw new ResourceNotFoundException("Cannot remove site " + id + " because site does not exist.");
+        }
+    }
+
+    private void populateModel(Site site, ModelObject siteModel, PathAddress address) {
+        // Site fields
         siteModel.set("name", site.getId().getName());
         siteModel.set("type", site.getId().getType().name().toLowerCase());
-
-        PathAddress address = context.getAddress();
+        populate("access-permissions", site.getAccessPermission(), siteModel);
+        populate("edit-permissions", site.getEditPermission(), siteModel);
+        ModelList attrList = siteModel.get("attributes", ModelList.class);
+        Attributes attributes = site.getAttributes();
+        for (String key : attributes.keySet()) {
+            ModelObject attr = attrList.add().setEmptyObject();
+            attr.set("key", key);
+            attr.set("value", attributes.get(key));
+        }
 
         // Pages
         ModelReference pagesRef = siteModel.get("pages", ModelReference.class);
@@ -297,9 +290,15 @@ public class GateInApiManagementResource {
         }
     }
 
+    private User getUser(ManagedUser managedUser) {
+        if (managedUser == null) return User.anonymous();
+
+        return new User(managedUser.getUserName());
+    }
+
     private void setCurrentPortalRequest(OperationContext context) {
-        ManagedUser managedUser = context.getUser();
-        PathAddress address = context.getAddress();
+        final ManagedUser managedUser = context.getUser();
+        final PathAddress address = context.getAddress();
         SiteType siteType = null;
         StringBuilder sb = null;
         String siteName = null;
@@ -334,5 +333,32 @@ public class GateInApiManagementResource {
         User user = (managedUser == null || managedUser.getUserName() == null) ? User.anonymous() : new User(managedUser.getUserName());
         // TODO Set base URI
         BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal, null));
+    }
+
+    static PathAddress getSiteAddress(SiteId siteId) {
+        PathAddress address = PathAddress.pathAddress("api");
+        switch (siteId.getType()) {
+            case SITE:
+                address = address.append("sites");
+                break;
+            case SPACE:
+                address = address.append("spaces");
+                break;
+            case DASHBOARD:
+                address = address.append("dashboards");
+                break;
+            default:
+                throw new AssertionError();
+        }
+
+        return address.append(siteId.getName());
+    }
+
+    static PathAddress getPagesAddress(SiteId siteId) {
+        return getSiteAddress(siteId).append("pages");
+    }
+
+    static PathAddress getNavigationAddress(SiteId siteId) {
+        return getSiteAddress(siteId).append("navigation");
     }
 }
