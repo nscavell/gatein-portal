@@ -22,8 +22,6 @@
 
 package org.exoplatform.portal.application;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Locale;
 
 import org.exoplatform.portal.mop.SiteKey;
@@ -104,16 +102,12 @@ public class PortalRequestImpl extends PortalRequest {
     }
 
     public class RequestContextURIResolver implements org.gatein.api.common.URIResolver {
-        public URI resolveURI(SiteId siteId, NodePath path) {
-            try {
-                SiteKey siteKey = Util.from(siteId);
-                NavigationResource navResource = new NavigationResource(siteKey, path.toString().substring(1));
-                NodeURL nodeURL = context.createURL(NodeURL.TYPE, navResource);
-                nodeURL.setSchemeUse(true);
-                return new URI(nodeURL.toString());
-            } catch (URISyntaxException e) {
-                return null;
-            }
+        public String resolveURI(SiteId siteId) {
+            SiteKey siteKey = Util.from(siteId);
+            NavigationResource navResource = new NavigationResource(siteKey, "");
+            NodeURL nodeURL = context.createURL(NodeURL.TYPE, navResource);
+            String n = nodeURL.toString();
+            return n.substring(0, n.length() - 1);
         }
     }
 }

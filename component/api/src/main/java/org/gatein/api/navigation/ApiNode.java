@@ -24,7 +24,6 @@ package org.gatein.api.navigation;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -60,7 +59,7 @@ public class ApiNode implements Node {
 
     private LocalizedString displayName;
     private String resolvedDisplayName;
-    private URI resolvedURI;
+    private String resolvedURI;
     private boolean displayNameChanged;
 
     private final SiteId siteId;
@@ -199,9 +198,13 @@ public class ApiNode implements Node {
     }
 
     @Override
-    public URI getURI() {
+    public String getURI() {
         if (resolvedURI == null) {
-            resolvedURI = PortalRequest.getInstance().getURIResolver().resolveURI(siteId, getNodePath());
+            if (isRoot()) {
+                resolvedURI = PortalRequest.getInstance().getURIResolver().resolveURI(siteId);
+            } else {
+                resolvedURI = getParent().getURI() + "/" + getName();
+            }
         }
 
         return resolvedURI;
