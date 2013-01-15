@@ -71,7 +71,11 @@ public class Navigation18NResolver {
         String resolved = null;
 
         if (string != null) {
-            resolved = ExpressionUtil.getExpressionValue(getResourceBundle(), string);
+            if (ExpressionUtil.isResourceBindingExpression(string)) {
+                resolved = ExpressionUtil.getExpressionValue(getResourceBundle(), string);
+            } else {
+                resolved = string;
+            }
         } else if (descriptionId != null) {
             Locale userLocale = getUserLocale();
             Described.State described;
