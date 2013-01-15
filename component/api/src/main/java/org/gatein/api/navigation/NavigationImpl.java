@@ -35,7 +35,6 @@ import org.exoplatform.portal.mop.navigation.NodeChangeListener;
 import org.exoplatform.portal.mop.navigation.NodeContext;
 import org.exoplatform.portal.mop.navigation.Scope;
 import org.exoplatform.services.resources.ResourceBundleManager;
-import org.gatein.api.AbstractI18NResolver;
 import org.gatein.api.ApiException;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.PortalRequest;
@@ -58,7 +57,7 @@ public class NavigationImpl implements Navigation {
     private final ApiNodeModel model;
 
     private NavigationContext navCtx;
-    private AbstractI18NResolver i18nResolver;
+    private Navigation18NResolver i18nResolver;
 
     public NavigationImpl(SiteId siteId, NavigationService navigationService, DescriptionService descriptionService,
             ResourceBundleManager bundleManager) {
@@ -199,7 +198,7 @@ public class NavigationImpl implements Navigation {
             i18nResolver = new Navigation18NResolver(descriptionService, bundleManager, site.getLocale(), siteId);
         }
 
-        return i18nResolver.resolveName(ctx.getNode().getDisplayNames(), ctx.getId(), ctx.getName());
+        return i18nResolver.resolveName(ctx.getState().getLabel(), ctx.getId(), ctx.getName());
     }
 
     NodeContext<ApiNode> getNodeContext(NodePath nodePath, NodeVisitor visitor) {

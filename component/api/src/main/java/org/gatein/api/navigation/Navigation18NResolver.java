@@ -25,10 +25,12 @@ package org.gatein.api.navigation;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import org.exoplatform.commons.utils.ExpressionUtil;
+import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.services.resources.ResourceBundleManager;
-import org.gatein.api.AbstractI18NResolver;
+import org.gatein.api.ApiException;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.Util;
 import org.gatein.api.site.SiteId;
@@ -36,34 +38,53 @@ import org.gatein.api.site.SiteId;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class Navigation18NResolver extends AbstractI18NResolver {
+public class Navigation18NResolver {
+    private final DescriptionService service;
     private final ResourceBundleManager bundleManager;
     private final Locale siteLocale;
     private final SiteId siteId;
 
     public Navigation18NResolver(DescriptionService service, ResourceBundleManager bundleManager, Locale siteLocale,
             SiteId siteId) {
-        super(service);
+        this.service = service;
         this.bundleManager = bundleManager;
         this.siteLocale = siteLocale;
         this.siteId = siteId;
     }
 
-    @Override
-    public ResourceBundle getResourceBundle() {
+    private ResourceBundle getResourceBundle() {
         Locale userLocale = getUserLocale();
         SiteKey siteKey = Util.from(siteId);
 
         return bundleManager.getNavigationResourceBundle(userLocale.getLanguage(), siteKey.getTypeName(), siteKey.getName());
     }
 
-    @Override
-    public Locale getUserLocale() {
+    private Locale getUserLocale() {
         return PortalRequest.getInstance().getLocale();
     }
 
-    @Override
-    public Locale getSiteLocale() {
-        return siteLocale;
+    public String resolveName(String string, String descriptionId, String defaultValue) {
+        return resolve(string, descriptionId, defaultValue, true);
+    }
+
+    private String resolve(String string, String descriptionId, String defaultValue, boolean nameFlag) {
+        String resolved = null;
+
+        if (string != null) {
+            resolved = ExpressionUtil.getExpressionValue(getResourceBundle(), string);
+        } else if (descriptionId != null) {
+            Locale userLocale = getUserLocale();
+            Described.State described;
+            try {
+                described = service.resolveDescription(descriptionId, siteLocale, userLocale);
+            } catch (Throwable t) {
+                throw new ApiException("Failed to resolve description", t);
+            }
+            if (described != null) {
+                resolved = (nameFlag) ? described.getName() : described.getDescription();
+            }
+        }
+
+        return (resolved == null) ? defaultValue : resolved;
     }
 }
