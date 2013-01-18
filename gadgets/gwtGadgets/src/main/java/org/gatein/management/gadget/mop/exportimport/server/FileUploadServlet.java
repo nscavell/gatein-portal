@@ -165,6 +165,8 @@ public class FileUploadServlet extends UploadAction {
                 ManagedRequest request = ManagedRequest.Factory.create(OperationNames.IMPORT_RESOURCE,
                         PathAddress.pathAddress("mop"), attributes, in, ContentType.ZIP);
 
+                request = new GwtManagedRequest(request);
+
                 ManagedResponse response = controller.execute(request);
                 if (!response.getOutcome().isSuccess()) {
                     throw new Exception(response.getOutcome().getFailureDescription());
