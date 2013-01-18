@@ -97,7 +97,7 @@ public class AbstractApiTest {
         RequestLifeCycle.begin(container);
 
         BasicPortalRequest.setInstance(new BasicPortalRequest(new User("john"), defaultSiteId, NodePath.root(), Locale.ENGLISH,
-                portal, "/portal"));
+                portal, new BasicPortalRequest.BasicURIResolver("/portal")));
     }
 
     protected void createSite(SiteId siteId, String... pages) {

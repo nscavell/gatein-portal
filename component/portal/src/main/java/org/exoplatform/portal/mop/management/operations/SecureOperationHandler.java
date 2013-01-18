@@ -14,7 +14,7 @@ public abstract class SecureOperationHandler implements OperationHandler {
     @Override
     public final void execute(OperationContext operationContext, ResultHandler resultHandler) throws ResourceNotFoundException, OperationException {
         // Secure all operations for MOP Management extension to /platform/administrators group.
-        if (!operationContext.isUserInRole("administrators")) {
+        if (!operationContext.getExternalContext().isUserInRole("administrators")) {
             throw new NotAuthorizedException(operationContext.getUser(), operationContext.getOperationName());
         }
 

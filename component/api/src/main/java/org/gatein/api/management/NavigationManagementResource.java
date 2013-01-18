@@ -82,7 +82,7 @@ public class NavigationManagementResource {
 
         Node node = getNode(NodePath.root(), true, visitor);
         boolean showAll = showAllAttribute != null && Boolean.parseBoolean(showAllAttribute);
-        if (!showAll || !context.isUserInRole("administrators")) {
+        if (!showAll || !context.getExternalContext().isUserInRole("administrators")) {
             node = node.filter().showDefault();
         }
 
@@ -102,7 +102,7 @@ public class NavigationManagementResource {
         }
         Node node = getNode(path, true, visitor);
         boolean showAll = showAllAttribute != null && Boolean.parseBoolean(showAllAttribute);
-        if (showAll && context.isUserInRole("administrators")) {
+        if (showAll && context.getExternalContext().isUserInRole("administrators")) {
             node = node.filter().showDefault();
         } else {
             node = node.filter().showDefault();

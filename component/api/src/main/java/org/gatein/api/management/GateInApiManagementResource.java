@@ -22,11 +22,19 @@
 
 package org.gatein.api.management;
 
+import org.exoplatform.container.PortalContainer;
+import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.web.WebAppController;
+import org.exoplatform.web.url.navigation.NavigationResource;
+import org.exoplatform.web.url.simple.SimpleURL;
+import org.exoplatform.web.url.simple.SimpleURLContext;
 import org.gatein.api.BasicPortalRequest;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
+import org.gatein.api.Util;
 import org.gatein.api.common.Attributes;
+import org.gatein.api.common.URIResolver;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.Group;
 import org.gatein.api.security.User;
@@ -53,6 +61,7 @@ import org.gatein.management.api.model.ModelReference;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationNames;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
 
@@ -215,7 +224,7 @@ public class GateInApiManagementResource {
     }
 
     private ModelList _getSites(SiteQuery query, PathAddress address) {
-        List<Site> sites = portal.findSites(DASHBOARD_QUERY);
+        List<Site> sites = portal.findSites(query);
         ModelList list = modelProvider.newModel(ModelList.class);
         populateModel(sites, list, address);
 
@@ -331,8 +340,32 @@ public class GateInApiManagementResource {
         Locale locale = context.getLocale();
 
         User user = (managedUser == null || managedUser.getUserName() == null) ? User.anonymous() : new User(managedUser.getUserName());
-        // TODO Set base URI
-        BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal, null));
+
+        final boolean relative = Boolean.valueOf(context.getAttributes().getValue("relativePath"));
+        final Object externalRequest = context.getExternalContext().getRequest();
+        final PortalContainer container = PortalContainer.getInstance();
+        final WebAppController controller = (WebAppController) container.getComponentInstanceOfType(WebAppController.class);
+        URIResolver uriResolver = new URIResolver() {
+            @Override
+            public String resolveURI(SiteId siteId) {
+                SiteKey siteKey = Util.from(siteId);
+                NavigationResource navResource = new NavigationResource(siteKey, "");
+                SimpleURL url;
+                if (externalRequest instanceof HttpServletRequest) {
+                    url = new SimpleURL(new SimpleURLContext((HttpServletRequest) externalRequest, container, controller));
+                    url.setSchemeUse(true);
+                } else {
+                    url = new SimpleURL(new SimpleURLContext(container, controller));
+                    url.setSchemeUse(false);
+                }
+                if (relative) {
+                    url.setSchemeUse(false);
+                }
+                String urlString = url.setResource(navResource).toString();
+                return urlString.substring(0, urlString.length() - 1);
+            }
+        };
+        BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal, uriResolver));
     }
 
     static PathAddress getSiteAddress(SiteId siteId) {

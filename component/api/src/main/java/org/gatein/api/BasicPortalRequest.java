@@ -22,12 +22,12 @@
 
 package org.gatein.api;
 
-import java.util.Locale;
-
 import org.gatein.api.common.URIResolver;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.User;
 import org.gatein.api.site.SiteId;
+
+import java.util.Locale;
 
 /**
  * A basic portal request supplying all the information needed in the constructor.
@@ -42,14 +42,13 @@ public class BasicPortalRequest extends PortalRequest {
     private final Portal portal;
     private final URIResolver uriResolver;
 
-    public BasicPortalRequest(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal, String portalURI) {
+    public BasicPortalRequest(User user, SiteId siteId, NodePath nodePath, Locale locale, Portal portal, URIResolver uriResolver) {
         this.user = user;
         this.siteId = siteId;
         this.nodePath = nodePath;
         this.locale = locale;
         this.portal = portal;
-
-        uriResolver = new BasicURIResolver(portalURI);
+        this.uriResolver = uriResolver;
     }
 
     @Override
@@ -82,19 +81,26 @@ public class BasicPortalRequest extends PortalRequest {
         return uriResolver;
     }
 
-    public class BasicURIResolver implements org.gatein.api.common.URIResolver {
-        private final String portalURI;
+    public static void setInstance(BasicPortalRequest request) {
+        PortalRequest.setInstance(request);
+    }
+
+    public static class BasicURIResolver implements URIResolver {
+
+        private String portalURI;
 
         public BasicURIResolver(String portalURI) {
             this.portalURI = portalURI;
         }
 
+        @Override
         public String resolveURI(SiteId siteId) {
-            return portalURI + "/" + siteId.getName();
+            String name = siteId.getName();
+            if (name.charAt(0) == '/') {
+                return portalURI + name;
+            } else {
+                return portalURI + "/" + name;
+            }
         }
-    }
-
-    public static void setInstance(BasicPortalRequest request) {
-        PortalRequest.setInstance(request);
     }
 }

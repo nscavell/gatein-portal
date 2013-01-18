@@ -130,10 +130,9 @@ public class ApiNodeTest extends AbstractApiTest {
     public void getURI() {
         root.addChild("child0").addChild("child0-0");
 
-        assertEquals("http://localhost:8080/classic/", root.getURI().toString());
-        assertEquals("http://localhost:8080/classic/child0", root.getChild("child0").getURI().toString());
-        assertEquals("http://localhost:8080/classic/child0/child0-0", root.getChild("child0").getChild("child0-0").getURI()
-                .toString());
+        assertEquals("/portal/classic", root.getURI());
+        assertEquals("/portal/classic/child0", root.getChild("child0").getURI());
+        assertEquals("/portal/classic/child0/child0-0", root.getChild("child0").getChild("child0-0").getURI());
     }
 
     @Test(expected = IllegalStateException.class)
