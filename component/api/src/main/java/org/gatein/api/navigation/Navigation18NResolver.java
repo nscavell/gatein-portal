@@ -80,7 +80,11 @@ public class Navigation18NResolver {
             Locale userLocale = getUserLocale();
             Described.State described;
             try {
-                described = service.resolveDescription(descriptionId, siteLocale, userLocale);
+                if (userLocale != null) {
+                    described = service.resolveDescription(descriptionId, siteLocale, userLocale);
+                } else {
+                    described = service.resolveDescription(descriptionId, siteLocale);
+                }
             } catch (Throwable t) {
                 throw new ApiException("Failed to resolve description", t);
             }

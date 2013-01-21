@@ -338,6 +338,10 @@ public class GateInApiManagementResource {
         }
         SiteId siteId = (siteName == null) ? null : new SiteId(siteType, siteName);
         Locale locale = context.getLocale();
+        // For some HTTP requests the locale is set to *, I guess to indicate a header 'Accept-Language: *' ?
+        if (locale != null && locale.getLanguage().equals("*")) {
+            locale = null;
+        }
 
         User user = (managedUser == null || managedUser.getUserName() == null) ? User.anonymous() : new User(managedUser.getUserName());
 
@@ -354,12 +358,15 @@ public class GateInApiManagementResource {
                 if (externalRequest instanceof HttpServletRequest) {
                     url = new SimpleURL(new SimpleURLContext((HttpServletRequest) externalRequest, container, controller));
                     url.setSchemeUse(true);
+                    url.setAuthorityUse(true);
                 } else {
                     url = new SimpleURL(new SimpleURLContext(container, controller));
                     url.setSchemeUse(false);
+                    url.setAuthorityUse(false);
                 }
                 if (relative) {
                     url.setSchemeUse(false);
+                    url.setAuthorityUse(false);
                 }
                 String urlString = url.setResource(navResource).toString();
                 return urlString.substring(0, urlString.length() - 1);

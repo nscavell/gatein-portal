@@ -59,10 +59,6 @@ class Utils {
         }
     }
 
-    public static void verifyAccess(Node node, OperationContext context) throws NotAuthorizedException {
-        //TODO: Implement
-    }
-
     public static boolean hasPermission(Permission permission) {
         PortalRequest request = PortalRequest.getInstance();
         Portal portal = request.getPortal();
