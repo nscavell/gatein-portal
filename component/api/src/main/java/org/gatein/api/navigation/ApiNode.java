@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.exoplatform.commons.utils.ExpressionUtil;
 import org.exoplatform.portal.mop.Described;
 import org.exoplatform.portal.mop.navigation.NodeChange;
 import org.exoplatform.portal.mop.navigation.NodeContext;
@@ -147,6 +148,21 @@ public class ApiNode implements Node {
     }
 
     @Override
+    public String getDisplayName() {
+        if (resolvedDisplayName == null) {
+            // Avoid any resolving if we're dealing with a simple non resource-bundle label
+            String simple = context.getState().getLabel();
+            if (simple != null && !ExpressionUtil.isResourceBindingExpression(simple)) {
+                resolvedDisplayName = simple;
+            } else {
+                resolvedDisplayName = navigation.resolve(context);
+            }
+        }
+
+        return resolvedDisplayName;
+    }
+
+    @Override
     public LocalizedString getDisplayNames() {
         if (displayName == null) {
             String simple = context.getState().getLabel();
@@ -186,15 +202,6 @@ public class ApiNode implements Node {
     @Override
     public Node getParent() {
         return context.getParentNode();
-    }
-
-    @Override
-    public String getDisplayName() {
-        if (resolvedDisplayName == null) {
-            resolvedDisplayName = navigation.resolve(context);
-        }
-
-        return resolvedDisplayName;
     }
 
     @Override
