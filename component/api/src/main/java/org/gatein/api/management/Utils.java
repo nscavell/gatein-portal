@@ -26,18 +26,27 @@ import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.common.i18n.Localized;
 import org.gatein.api.common.i18n.LocalizedString;
-import org.gatein.api.navigation.Node;
+import org.gatein.api.internal.StringJoiner;
 import org.gatein.api.page.Page;
 import org.gatein.api.security.Membership;
 import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.gatein.api.site.Site;
-import org.gatein.common.xml.stax.writer.WritableValueTypes;
+import org.gatein.management.api.exceptions.InvalidDataException;
 import org.gatein.management.api.exceptions.NotAuthorizedException;
+import org.gatein.management.api.model.Model;
+import org.gatein.management.api.model.ModelBoolean;
 import org.gatein.management.api.model.ModelList;
+import org.gatein.management.api.model.ModelNumber;
 import org.gatein.management.api.model.ModelObject;
+import org.gatein.management.api.model.ModelReference;
+import org.gatein.management.api.model.ModelString;
+import org.gatein.management.api.model.ModelValue;
 import org.gatein.management.api.operation.OperationContext;
 
+import javax.xml.bind.DatatypeConverter;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -111,9 +120,85 @@ class Utils {
     public static void set(String name, Date value, ModelObject model) {
         String s = null;
         if (value != null) {
-            s = WritableValueTypes.DATE_TIME.format(value);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(value);
+            s = DatatypeConverter.printDateTime(cal);
         }
 
         set(name, s, model);
+    }
+
+    public static <T extends ModelValue> T get(ModelObject modelObject, Class<T> type, String...names) {
+        Model model = modelObject.get(names);
+        try {
+            return model.asValue(type);
+        } catch (IllegalArgumentException e) {
+            ModelValue.ModelValueType expected;
+            if (type == ModelString.class) {
+                expected = ModelValue.ModelValueType.STRING;
+            } else if (type == ModelNumber.class) {
+                expected = ModelValue.ModelValueType.NUMBER;
+            } else if (type == ModelBoolean.class) {
+                expected = ModelValue.ModelValueType.BOOLEAN;
+            } else if (type == ModelList.class) {
+                expected = ModelValue.ModelValueType.LIST;
+            } else if (type == ModelObject.class) {
+                expected = ModelValue.ModelValueType.OBJECT;
+            } else if (type == ModelReference.class) {
+                expected = ModelValue.ModelValueType.REFERENCE;
+            } else {
+                expected = ModelValue.ModelValueType.UNDEFINED;
+            }
+            throw invalidType(model, expected, names);
+        }
+    }
+
+    public static String nonNullString(ModelObject model, String... names) {
+        ModelString string = get(model, ModelString.class, names);
+        if (!string.isDefined()) {
+            throw invalidValue(null, names);
+        }
+        String value = string.getValue();
+        if (value == null) {
+            throw invalidValue(null, names);
+        }
+
+        return value;
+    }
+
+    public static Date getDate(ModelObject model, String...names) {
+        String string = get(model, ModelString.class, names).getValue();
+        if (string != null) {
+            try {
+                return DatatypeConverter.parseDateTime(string).getTime();
+            } catch (IllegalArgumentException e) {
+                throw invalidValue(string, names);
+            }
+        }
+
+        return null;
+    }
+
+    public static InvalidDataException invalidValue(String value, String...field) {
+        return invalidData("Invalid value '" + value + "' for %s", field);
+    }
+
+    public static InvalidDataException invalidType(ModelValue value, ModelValue.ModelValueType type, String...field) {
+        return invalidData("Invalid value type " + value.getValueType() + " for %s. Was expecting " + type, field);
+    }
+
+    public static InvalidDataException requiredField(String...field) {
+        return invalidData("%s is required", field);
+    }
+
+    public static InvalidDataException requiredFieldWhen(String when, String...field) {
+        return invalidData("%s is required when " + when, field);
+    }
+
+    public static InvalidDataException invalidData(String format, String... field) {
+        if (field == null) {
+            throw new InvalidDataException(format);
+        }
+        return new InvalidDataException(String.format(format, StringJoiner.joiner(".").join(field)));
     }
 }
