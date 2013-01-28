@@ -557,14 +557,14 @@ public class PortalImplTest extends AbstractApiTest {
         assertNull(portal.getPage(new PageId("removePage", "page2")));
     }
 
-    @Test
+    @Test(expected = ApiException.class)
     public void removePage_Faulty() {
         createSite(new SiteId("test1"), "page1");
 
         runWithFault(new Runnable() {
             @Override
             public void run() {
-                assertFalse(portal.removePage(new PageId("removePage", "page1")));
+                portal.removePage(new PageId("removePage", "page1"));
             }
         });
     }
@@ -611,14 +611,14 @@ public class PortalImplTest extends AbstractApiTest {
         assertNotNull(portal.getSite(new SiteId("test3")));
     }
 
-    @Test
+    @Test(expected = ApiException.class)
     public void removeSite_Faulty() {
         createSite(new SiteId("test1"));
 
         runWithFault(new Runnable() {
             @Override
             public void run() {
-                assertFalse(portal.removeSite(new SiteId("test1")));
+                portal.removeSite(new SiteId("test1"));
             }
         });
     }

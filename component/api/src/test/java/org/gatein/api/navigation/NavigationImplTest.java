@@ -199,9 +199,10 @@ public class NavigationImplTest extends AbstractApiTest {
         portal.getNavigation(defaultSiteId).getRootNode(Nodes.visitAll());
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test
     public void getNavigation_InvalidSite() {
-        portal.getNavigation(new SiteId("invalid")).getRootNode(Nodes.visitAll());
+        Navigation nav = portal.getNavigation(new SiteId("invalid"));
+        assertNull(nav);
     }
 
     @Test(expected = IllegalArgumentException.class)

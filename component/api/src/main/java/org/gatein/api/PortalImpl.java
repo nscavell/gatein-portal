@@ -227,19 +227,32 @@ public class PortalImpl implements Portal {
 
     @Override
     public boolean removeSite(SiteId siteId) {
+        Site site = getSite(siteId);
+        if (site == null) {
+            return false;
+        }
         SiteKey siteKey = Util.from(Parameters.requireNonNull(siteId, "siteId"));
         PortalConfig data = new PortalConfig(siteKey.getTypeName(), siteKey.getName());
         try {
             dataStorage.remove(data);
             return true;
-        } catch (Throwable e) {
-            return false;
+        } catch (Throwable t) {
+            throw new ApiException("Failed to remove site " + siteId, t);
         }
     }
 
     @Override
     public Navigation getNavigation(SiteId siteId) {
-        return new NavigationImpl(siteId, navigationService, descriptionService, bundleManager);
+        Parameters.requireNonNull(siteId, "siteId");
+
+        try {
+            NavigationContext ctx = navigationService.loadNavigation(Util.from(siteId));
+            if (ctx == null) return null;
+
+            return new NavigationImpl(siteId, navigationService, ctx, descriptionService, bundleManager);
+        } catch (Throwable t) {
+            throw new ApiException("Failed to load navigation", t);
+        }
     }
 
     @Override
@@ -325,7 +338,7 @@ public class PortalImpl implements Portal {
         try {
             pageService.savePage(context);
         } catch (Throwable t) {
-            throw new ApiException("Failed to save page");
+            throw new ApiException("Failed to save page " + page.getId(), t);
         }
     }
 
@@ -333,10 +346,13 @@ public class PortalImpl implements Portal {
     public boolean removePage(PageId pageId) {
         Parameters.requireNonNull(pageId, "pageId");
 
+        if (getPage(pageId) == null) {
+            return false;
+        }
         try {
             return pageService.destroyPage(Util.from(pageId));
         } catch (Throwable t) {
-            return false;
+            throw new ApiException("Failed to remove page " + pageId, t);
         }
     }
 
@@ -358,8 +374,8 @@ public class PortalImpl implements Portal {
         if (identity == null) {
             try {
                 identity = authenticator.createIdentity(user.getId());
-            } catch (Exception e) {
-                throw new ApiException("Failed to retrive user identity", e);
+            } catch (Throwable t) {
+                throw new ApiException("Failed to retrieve user identity", t);
             }
 
             if (identity == null) {

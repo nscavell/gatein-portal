@@ -49,36 +49,32 @@ import org.gatein.api.site.SiteId;
  */
 public class NavigationImpl implements Navigation {
     private final NavigationService navigationService;
+    private final NavigationContext navCtx;
     private final DescriptionService descriptionService;
     private final ResourceBundleManager bundleManager;
 
     private final SiteId siteId;
-    private final SiteKey siteKey;
     private final ApiNodeModel model;
 
-    private NavigationContext navCtx;
     private Navigation18NResolver i18nResolver;
 
-    public NavigationImpl(SiteId siteId, NavigationService navigationService, DescriptionService descriptionService,
+    public NavigationImpl(SiteId siteId, NavigationService navigationService, NavigationContext navCtx, DescriptionService descriptionService,
             ResourceBundleManager bundleManager) {
-        this.siteId = Parameters.requireNonNull(siteId, "siteId");
+        this.siteId = siteId;
         this.navigationService = navigationService;
+        this.navCtx = navCtx;
         this.descriptionService = descriptionService;
         this.bundleManager = bundleManager;
-
-        this.siteKey = Util.from(siteId);
         this.model = new ApiNodeModel(this);
-
-        updateNavigationContext();
     }
 
     // Used for unit testing
     NavigationImpl(SiteId siteId) {
         this.siteId = siteId;
         this.navigationService = null;
+        this.navCtx = null;
         this.descriptionService = null;
         this.bundleManager = null;
-        this.siteKey = null;
         this.model = null;
     }
 
@@ -116,7 +112,6 @@ public class NavigationImpl implements Navigation {
 
     @Override
     public int getPriority() {
-        updateNavigationContext();
         return navCtx.getState().getPriority();
     }
 
@@ -192,8 +187,9 @@ public class NavigationImpl implements Navigation {
                 site = request.getPortal().getSite(siteId);
             }
 
-            if (site == null)
+            if (site == null) {
                 throw new ApiException("Could not resolve display name because site " + siteId + " could not be found.");
+            }
 
             i18nResolver = new Navigation18NResolver(descriptionService, bundleManager, site.getLocale(), siteId);
         }
@@ -272,18 +268,6 @@ public class NavigationImpl implements Navigation {
             descriptionService.setDescriptions(id, descriptions);
         } catch (Throwable t) {
             throw new ApiException("Failed to set descriptions", t);
-        }
-    }
-
-    private void updateNavigationContext() {
-        try {
-            navCtx = navigationService.loadNavigation(siteKey);
-        } catch (Throwable e) {
-            throw new ApiException("Failed to load navigation", e);
-        }
-
-        if (navCtx == null) {
-            throw new EntityNotFoundException("Site " + siteId + " not found");
         }
     }
 }
