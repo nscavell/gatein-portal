@@ -69,8 +69,8 @@ public class NavigationManagementResource {
     private final Navigation navigation;
     private final ModelProvider modelProvider;
 
-    public NavigationManagementResource(Portal portal, ModelProvider modelProvider, SiteId siteId) {
-        this.navigation = portal.getNavigation(siteId);
+    public NavigationManagementResource(Navigation navigation, ModelProvider modelProvider) {
+        this.navigation = navigation;
         this.modelProvider = modelProvider;
     }
 
@@ -191,7 +191,7 @@ public class NavigationManagementResource {
     private Node getNode(NodePath path, boolean require, NodeVisitor visitor) {
         Node node = navigation.getNode(path, visitor);
         if (node == null && require)
-            throw new ResourceNotFoundException("Node not found for path " + path);
+            throw notFound("Cannot retrieve node", navigation.getSiteId(), path);
 
         return node;
     }
@@ -326,8 +326,7 @@ public class NavigationManagementResource {
             if (!displayNameModel.has("value")) {
                 throw requiredField("displayNames["+i+"].value");
             }
-            ModelString valueModel = get(displayNameModel, ModelString.class, "value");
-            String value = valueModel.getValue();
+            String value = get(displayNameModel, ModelString.class, "value").getValue();
             if (value == null) {
                 throw invalidValue(value, "displayNames[" + i + "].value");
             }

@@ -54,6 +54,10 @@
     </dependency>
     <dependency>
       <groupId>org.gatein.portal</groupId>
+      <artifactId>exo.portal.component.web.resources</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gatein.portal</groupId>
       <artifactId>exo.portal.component.resources</artifactId>
     </dependency>
     <!-- For mgmt (rest) of api -->

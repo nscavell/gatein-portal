@@ -94,7 +94,7 @@ public class PortalImplTest extends AbstractApiTest {
 
     @Test
     public void createSite() {
-        portal.createSite(new SiteId("newsite"));
+        portal.createSite(new SiteId("newsite"), "basic");
         assertNull(portal.getSite(new SiteId("newsite")));
     }
 
@@ -103,20 +103,25 @@ public class PortalImplTest extends AbstractApiTest {
         runWithFault(new Runnable() {
             @Override
             public void run() {
-                portal.createSite(new SiteId("newsite"));
+                portal.createSite(new SiteId("newsite"), "basic");
             }
         });
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createSite_NullSiteId() {
-        portal.createSite(null);
+        portal.createSite(null, "basic");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createSite_NullTemplateName() {
+        portal.createSite(new SiteId("newsite"), null);
     }
 
     @Test(expected = EntityAlreadyExistsException.class)
     public void createSite_SiteExists() {
         saveSite();
-        portal.createSite(new SiteId("newsite"));
+        portal.createSite(new SiteId("newsite"), "basic");
     }
 
     @Test
@@ -573,10 +578,10 @@ public class PortalImplTest extends AbstractApiTest {
     public void removePage_NonExisting() {
         createSite(new SiteId("test1"), "page1");
 
-        assertFalse(portal.removePage(new PageId("removePage", "page1")));
+        assertFalse(portal.removePage(new PageId("test1", "page2")));
     }
 
-    @Test
+    @Test(expected = EntityNotFoundException.class)
     public void removePage_SiteNonExisting() {
         createSite(new SiteId("test1"), "page1");
 
@@ -661,7 +666,7 @@ public class PortalImplTest extends AbstractApiTest {
 
     @Test(expected = EntityNotFoundException.class)
     public void savePage_NoSite() {
-        Site site = portal.createSite(new SiteId("save-page"));
+        Site site = portal.createSite(new SiteId("save-page"), "basic");
         portal.saveSite(site);
 
         Page page = portal.createPage(new PageId("no-site", "baz"));
@@ -731,7 +736,7 @@ public class PortalImplTest extends AbstractApiTest {
         Permission access = new Permission("*", new Group("access"));
         Permission edit = new Permission("*", new Group("edit"));
 
-        Site site = portal.createSite(new SiteId("newsite"));
+        Site site = portal.createSite(new SiteId("newsite"), "basic");
         site.setAccessPermission(access);
         site.setDisplayName("displayName");
         site.setDescription("description");
@@ -761,10 +766,10 @@ public class PortalImplTest extends AbstractApiTest {
         assertNull(portal.getSite(new SiteId("xxx")));
     }
 
-    @Test(expected = EntityAlreadyExistsException.class)
+    @Test(expected = ApiException.class)
     public void saveSite_Exists() {
-        Site siteA = portal.createSite(new SiteId("newsite"));
-        Site siteB = portal.createSite(new SiteId("newsite"));
+        Site siteA = portal.createSite(new SiteId("newsite"), "basic");
+        Site siteB = portal.createSite(new SiteId("newsite"), "basic");
 
         portal.saveSite(siteA);
         portal.saveSite(siteB);
@@ -772,7 +777,7 @@ public class PortalImplTest extends AbstractApiTest {
 
     @Test(expected = ApiException.class)
     public void saveSite_Faulty() {
-        final Site site = portal.createSite(new SiteId("newsite"));
+        final Site site = portal.createSite(new SiteId("newsite"), "basic");
         runWithFault(new Runnable() {
             @Override
             public void run() {
@@ -868,7 +873,7 @@ public class PortalImplTest extends AbstractApiTest {
         Permission access = new Permission("*", new Group("access"));
         Permission edit = new Permission("*", new Group("edit"));
 
-        Site site = portal.createSite(new SiteId("newsite"));
+        Site site = portal.createSite(new SiteId("newsite"), "basic");
         site.setAccessPermission(access);
         site.setDisplayName("displayName");
         site.setDescription("description");

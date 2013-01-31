@@ -22,15 +22,7 @@
 
 package org.gatein.api;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.commons.lang.LocaleUtils;
-import org.exoplatform.portal.config.model.PortalConfig;
 import org.exoplatform.portal.config.model.Properties;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.page.PageKey;
@@ -42,69 +34,20 @@ import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.gatein.api.site.Site;
 import org.gatein.api.site.SiteId;
-import org.gatein.api.site.SiteImpl;
 import org.gatein.api.site.SiteType;
+
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class Util {
-    public static Site from(PortalConfig portalConfig) {
-        if (portalConfig == null)
-            return null;
-
-        SiteKey siteKey = new SiteKey(portalConfig.getType(), portalConfig.getName());
-
-        Site site = new SiteImpl(from(siteKey));
-        if (portalConfig.getLabel() != null) {
-            site.setDisplayName(portalConfig.getLabel());
-        }
-        if (portalConfig.getDescription() != null) {
-            site.setDescription(portalConfig.getDescription());
-        }
-        if (portalConfig.getLocale() != null) {
-            site.setLocale(LocaleUtils.toLocale(portalConfig.getLocale()));
-        }
-        if (portalConfig.getSkin() != null) {
-            site.setSkin(portalConfig.getSkin());
-        }
-
-        site.setAccessPermission(from(portalConfig.getAccessPermissions()));
-        site.setEditPermission(from(portalConfig.getEditPermission()));
-
-        site.getAttributes().putAll(portalConfig.getProperties());
-
-        return site;
-    }
-
-    public static PortalConfig from(Site site) {
-        if (site == null)
-            return null;
-
-        SiteKey siteKey = from(site.getId());
-        PortalConfig portalConfig = new PortalConfig(siteKey.getTypeName(), siteKey.getName());
-        if (site.getDisplayName() != null) {
-            portalConfig.setLabel(site.getDisplayName());
-        }
-        if (site.getDescription() != null) {
-            portalConfig.setDescription(site.getDescription());
-        }
-        if (site.getLocale() != null) {
-            portalConfig.setLocale(site.getLocale().toString());
-        }
-        if (site.getSkin() != null) {
-            portalConfig.setSkin(site.getSkin());
-        }
-        portalConfig.setAccessPermissions(from(site.getAccessPermission()));
-        String[] editPermission = from(site.getEditPermission());
-        if (editPermission != null) {
-            portalConfig.setEditPermission(editPermission[0]); // edit permissions currently only support one permission
-        }
-
-        portalConfig.setProperties(Util.from(site.getAttributes()));
-
-        return portalConfig;
-    }
 
     public static Properties from(Attributes attributes) {
         if (attributes == null) {
@@ -113,17 +56,41 @@ public class Util {
 
         Properties properties = new Properties();
         properties.putAll(attributes);
+
+        for (String key : properties.keySet()) {
+            if (key.equals(Site.AttributeKeys.SHOW_PORTLET_INFO_BAR.getName())) {
+                String value = properties.get(key);
+                boolean show = Boolean.parseBoolean(value);
+                if (show) {
+                    properties.put(key, "1");
+                } else {
+                    properties.put(key, "0");
+                }
+            }
+        }
         return properties;
     }
 
     public static Attributes from(Properties properties) {
         if (properties == null) {
-            return null;
+            return new Attributes();
         }
 
         Attributes attributes = new Attributes();
         for (Entry<String, String> e : properties.entrySet()) {
-            attributes.put(Attributes.key(e.getKey(), String.class), e.getValue().toString());
+            String key = e.getKey();
+            String value = e.getValue();
+            if (key.equals(Site.AttributeKeys.SHOW_PORTLET_INFO_BAR.getName())) {
+                if ("0".equals(value)) {
+                    attributes.put(Site.AttributeKeys.SHOW_PORTLET_INFO_BAR, Boolean.FALSE);
+                } else if ("1".equals(value)) {
+                    attributes.put(Site.AttributeKeys.SHOW_PORTLET_INFO_BAR, Boolean.TRUE);
+                } else {
+                    attributes.put(key, value);
+                }
+            } else {
+                attributes.put(key, value);
+            }
         }
         return attributes;
     }
@@ -240,5 +207,13 @@ public class Util {
 
             return permissions;
         }
+    }
+
+    public static Locale toLocale(String locale) {
+        return LocaleUtils.toLocale(locale);
+    }
+
+    public static String fromLocale(Locale locale) {
+        return locale.toString();
     }
 }

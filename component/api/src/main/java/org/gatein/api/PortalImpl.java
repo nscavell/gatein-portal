@@ -22,29 +22,27 @@
 
 package org.gatein.api;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-
 import org.exoplatform.commons.utils.ListAccess;
 import org.exoplatform.portal.config.DataStorage;
 import org.exoplatform.portal.config.Query;
 import org.exoplatform.portal.config.UserACL;
+import org.exoplatform.portal.config.UserPortalConfigService;
 import org.exoplatform.portal.config.model.PortalConfig;
+import org.exoplatform.portal.config.model.PortalProperties;
 import org.exoplatform.portal.mop.QueryResult;
 import org.exoplatform.portal.mop.SiteKey;
 import org.exoplatform.portal.mop.description.DescriptionService;
 import org.exoplatform.portal.mop.navigation.NavigationContext;
 import org.exoplatform.portal.mop.navigation.NavigationService;
-import org.exoplatform.portal.mop.navigation.NavigationState;
 import org.exoplatform.portal.mop.page.PageContext;
+import org.exoplatform.portal.mop.page.PageError;
 import org.exoplatform.portal.mop.page.PageService;
+import org.exoplatform.portal.mop.page.PageServiceException;
 import org.exoplatform.portal.mop.page.PageServiceImpl;
 import org.exoplatform.portal.mop.page.PageServiceWrapper;
 import org.exoplatform.portal.mop.page.PageState;
+import org.exoplatform.portal.resource.SkinService;
+import org.exoplatform.services.resources.LocaleConfigService;
 import org.exoplatform.services.resources.ResourceBundleManager;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.Identity;
@@ -70,6 +68,15 @@ import org.gatein.api.site.SiteType;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
 /**
  * @author <a href="mailto:boleslaw.dawidowicz@redhat.com">Boleslaw Dawidowicz</a>
  * @author <a href="mailto:chris.laprun@jboss.com">Chris Laprun</a>
@@ -78,11 +85,11 @@ import org.gatein.common.logging.LoggerFactory;
  */
 public class PortalImpl implements Portal {
     private static final Query<PortalConfig> SITES = new Query<PortalConfig>(
-            org.exoplatform.portal.mop.SiteType.PORTAL.getName(), null, PortalConfig.class);
+        org.exoplatform.portal.mop.SiteType.PORTAL.getName(), null, PortalConfig.class);
     private static final Query<PortalConfig> SPACES = new Query<PortalConfig>(
-            org.exoplatform.portal.mop.SiteType.GROUP.getName(), null, PortalConfig.class);
+        org.exoplatform.portal.mop.SiteType.GROUP.getName(), null, PortalConfig.class);
     private static final Query<PortalConfig> DASHBOARDS = new Query<PortalConfig>(
-            org.exoplatform.portal.mop.SiteType.USER.getName(), null, PortalConfig.class);
+        org.exoplatform.portal.mop.SiteType.USER.getName(), null, PortalConfig.class);
 
     static final Logger log = LoggerFactory.getLogger("org.gatein.api");
 
@@ -91,13 +98,14 @@ public class PortalImpl implements Portal {
     private final NavigationService navigationService;
     private final DescriptionService descriptionService;
     private final ResourceBundleManager bundleManager;
-    private UserACL acl;
-    private Authenticator authenticator;
-    private IdentityRegistry identityRegistry;
+    private final UserACL acl;
+    private final Authenticator authenticator;
+    private final IdentityRegistry identityRegistry;
+    private final UserPortalConfigService userPortalConfigService;
 
     public PortalImpl(DataStorage dataStorage, PageService pageService, NavigationService navigationService,
-            DescriptionService descriptionService, ResourceBundleManager bundleManager, Authenticator authenticator,
-            IdentityRegistry identityRegistry, UserACL acl) {
+                      DescriptionService descriptionService, ResourceBundleManager bundleManager, Authenticator authenticator,
+                      IdentityRegistry identityRegistry, UserACL acl, UserPortalConfigService userPortalConfigService) {
         this.dataStorage = dataStorage;
         this.pageService = pageService;
         this.navigationService = navigationService;
@@ -106,6 +114,7 @@ public class PortalImpl implements Portal {
         this.authenticator = authenticator;
         this.identityRegistry = identityRegistry;
         this.acl = acl;
+        this.userPortalConfigService = userPortalConfigService;
     }
 
     @Override
@@ -114,21 +123,31 @@ public class PortalImpl implements Portal {
         SiteKey siteKey = Util.from(siteId);
 
         try {
-            return Util.from(dataStorage.getPortalConfig(siteKey.getTypeName(), siteKey.getName()));
+            PortalConfig portalConfig = dataStorage.getPortalConfig(siteKey.getTypeName(), siteKey.getName());
+            return (portalConfig == null) ? null : new SiteImpl(portalConfig);
         } catch (Throwable e) {
             throw new ApiException("Failed to get site", e);
         }
     }
 
     @Override
-    public Site createSite(SiteId siteId) throws IllegalArgumentException, EntityAlreadyExistsException {
+    public Site createSite(SiteId siteId) {
+        String template = userPortalConfigService.getDefaultPortalTemplate();
+        if (template == null) {
+            template = ""; // This is valid if we're being executed within a test environment
+        }
+        return createSite(siteId, template);
+    }
+
+    @Override
+    public Site createSite(SiteId siteId, String templateName) throws IllegalArgumentException, EntityAlreadyExistsException {
         if (getSite(siteId) != null) {
             throw new EntityAlreadyExistsException("Cannot create site. Site " + siteId + " already exists.");
         }
+        Parameters.requireNonNull(templateName, "templateName");
 
-        SiteImpl s = new SiteImpl(siteId);
-        s.setCreate(true);
-        return s;
+        // Create new site
+        return new SiteImpl(siteId, templateName);
     }
 
     @Override
@@ -137,8 +156,7 @@ public class PortalImpl implements Portal {
 
         Pagination pagination = query.getPagination();
         if (pagination != null && query.getSiteTypes().size() > 1) {
-            pagination = null; // set it to null so the internal DataStorage doesn't use it, and we manually
-                               // page later.
+            pagination = null; // set it to null so the internal DataStorage doesn't use it, and we manually page later
             log.warn("Pagination is not supported internally for SiteQuery's with multiple site types. Therefore this query has the possibility to perform poorly.");
         }
 
@@ -197,32 +215,7 @@ public class PortalImpl implements Portal {
     @Override
     public void saveSite(Site site) {
         Parameters.requireNonNull(site, "site");
-
-        PortalConfig data = Util.from(site);
-        boolean create = ((SiteImpl) site).isCreate();
-
-        if (create && getSite(site.getId()) != null) {
-            throw new EntityAlreadyExistsException("Cannot create site. Site " + site.getId() + " already exists.");
-        }
-
-        try {
-            if (create) {
-                dataStorage.create(data);
-            } else {
-                dataStorage.save(data);
-            }
-        } catch (Throwable e) {
-            throw new ApiException("Failed to save site", e);
-        }
-
-        if (create) {
-            try {
-                NavigationContext nav = new NavigationContext(Util.from(site.getId()), new NavigationState(null));
-                navigationService.saveNavigation(nav);
-            } catch (Throwable e) {
-                throw new ApiException("Failed to default navigation for site", e);
-            }
-        }
+        ((SiteImpl) site).save(dataStorage, userPortalConfigService);
     }
 
     @Override
@@ -280,7 +273,7 @@ public class PortalImpl implements Portal {
         Permission access = Permission.everyone();
         Permission edit = Permission.any("platform", "administrators");
         PageState pageState = new PageState(pageId.getPageName(), null, false, null, Arrays.asList(Util.from(access)),
-                Util.from(edit)[0]);
+            Util.from(edit)[0]);
 
         PageImpl p = new PageImpl(new PageContext(Util.from(pageId), pageState));
         p.setCreate(true);
@@ -305,7 +298,7 @@ public class PortalImpl implements Portal {
             }
         } else {
             QueryResult<PageContext> result = pageService.findPages(pagination.getOffset(), pagination.getLimit(),
-                    Util.from(query.getSiteType()), query.getSiteName(), null, query.getDisplayName());
+                Util.from(query.getSiteType()), query.getSiteName(), null, query.getDisplayName());
 
             iterator = result.iterator();
         }
@@ -346,11 +339,14 @@ public class PortalImpl implements Portal {
     public boolean removePage(PageId pageId) {
         Parameters.requireNonNull(pageId, "pageId");
 
-        if (getPage(pageId) == null) {
-            return false;
-        }
         try {
             return pageService.destroyPage(Util.from(pageId));
+        } catch (PageServiceException e) {
+            if (e.getError() == PageError.NO_SITE) {
+                throw new EntityNotFoundException("Cannot remove page '" + pageId.getPageName() + "'. Site " + pageId.getSiteId() + " does not exist.");
+            } else {
+                throw new ApiException("Failed to remove page " + pageId, e);
+            }
         } catch (Throwable t) {
             throw new ApiException("Failed to remove page " + pageId, t);
         }
@@ -400,7 +396,7 @@ public class PortalImpl implements Portal {
         if (filter == null)
             return;
 
-        for (Iterator<T> iterator = list.iterator(); iterator.hasNext();) {
+        for (Iterator<T> iterator = list.iterator(); iterator.hasNext(); ) {
             if (!filter.accept(iterator.next())) {
                 iterator.remove();
             }
@@ -433,7 +429,7 @@ public class PortalImpl implements Portal {
             }
 
             if (includeAllSites || ctx != null) {
-                sites.add(Util.from(internalSite));
+                sites.add(new SiteImpl(internalSite));
             }
         }
         return sites;

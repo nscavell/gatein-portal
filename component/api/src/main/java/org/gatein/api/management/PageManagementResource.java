@@ -22,6 +22,7 @@
 
 package org.gatein.api.management;
 
+import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.page.Page;
@@ -32,9 +33,9 @@ import org.gatein.management.api.PathAddress;
 import org.gatein.management.api.annotations.Managed;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
+import org.gatein.management.api.annotations.ManagedRole;
 import org.gatein.management.api.annotations.MappedAttribute;
 import org.gatein.management.api.annotations.MappedPath;
-import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
@@ -72,9 +73,11 @@ public class PageManagementResource {
 
     @Managed("{page-name}")
     public ModelObject getPage(@MappedPath("page-name") String name) {
-        Page page = portal.getPage(new PageId(siteId, name));
-        if (page == null)
-            throw new ResourceNotFoundException("Page " + name + " does not exist for site id " + siteId);
+        PageId pageId = new PageId(siteId, name);
+        Page page = portal.getPage(pageId);
+        if (page == null) {
+            throw notFound("Could not retrieve page", pageId);
+        }
 
         // Populate model
         ModelObject model = modelProvider.newModel(ModelObject.class);
@@ -84,20 +87,33 @@ public class PageManagementResource {
     }
 
     @Managed("{page-name}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.REMOVE_RESOURCE, description = "Removes the given page from the portal")
     public void removePage(@MappedPath("page-name") String name) {
+        PageId pageId = new PageId(siteId, name);
         try {
-            portal.removePage(new PageId(siteId, name));
+            if (!portal.removePage(pageId)) {
+                throw notFound("Could not remove page", pageId);
+            }
         } catch (EntityNotFoundException e) {
-            throw new ResourceNotFoundException("Could not remove page because page id " + new PageId(siteId, name)
-                    + " does not exist.");
+            throw notFound("Could not remove page", siteId);
         }
     }
 
     @Managed("{page-name}")
+    @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds the given page to the portal")
     public ModelObject addPage(@MappedPath("page-name") String name, @MappedAttribute("displayName") String displayName) {
-        Page page = portal.createPage(new PageId(siteId, name));
+
+        PageId pageId = new PageId(siteId, name);
+        Page page;
+        try {
+            page = portal.createPage(pageId);
+        } catch (EntityAlreadyExistsException e) {
+            throw alreadyExists("Could not add page", pageId);
+        } catch (EntityNotFoundException e) {
+            throw alreadyExists("Cannot add page", siteId);
+        }
         page.setDisplayName(displayName);
         portal.savePage(page);
 
@@ -105,6 +121,13 @@ public class PageManagementResource {
         populateModel(page, model);
 
         return model;
+    }
+
+    @Managed("{page-name}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Updates a page of the portal")
+    public ModelObject addPage(@MappedPath("page-name") String name, @ManagedContext ModelObject pageModel) {
+        throw new UnsupportedOperationException();
     }
 
     private void populateModel(List<Page> pages, ModelList list, PathAddress address) {

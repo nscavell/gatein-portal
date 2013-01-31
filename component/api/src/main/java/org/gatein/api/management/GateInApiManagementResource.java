@@ -24,19 +24,23 @@ package org.gatein.api.management;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.mop.SiteKey;
+import org.exoplatform.portal.pom.data.MappedAttributes;
 import org.exoplatform.web.WebAppController;
 import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.simple.SimpleURL;
 import org.exoplatform.web.url.simple.SimpleURLContext;
 import org.gatein.api.BasicPortalRequest;
+import org.gatein.api.EntityAlreadyExistsException;
 import org.gatein.api.EntityNotFoundException;
 import org.gatein.api.Portal;
 import org.gatein.api.PortalRequest;
 import org.gatein.api.Util;
 import org.gatein.api.common.Attributes;
 import org.gatein.api.common.URIResolver;
+import org.gatein.api.navigation.Navigation;
 import org.gatein.api.navigation.NodePath;
 import org.gatein.api.security.Group;
+import org.gatein.api.security.Permission;
 import org.gatein.api.security.User;
 import org.gatein.api.site.Site;
 import org.gatein.api.site.SiteId;
@@ -52,12 +56,15 @@ import org.gatein.management.api.annotations.ManagedBefore;
 import org.gatein.management.api.annotations.ManagedContext;
 import org.gatein.management.api.annotations.ManagedOperation;
 import org.gatein.management.api.annotations.ManagedRole;
+import org.gatein.management.api.annotations.MappedAttribute;
 import org.gatein.management.api.annotations.MappedPath;
 import org.gatein.management.api.exceptions.ResourceNotFoundException;
 import org.gatein.management.api.model.ModelList;
 import org.gatein.management.api.model.ModelObject;
 import org.gatein.management.api.model.ModelProvider;
 import org.gatein.management.api.model.ModelReference;
+import org.gatein.management.api.model.ModelString;
+import org.gatein.management.api.model.ModelValue;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationNames;
 
@@ -124,9 +131,9 @@ public class GateInApiManagementResource {
     @Managed("/sites/{site-name}")
     @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds a given site")
-    public ModelObject addSite(@MappedPath("site-name") String siteName, @ManagedContext PathAddress address) {
+    public ModelObject addSite(@MappedPath("site-name") String siteName, @MappedAttribute("template") String template, @ManagedContext PathAddress address) {
         SiteId siteId = new SiteId(siteName);
-        return _addSite(address, siteId);
+        return _addSite(address, siteId, template);
     }
 
     @Managed("/sites/{site-name}")
@@ -137,14 +144,24 @@ public class GateInApiManagementResource {
         _removeSite(id);
     }
 
+    @Managed("/sites/{site-name}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Updates a given site")
+    public ModelObject updateSite(@MappedPath("site-name") String siteName, @ManagedContext ModelObject siteModel, @ManagedContext PathAddress address) {
+        SiteId id = new SiteId(siteName);
+        return _updateSite(id, siteModel, address);
+    }
+
     @Managed("/sites/{site-name}/pages")
     public PageManagementResource getPages(@MappedPath("site-name") String siteName) {
-        return new PageManagementResource(portal, modelProvider, new SiteId(siteName));
+        SiteId id = new SiteId(siteName);
+        return pagesResource(id);
     }
 
     @Managed("/sites/{site-name}/navigation")
     public NavigationManagementResource getNavigation(@MappedPath("site-name") String siteName) {
-        return new NavigationManagementResource(portal, modelProvider, new SiteId(siteName));
+        SiteId id = new SiteId(siteName);
+        return navigationResource(id);
     }
 
     // --------------------------------------------- Group Sites (Spaces) ----------------------------------------------//
@@ -162,9 +179,9 @@ public class GateInApiManagementResource {
     @Managed("/spaces/{group-name: .*}")
     @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds a given site")
-    public ModelObject addSpace(@MappedPath("group-name") String groupName, @ManagedContext PathAddress address) {
+    public ModelObject addSpace(@MappedPath("group-name") String groupName, @MappedAttribute("template") String template, @ManagedContext PathAddress address) {
         SiteId siteId = new SiteId(new Group(groupName));
-        return _addSite(address, siteId);
+        return _addSite(address, siteId, template);
     }
 
     @Managed("/spaces/{group-name: .*}")
@@ -175,14 +192,24 @@ public class GateInApiManagementResource {
         _removeSite(id);
     }
 
+    @Managed("/spaces/{group-name: .*}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Updates a given space")
+    public ModelObject updateSpace(@MappedPath("group-name") String groupName, @ManagedContext ModelObject siteModel, @ManagedContext PathAddress address) {
+        SiteId id = new SiteId(new Group(groupName));
+        return _updateSite(id, siteModel, address);
+    }
+
     @Managed("/spaces/{group-name: .*}/pages")
     public PageManagementResource getSpacePages(@MappedPath("group-name") String groupName) {
-        return new PageManagementResource(portal, modelProvider, new SiteId(new Group(groupName)));
+        SiteId id = new SiteId(new Group(groupName));
+        return pagesResource(id);
     }
 
     @Managed("/spaces/{group-name: .*}/navigation")
     public NavigationManagementResource getSpaceNavigation(@MappedPath("group-name") String groupName) {
-        return new NavigationManagementResource(portal, modelProvider, new SiteId(new Group(groupName)));
+        SiteId id = new SiteId(new Group(groupName));
+        return navigationResource(id);
     }
 
     // -------------------------------------------- User Sites (Dashboard) ---------------------------------------------//
@@ -200,9 +227,9 @@ public class GateInApiManagementResource {
     @Managed("/dashboards/{user-name}")
     @ManagedRole("administrators")
     @ManagedOperation(name = OperationNames.ADD_RESOURCE, description = "Adds a given site")
-    public ModelObject addDashboard(@MappedPath("user-name") String userName, @ManagedContext PathAddress address) {
+    public ModelObject addDashboard(@MappedPath("user-name") String userName, @MappedAttribute("template") String template, @ManagedContext PathAddress address) {
         SiteId siteId = new SiteId(new User(userName));
-        return _addSite(address, siteId);
+        return _addSite(address, siteId, template);
     }
 
     @Managed("/dashboards/{user-name}")
@@ -213,14 +240,38 @@ public class GateInApiManagementResource {
         _removeSite(id);
     }
 
+    @Managed("/dashboards/{user-name}")
+    @ManagedRole("administrators")
+    @ManagedOperation(name = OperationNames.UPDATE_RESOURCE, description = "Updates a given space")
+    public ModelObject updateDashboard(@MappedPath("user-name") String userName, @ManagedContext ModelObject siteModel, @ManagedContext PathAddress address) {
+        SiteId id = new SiteId(new User(userName));
+        return _updateSite(id, siteModel, address);
+    }
+
     @Managed("/dashboards/{user-name}/pages")
     public PageManagementResource getDashboardPages(@MappedPath("user-name") String userName) {
-        return new PageManagementResource(portal, modelProvider, new SiteId(new User(userName)));
+        SiteId id = new SiteId(new User(userName));
+        return pagesResource(id);
     }
 
     @Managed("/dashboards/{user-name}/navigation")
     public NavigationManagementResource getDashboardNavigation(@MappedPath("user-name") String userName) {
-        return new NavigationManagementResource(portal, modelProvider, new SiteId(new User(userName)));
+        SiteId id = new SiteId(new User(userName));
+        return navigationResource(id);
+    }
+
+    private NavigationManagementResource navigationResource(SiteId siteId) {
+        Navigation navigation = portal.getNavigation(siteId);
+        if (navigation == null) {
+            throw new ResourceNotFoundException("Navigation does not exist for site " + siteId);
+        }
+
+        return new NavigationManagementResource(navigation, modelProvider);
+    }
+
+    private PageManagementResource pagesResource(SiteId siteId) {
+        requireSite(siteId);
+        return new PageManagementResource(portal, modelProvider, siteId);
     }
 
     private ModelList _getSites(SiteQuery query, PathAddress address) {
@@ -232,8 +283,7 @@ public class GateInApiManagementResource {
     }
 
     private ModelObject _getSite(SiteId id, OperationContext context) {
-        Site site = portal.getSite(id);
-        if (site == null) throw new ResourceNotFoundException("Site not found for " + id);
+        Site site = requireSite(id);
 
         // Verify current user has access to site
         verifyAccess(site, context);
@@ -245,8 +295,17 @@ public class GateInApiManagementResource {
         return siteModel;
     }
 
-    private ModelObject _addSite(PathAddress address, SiteId siteId) {
-        Site site = portal.createSite(siteId);
+    private ModelObject _addSite(PathAddress address, SiteId siteId, String template) {
+        Site site;
+        try {
+            if (template == null) {
+                site = portal.createSite(siteId);
+            } else {
+                site = portal.createSite(siteId, template);
+            }
+        } catch (EntityAlreadyExistsException e) {
+            throw alreadyExists("Could not add site", siteId);
+        }
         portal.saveSite(site);
 
         // Populate model
@@ -257,18 +316,86 @@ public class GateInApiManagementResource {
     }
 
     private void _removeSite(SiteId id) {
+        requireSite(id);
         try {
-            portal.removeSite(id);
+            boolean removed = portal.removeSite(id);
+            if (!removed) throw new RuntimeException("Could not remove site + " + id + " for unknown reasons.");
         } catch (EntityNotFoundException e) {
-            log.error(e.getMessage());
-            throw new ResourceNotFoundException("Cannot remove site " + id + " because site does not exist.");
+            throw notFound("Cannot remove site", id);
         }
+    }
+
+    private ModelObject _updateSite(SiteId id, ModelObject siteModel, PathAddress address) {
+        Site site = requireSite(id);
+
+        if (siteModel.has("displayName")) {
+            String displayName = get(siteModel, ModelString.class, "displayName").getValue();
+            site.setDisplayName(displayName);
+        }
+        if (siteModel.has("description")) {
+            String description = get(siteModel, ModelString.class, "description").getValue();
+            site.setDescription(description);
+        }
+        if (siteModel.has("skin")) {
+            String skin = get(siteModel, ModelString.class, "skin").getValue();
+            site.setSkin(skin);
+        }
+        if (siteModel.has("locale")) {
+            Locale locale = getLocale(siteModel, "locale");
+            site.setLocale(locale);
+        }
+        if (siteModel.has("access-permissions")) {
+            Permission permission = getPermission(siteModel, false, "access-permissions");
+            site.setAccessPermission(permission);
+        }
+        if (siteModel.has("edit-permissions")) {
+            Permission permission = getPermission(siteModel, true, "access-permissions");
+            site.setEditPermission(permission);
+        }
+        if (siteModel.hasDefined("attributes")) {
+            ModelList list = get(siteModel, ModelList.class, "attributes");
+            for (int i = 0; i < list.size(); i++) {
+                ModelValue mv = list.get(i);
+                String field = "attributes["+i+"]"; // Used for error reporting
+                if (mv.getValueType() != ModelValue.ModelValueType.OBJECT) {
+                    throw invalidType(mv, ModelValue.ModelValueType.OBJECT, field);
+                }
+                ModelObject attrModel = mv.asValue(ModelObject.class);
+                if (!attrModel.hasDefined("key")) {
+                    throw requiredField(field, "key");
+                }
+                String key = get(attrModel, ModelString.class, "key").getValue();
+                if (!attrModel.has("value")) {
+                    throw requiredField(field, "value");
+                }
+                String value = get(attrModel, ModelString.class, "value").getValue();
+                site.getAttributes().put(key, value);
+            }
+        }
+
+        portal.saveSite(site);
+
+        ModelObject updatedSiteModel = modelProvider.newModel(ModelObject.class);
+        populateModel(site, updatedSiteModel, address);
+
+        return updatedSiteModel;
+    }
+
+    private Site requireSite(SiteId id) {
+        Site site = portal.getSite(id);
+        if (site == null) throw new ResourceNotFoundException("Site not found for " + id);
+
+        return site;
     }
 
     private void populateModel(Site site, ModelObject siteModel, PathAddress address) {
         // Site fields
         siteModel.set("name", site.getId().getName());
         siteModel.set("type", site.getId().getType().name().toLowerCase());
+        siteModel.set("displayName", site.getDisplayName());
+        siteModel.set("description", site.getDescription());
+        siteModel.set("skin", site.getSkin());
+        populate("locale", site.getLocale(), siteModel);
         populate("access-permissions", site.getAccessPermission(), siteModel);
         populate("edit-permissions", site.getEditPermission(), siteModel);
         ModelList attrList = siteModel.get("attributes", ModelList.class);
@@ -308,35 +435,13 @@ public class GateInApiManagementResource {
     private void setCurrentPortalRequest(OperationContext context) {
         final ManagedUser managedUser = context.getUser();
         final PathAddress address = context.getAddress();
-        SiteType siteType = null;
-        StringBuilder sb = null;
-        String siteName = null;
-        NodePath nodePath = null;
-        for (String segment : address) {
-            if (segment.equals("sites")) {
-                siteType = SiteType.SITE;
-                sb = new StringBuilder();
-            } else if (segment.equals("spaces")) {
-                siteType = SiteType.SPACE;
-                sb = new StringBuilder();
-            } else if (segment.equals("dashboards")) {
-                siteType = SiteType.DASHBOARD;
-                sb = new StringBuilder();
-            } else if (segment.equals("navigation")) {
-                siteName = sb.toString();
-                sb = null;
-                nodePath = NodePath.root();
-            } else if (segment.equals("pages")) {
-                siteName = sb.toString();
-                sb = null;
-                break;
-            } else if (nodePath != null) {
-                nodePath.append(segment);
-            } else if (sb != null) {
-                sb.append(segment);
-            }
-        }
-        SiteId siteId = (siteName == null) ? null : new SiteId(siteType, siteName);
+
+        // Retrieve siteId from address (can be null)
+        SiteId siteId = getSiteId(address);
+
+        // Retrieve nodePath from address (can be null)
+        NodePath nodePath = getNodePath(address);
+
         Locale locale = context.getLocale();
         // For some HTTP requests the locale is set to *, I guess to indicate a header 'Accept-Language: *' ?
         if (locale != null && locale.getLanguage().equals("*")) {
@@ -373,6 +478,34 @@ public class GateInApiManagementResource {
             }
         };
         BasicPortalRequest.setInstance(new BasicPortalRequest(user, siteId, nodePath, locale, portal, uriResolver));
+    }
+
+    private static SiteId getSiteId(PathAddress address) {
+        String siteName = address.resolvePathTemplate("site-name");
+        if (siteName != null) {
+            return new SiteId(siteName);
+        }
+
+        String groupName = address.resolvePathTemplate("group-name");
+        if (groupName != null) {
+            return new SiteId(new Group(groupName));
+        }
+
+        String userName = address.resolvePathTemplate("user-name");
+        if (userName != null) {
+            return new SiteId(new User(userName));
+        }
+
+        return null;
+    }
+
+    private static NodePath getNodePath(PathAddress address) {
+        String path = address.resolvePathTemplate("path");
+        if (path != null) {
+            return NodePath.fromString(path);
+        }
+
+        return null;
     }
 
     static PathAddress getSiteAddress(SiteId siteId) {

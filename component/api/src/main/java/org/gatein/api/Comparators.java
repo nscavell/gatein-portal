@@ -28,6 +28,7 @@ import org.exoplatform.portal.config.model.PortalConfig;
 import org.gatein.api.common.Sorting;
 import org.gatein.api.page.Page;
 import org.gatein.api.site.Site;
+import org.gatein.api.site.SiteImpl;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -40,8 +41,8 @@ class Comparators {
             return new Comparator<PortalConfig>() {
                 @Override
                 public int compare(PortalConfig o1, PortalConfig o2) {
-                    Site site = Util.from(o1);
-                    Site other = Util.from(o2);
+                    Site site = new SiteImpl(o1);
+                    Site other = new SiteImpl(o2);
                     if (sorting.getOrder() == Sorting.Order.descending) {
                         Site tmp = site;
                         site = other;
@@ -56,7 +57,7 @@ class Comparators {
 
                 @Override
                 protected Site from(PortalConfig entity) {
-                    return Util.from(entity);
+                    return new SiteImpl(entity);
                 }
             };
         }
