@@ -138,8 +138,6 @@ public class GateInServiceImpl extends RemoteServiceServlet implements GateInSer
             ManagedRequest request = ManagedRequest.Factory.create(OperationNames.READ_RESOURCE,
                     PathAddress.pathAddress("mop", siteType + "sites"), ContentType.JSON);
 
-            request = new GwtManagedRequest(request);
-
             ManagedResponse response = controller.execute(request);
             if (!response.getOutcome().isSuccess()) {
                 throw new Exception(response.getOutcome().getFailureDescription());

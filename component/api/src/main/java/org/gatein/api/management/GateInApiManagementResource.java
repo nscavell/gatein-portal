@@ -24,7 +24,6 @@ package org.gatein.api.management;
 
 import org.exoplatform.container.PortalContainer;
 import org.exoplatform.portal.mop.SiteKey;
-import org.exoplatform.portal.pom.data.MappedAttributes;
 import org.exoplatform.web.WebAppController;
 import org.exoplatform.web.url.navigation.NavigationResource;
 import org.exoplatform.web.url.simple.SimpleURL;
@@ -68,7 +67,6 @@ import org.gatein.management.api.model.ModelValue;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationNames;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
 
@@ -450,8 +448,6 @@ public class GateInApiManagementResource {
 
         User user = (managedUser == null || managedUser.getUserName() == null) ? User.anonymous() : new User(managedUser.getUserName());
 
-        final boolean relative = Boolean.valueOf(context.getAttributes().getValue("relativePath"));
-        final Object externalRequest = context.getExternalContext().getRequest();
         final PortalContainer container = PortalContainer.getInstance();
         final WebAppController controller = (WebAppController) container.getComponentInstanceOfType(WebAppController.class);
         URIResolver uriResolver = new URIResolver() {
@@ -459,20 +455,9 @@ public class GateInApiManagementResource {
             public String resolveURI(SiteId siteId) {
                 SiteKey siteKey = Util.from(siteId);
                 NavigationResource navResource = new NavigationResource(siteKey, "");
-                SimpleURL url;
-                if (externalRequest instanceof HttpServletRequest) {
-                    url = new SimpleURL(new SimpleURLContext((HttpServletRequest) externalRequest, container, controller));
-                    url.setSchemeUse(true);
-                    url.setAuthorityUse(true);
-                } else {
-                    url = new SimpleURL(new SimpleURLContext(container, controller));
-                    url.setSchemeUse(false);
-                    url.setAuthorityUse(false);
-                }
-                if (relative) {
-                    url.setSchemeUse(false);
-                    url.setAuthorityUse(false);
-                }
+                SimpleURL url = new SimpleURL(new SimpleURLContext(container, controller));
+                url.setSchemeUse(false);
+                url.setAuthorityUse(false);
                 String urlString = url.setResource(navResource).toString();
                 return urlString.substring(0, urlString.length() - 1);
             }

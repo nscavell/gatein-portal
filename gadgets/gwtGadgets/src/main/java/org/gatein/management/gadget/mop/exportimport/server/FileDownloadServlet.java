@@ -84,8 +84,6 @@ public class FileDownloadServlet extends HttpServlet {
 
                     ManagedRequest request = ManagedRequest.Factory.create(OperationNames.EXPORT_RESOURCE, address,
                             ContentType.ZIP);
-                    request = new GwtManagedRequest(request);
-
                     ManagedResponse response = controller.execute(request);
                     if (response.getOutcome().isSuccess()) {
                         response.writeResult(os, true);
