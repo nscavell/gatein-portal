@@ -25,15 +25,33 @@ package org.jboss.portal.portlet.samples;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.inject.Inject;
+import javax.portlet.ActionRequest;
+import javax.portlet.ActionResponse;
 import javax.portlet.GenericPortlet;
+import javax.portlet.PortletException;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 
 public class SimplestHelloWorldPortlet extends GenericPortlet {
+
+    @Inject
+    private HelloWorldService service;
+
     public void doView(RenderRequest request, RenderResponse response) throws IOException {
         PrintWriter writer = response.getWriter();
-        writer.write("Hello World !");
+        writer.write(service.getGreeting("World"));
         writer.close();
+    }
+
+    @Override
+    public void processAction(ActionRequest request, ActionResponse response) throws PortletException, IOException {
+        super.processAction(request, response);
+    }
+
+    @Override
+    public void render(RenderRequest request, RenderResponse response) throws PortletException, IOException {
+        super.render(request, response);
     }
 }
