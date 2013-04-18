@@ -20,30 +20,25 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.portal.portlet.samples;
+package org.gatein.cdi;
 
-import javax.enterprise.context.RequestScoped;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.gatein.api.cdi.context.PortletLifecycleScoped;
+import javax.enterprise.context.spi.Contextual;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-//@RequestScoped
-@PortletLifecycleScoped
-public class RequestBean {
+public class BeanStore {
+    private Map<Contextual<?>, Object> map = new HashMap<Contextual<?>, Object>();
 
-    private String name;
-
-    public RequestBean() {
-        System.out.println("RequestBean created !!!");
+    @SuppressWarnings("unchecked")
+    public <T> T getBean(Contextual<T> contexual) {
+        return (T) map.get(contexual);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void addBean(Contextual<?> contextual, Object bean) {
+        map.put(contextual, bean);
     }
 }

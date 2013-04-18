@@ -24,33 +24,25 @@ package org.gatein.cdi;
 
 import java.lang.annotation.Annotation;
 
+import javax.enterprise.context.ContextNotActiveException;
+import javax.enterprise.context.spi.Context;
+import javax.enterprise.context.spi.Contextual;
+import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Singleton;
-import javax.servlet.ServletRequest;
 
 import org.gatein.api.cdi.context.PortletLifecycleScoped;
-import org.jboss.weld.context.AbstractBoundContext;
-import org.jboss.weld.context.beanstore.NamingScheme;
-import org.jboss.weld.context.beanstore.SimpleNamingScheme;
-import org.jboss.weld.context.beanstore.http.RequestBeanStore;
-import org.jboss.weld.context.cache.RequestScopedBeanCache;
-import org.jboss.weld.context.http.HttpRequestContext;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @Singleton
-public class PortletLifecycleContext extends AbstractBoundContext<ServletRequest> implements HttpRequestContext {
-
-    private static final String IDENTIFIER = PortletLifecycleContext.class.getName();
+public class PortletLifecycleContext implements Context {
 
     private final BeanManager beanManager;
-    private final NamingScheme namingScheme;
 
     public PortletLifecycleContext(BeanManager beanManager) {
-        super(false);
         this.beanManager = beanManager;
-        this.namingScheme = new SimpleNamingScheme(HttpRequestContext.class.getName());
     }
 
     @Override
@@ -59,46 +51,49 @@ public class PortletLifecycleContext extends AbstractBoundContext<ServletRequest
     }
 
     @Override
-    public boolean associate(ServletRequest request) {
-        System.out.println("Associating request...");
-        if (request.getAttribute(IDENTIFIER) == null) {
-            request.setAttribute(IDENTIFIER, IDENTIFIER);
-            setBeanStore(new RequestBeanStore(request, namingScheme));
-            getBeanStore().attach();
-            return true;
-        } else {
-            return false;
+    public <T> T get(Contextual<T> contextual, CreationalContext<T> creationalContext) {
+        if (!isActive()) {
+            throw new ContextNotActiveException();
         }
+        BeanStore beanStore = beanStoreCache.get();
+        if (beanStore == null) {
+            return null;
+        }
+        if (contextual == null) {
+            throw new IllegalArgumentException();
+        }
+
+        T bean = beanStore.getBean(contextual);
+        if (bean == null && creationalContext != null) {
+            bean = contextual.create(creationalContext);
+            beanStore.addBean(contextual, bean);
+        }
+
+        return bean;
     }
 
     @Override
-    public boolean dissociate(ServletRequest request) {
-        System.out.println("Dissociating request...");
-        if (request.getAttribute(IDENTIFIER) != null) {
-            try {
-                setBeanStore(null);
-                request.removeAttribute(IDENTIFIER);
-                return true;
-            } finally {
-                cleanup();
-            }
-        } else {
-            return false;
-        }
+    public <T> T get(Contextual<T> contextual) {
+        return get(contextual, null);
     }
 
     @Override
-    public void activate() {
-        super.activate();
-        RequestScopedBeanCache.beginRequest();
+    public boolean isActive() {
+        return isAttached();
     }
 
-    @Override
-    public void deactivate() {
-        try {
-            RequestScopedBeanCache.endRequest();
-        } finally {
-            super.deactivate();
-        }
+    static boolean isAttached() {
+        BeanStore store = beanStoreCache.get();
+        return store != null;
     }
+
+    static void attach() {
+        beanStoreCache.set(new BeanStore());
+    }
+
+    static void detach() {
+        beanStoreCache.remove();
+    }
+
+    private static final ThreadLocal<BeanStore> beanStoreCache = new ThreadLocal<BeanStore>();
 }
