@@ -3,7 +3,7 @@
 
 <portlet:defineObjects/>
 
-<div class="portlet-section-header">Remember we love  you: ${bean.getName()} %></div>
+<div class="portlet-section-header">Remember we love  you: ${bean.getName()}</div>
 
 <portlet:renderURL var="myRenderURL"/>
 <br/>
