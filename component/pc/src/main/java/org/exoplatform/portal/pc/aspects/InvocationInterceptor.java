@@ -18,7 +18,11 @@ public class InvocationInterceptor extends PortletInvokerInterceptor {
     @Override
     public PortletInvocationResponse invoke(PortletInvocation invocation) throws IllegalArgumentException, PortletInvokerException {
         portletInvocation.set(invocation);
-        return super.invoke(invocation);
+        try {
+            return super.invoke(invocation);
+        } finally {
+            portletInvocation.remove();
+        }
     }
 
     public static PortletInvocation getPortletInvocation() {
