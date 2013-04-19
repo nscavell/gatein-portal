@@ -40,9 +40,12 @@ public class JSPHelloUserPortlet extends GenericPortlet {
     private RequestBean bean;
 
     public void doView(RenderRequest request, RenderResponse response) throws PortletException, IOException {
-        String sYourName = (String) request.getParameter("yourname");
-        if (sYourName != null) {
+        String sYourName = request.getParameter("yourname");
+        if (sYourName != null || bean.getName() != null) {
             PortletRequestDispatcher prd = getPortletContext().getRequestDispatcher("/jsp/hello.jsp");
+            if (bean.getName() == null) {
+                bean.setName(sYourName);
+            }
             request.setAttribute("bean", bean);
             prd.include(request, response);
         } else {
@@ -64,8 +67,7 @@ public class JSPHelloUserPortlet extends GenericPortlet {
     }
 
     public void processAction(ActionRequest aRequest, ActionResponse aResponse) throws PortletException, IOException {
-        String sYourname = (String) aRequest.getParameter("yourname");
-        aResponse.setRenderParameter("yourname", sYourname);
+        String sYourname = aRequest.getParameter("yourname");
         bean.setName(sYourname);
     }
 

@@ -193,6 +193,7 @@
       <maven-resource group="org.apache.xmlbeans" artifact="xmlbeans"/>
       <maven-resource group="com.thoughtworks.xstream" artifact="xstream"/>
       <maven-resource group="org.gatein.cdi" artifact="gatein-cdi-injection"/>
+      <maven-resource group="org.gatein.cdi" artifact="gatein-cdi-extension"/>
     </module-def>
 
     <module-def name="org.gatein.wci">

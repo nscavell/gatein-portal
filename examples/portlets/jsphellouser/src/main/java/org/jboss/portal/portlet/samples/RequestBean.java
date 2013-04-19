@@ -22,21 +22,17 @@
 
 package org.jboss.portal.portlet.samples;
 
-import javax.enterprise.context.RequestScoped;
-
 import org.gatein.api.cdi.context.PortletLifecycleScoped;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-//@RequestScoped
 @PortletLifecycleScoped
 public class RequestBean {
 
     private String name;
 
     public RequestBean() {
-        System.out.println("RequestBean created !!!");
     }
 
     public String getName() {

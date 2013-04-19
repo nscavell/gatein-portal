@@ -22,18 +22,23 @@
 
 package org.gatein.cdi;
 
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.enterprise.inject.spi.Extension;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.enterprise.context.spi.Contextual;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class CDIPortletExtension implements Extension {
+class BeanStore {
+    private Map<Contextual<?>, Object> map = new HashMap<Contextual<?>, Object>();
 
-    @SuppressWarnings("unused")
-    public void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {
-        afterBeanDiscovery.addContext(new PortletLifecycleContext(beanManager));
+    @SuppressWarnings("unchecked")
+    public <T> T getBean(Contextual<T> contexual) {
+        return (T) map.get(contexual);
+    }
+
+    public void addBean(Contextual<?> contextual, Object bean) {
+        map.put(contextual, bean);
     }
 }

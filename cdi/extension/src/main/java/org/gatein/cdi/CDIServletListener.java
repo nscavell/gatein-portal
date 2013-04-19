@@ -22,31 +22,20 @@
 
 package org.gatein.cdi;
 
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletRequest;
+import javax.portlet.PortletRequest;
 import javax.servlet.ServletRequestEvent;
-import javax.servlet.http.HttpSessionEvent;
-
-import org.gatein.pc.api.invocation.ActionInvocation;
-import org.gatein.pc.api.invocation.PortletInvocation;
-import org.gatein.pc.api.invocation.RenderInvocation;
+import javax.servlet.ServletRequestListener;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class CDIServletListener extends AbstractServletListener {
-
-    @Inject
-    private BeanManager beanManager;
+public class CDIServletListener implements ServletRequestListener {
 
     @Override
     public void requestInitialized(ServletRequestEvent event) {
-        ServletRequest request = event.getServletRequest();
         boolean attached = PortletLifecycleContext.isAttached();
         if (attached) {
-            if (!isRenderRequest(request)) {
+            if (!isRenderRequest()) {
                 PortletLifecycleContext.attach();
             }
         } else {
@@ -56,30 +45,27 @@ public class CDIServletListener extends AbstractServletListener {
 
     @Override
     public void requestDestroyed(ServletRequestEvent event) {
-        ServletRequest request = event.getServletRequest();
         boolean attached = PortletLifecycleContext.isAttached();
         if (attached) {
-            if (!isActionRequest(request)) {
+            if (!isActionRequest()) {
                 PortletLifecycleContext.detach();
             }
         }
     }
 
-    @Override
-    public void sessionDestroyed(HttpSessionEvent httpSessionEvent) {
+    private boolean isActionRequest() {
+        return PortletRequest.ACTION_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
     }
 
-    @Override
-    public void contextDestroyed(ServletContextEvent servletContextEvent) {
+    private boolean isEventRequest() {
+        return PortletRequest.EVENT_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
     }
 
-    private boolean isRenderRequest(ServletRequest request) {
-        PortletInvocation invocation = (PortletInvocation) request.getAttribute("cdi.portlet.invocation");
-        return invocation instanceof RenderInvocation;
+    private boolean isRenderRequest() {
+        return PortletRequest.RENDER_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
     }
 
-    private boolean isActionRequest(ServletRequest request) {
-        PortletInvocation invocation = (PortletInvocation) request.getAttribute("cdi.portlet.invocation");
-        return invocation instanceof ActionInvocation;
+    private boolean isResourceRequest() {
+        return PortletRequest.RESOURCE_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
     }
 }

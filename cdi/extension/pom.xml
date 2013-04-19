@@ -36,13 +36,24 @@
 
   <dependencies>
     <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.portlet</groupId>
+      <artifactId>portlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>javax.enterprise</groupId>
       <artifactId>cdi-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.gatein.api</groupId>
-      <artifactId>gatein-api</artifactId>
+      <groupId>org.gatein.cdi</groupId>
+      <artifactId>gatein-cdi-injection</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

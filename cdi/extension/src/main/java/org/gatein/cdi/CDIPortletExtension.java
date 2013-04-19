@@ -20,17 +20,19 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.portal.portlet.samples;
+package org.gatein.cdi;
 
-import javax.inject.Singleton;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.AfterBeanDiscovery;
+import javax.enterprise.inject.spi.Extension;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-@Singleton
-public class HelloWorldService {
+public class CDIPortletExtension implements Extension {
 
-    public String getGreeting(String greeting) {
-        return "Hello " + greeting + " !";
+    @SuppressWarnings("unused")
+    public void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery) {
+        afterBeanDiscovery.addContext(new PortletLifecycleContext());
     }
 }

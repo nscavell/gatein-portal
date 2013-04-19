@@ -1085,6 +1085,11 @@
         <artifactId>gatein-cdi-injection</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.gatein.cdi</groupId>
+        <artifactId>gatein-cdi-extension</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <!-- TODO: Move to gatein-dep -->
       <dependency>

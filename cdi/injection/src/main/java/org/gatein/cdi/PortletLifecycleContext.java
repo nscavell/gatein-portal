@@ -28,22 +28,13 @@ import javax.enterprise.context.ContextNotActiveException;
 import javax.enterprise.context.spi.Context;
 import javax.enterprise.context.spi.Contextual;
 import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Singleton;
 
 import org.gatein.api.cdi.context.PortletLifecycleScoped;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-@Singleton
 public class PortletLifecycleContext implements Context {
-
-    private final BeanManager beanManager;
-
-    public PortletLifecycleContext(BeanManager beanManager) {
-        this.beanManager = beanManager;
-    }
 
     @Override
     public Class<? extends Annotation> getScope() {
@@ -51,7 +42,7 @@ public class PortletLifecycleContext implements Context {
     }
 
     @Override
-    public <T> T get(Contextual<T> contextual, CreationalContext<T> creationalContext) {
+    public <T> T get(Contextual<T> contextual, CreationalContext<T> creational) {
         if (!isActive()) {
             throw new ContextNotActiveException();
         }
@@ -64,8 +55,8 @@ public class PortletLifecycleContext implements Context {
         }
 
         T bean = beanStore.getBean(contextual);
-        if (bean == null && creationalContext != null) {
-            bean = contextual.create(creationalContext);
+        if (bean == null && creational != null) {
+            bean = contextual.create(creational);
             beanStore.addBean(contextual, bean);
         }
 
