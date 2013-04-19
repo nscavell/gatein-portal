@@ -32,23 +32,5 @@
       <artifactId>gatein-api</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.gatein.cdi</groupId>
-      <artifactId>gatein-cdi-extension</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.gatein.cdi</groupId>
-          <artifactId>gatein-cdi-injection</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.gatein.pc</groupId>
-          <artifactId>pc-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.gatein.pc</groupId>
-          <artifactId>pc-portlet</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
   </dependencies>
 </project>

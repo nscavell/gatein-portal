@@ -1016,7 +1016,7 @@
         <groupId>org.gatein</groupId>
         <artifactId>cdi-portlet-integration</artifactId>
         <version>${version.cdi.portlet.integration}</version>
-      </dependency>      
+      </dependency>
 
       <!-- needed for the IBM jdk, should be remove in the future when IBM fixes its jdk (see GTNPORTAL-636) -->
       <dependency>
@@ -1087,7 +1087,7 @@
       </dependency>
       <dependency>
         <groupId>org.gatein.cdi</groupId>
-        <artifactId>gatein-cdi-extension</artifactId>
+        <artifactId>gatein-cdi-contexts</artifactId>
         <version>${project.version}</version>
       </dependency>
 

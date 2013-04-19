@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.cdi;
+package org.gatein.cdi.contexts;
 
 import java.lang.annotation.Annotation;
 

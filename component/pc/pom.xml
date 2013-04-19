@@ -71,10 +71,6 @@
       <groupId>org.exoplatform.kernel</groupId>
       <artifactId>exo.kernel.container</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.gatein.cdi</groupId>
-      <artifactId>gatein-cdi-injection</artifactId>
-    </dependency>
 
   </dependencies>
 

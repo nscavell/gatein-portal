@@ -1,4 +1,4 @@
-package org.gatein.cdi;
+package org.exoplatform.portal.pc.aspects;
 
 import javax.portlet.PortletRequest;
 

@@ -22,6 +22,8 @@
 
 package org.gatein.cdi;
 
+import org.gatein.cdi.contexts.PortletLifecycleContext;
+
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;

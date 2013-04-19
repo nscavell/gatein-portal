@@ -30,9 +30,9 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>gatein-cdi-extension</artifactId>
+  <artifactId>gatein-cdi-contexts</artifactId>
   <packaging>jar</packaging>
-  <name>GateIn CDI Portlet Extension</name>
+  <name>GateIn CDI Portlet Contexts</name>
 
   <dependencies>
     <dependency>
@@ -51,8 +51,13 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.gatein.cdi</groupId>
-      <artifactId>gatein-cdi-injection</artifactId>
+      <groupId>org.gatein.api</groupId>
+      <artifactId>gatein-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.gatein.portal</groupId>
+      <artifactId>exo.portal.component.pc</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

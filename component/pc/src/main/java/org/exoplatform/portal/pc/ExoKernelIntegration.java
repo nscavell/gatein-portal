@@ -24,7 +24,7 @@ import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
 import org.exoplatform.services.resources.PortletConfigRegistry;
 import org.exoplatform.services.resources.ResourceBundleService;
-import org.gatein.cdi.PortletLifecyclePhaseInterceptor;
+import org.exoplatform.portal.pc.aspects.PortletLifecyclePhaseInterceptor;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.pc.api.PortletInvoker;
