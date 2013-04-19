@@ -48,5 +48,10 @@
       <scope>provided</scope>
       <version>1.1.9.Final</version>
     </dependency>
+    <dependency>
+      <groupId>org.gatein.portal</groupId>
+      <artifactId>exo.portal.component.pc</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

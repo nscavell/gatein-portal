@@ -22,16 +22,16 @@
 
 package org.gatein.cdi;
 
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestEvent;
-import javax.servlet.http.HttpSessionEvent;
-
+import org.exoplatform.portal.pc.aspects.InvocationInterceptor;
 import org.gatein.pc.api.invocation.ActionInvocation;
 import org.gatein.pc.api.invocation.PortletInvocation;
 import org.gatein.pc.api.invocation.RenderInvocation;
+
+import javax.enterprise.inject.spi.BeanManager;
+import javax.inject.Inject;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.http.HttpSessionEvent;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -43,10 +43,9 @@ public class CDIServletListener extends AbstractServletListener {
 
     @Override
     public void requestInitialized(ServletRequestEvent event) {
-        ServletRequest request = event.getServletRequest();
         boolean attached = PortletLifecycleContext.isAttached();
         if (attached) {
-            if (!isRenderRequest(request)) {
+            if (!isRenderRequest()) {
                 PortletLifecycleContext.attach();
             }
         } else {
@@ -56,10 +55,9 @@ public class CDIServletListener extends AbstractServletListener {
 
     @Override
     public void requestDestroyed(ServletRequestEvent event) {
-        ServletRequest request = event.getServletRequest();
         boolean attached = PortletLifecycleContext.isAttached();
         if (attached) {
-            if (!isActionRequest(request)) {
+            if (!isActionRequest()) {
                 PortletLifecycleContext.detach();
             }
         }
@@ -73,13 +71,13 @@ public class CDIServletListener extends AbstractServletListener {
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
     }
 
-    private boolean isRenderRequest(ServletRequest request) {
-        PortletInvocation invocation = (PortletInvocation) request.getAttribute("cdi.portlet.invocation");
+    private boolean isRenderRequest() {
+        PortletInvocation invocation = InvocationInterceptor.getPortletInvocation();
         return invocation instanceof RenderInvocation;
     }
 
-    private boolean isActionRequest(ServletRequest request) {
-        PortletInvocation invocation = (PortletInvocation) request.getAttribute("cdi.portlet.invocation");
+    private boolean isActionRequest() {
+        PortletInvocation invocation = InvocationInterceptor.getPortletInvocation();
         return invocation instanceof ActionInvocation;
     }
 }
