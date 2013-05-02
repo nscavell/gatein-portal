@@ -22,54 +22,56 @@
 
 package org.gatein.cdi.contexts;
 
-import org.exoplatform.portal.pc.aspects.PortletLifecyclePhaseInterceptor;
-
-import javax.portlet.PortletRequest;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.ServletRequestListener;
+import javax.servlet.http.HttpSessionEvent;
+import javax.servlet.http.HttpSessionListener;
+
+import org.gatein.cdi.contexts.state.Transition;
+
+import static org.exoplatform.portal.pc.aspects.PortletLifecyclePhaseInterceptor.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class CDIServletListener implements ServletRequestListener {
+public class CDIServletListener implements ServletRequestListener, HttpSessionListener {
+
 
     @Override
     public void requestInitialized(ServletRequestEvent event) {
-        boolean attached = PortletLifecycleContext.isAttached();
-        if (!attached) {
-            PortletLifecycleContext.attach();
-        } else {
-            if (isActionRequest()) {
-                // Unlikely to occur, but just as a precaution
-                PortletLifecycleContext.detach();
-                PortletLifecycleContext.attach();
+        String windowId = currentWindowId();
+        String phase = currentPhase();
+
+        // The phase is null when we access the application registry, so we don't need to do anything
+        if (phase != null) {
+            for (CDIPortletContext context : CDIPortletContextExtension.getContexts()) {
+                context.transitionTo(windowId, Transition.State.starting(phase));
             }
         }
     }
 
     @Override
     public void requestDestroyed(ServletRequestEvent event) {
-        boolean attached = PortletLifecycleContext.isAttached();
-        if (attached) {
-            if (isRenderRequest() || isResourceRequest()) {
-                PortletLifecycleContext.detach();
+        String windowId = currentWindowId();
+        String phase = currentPhase();
+
+        // The phase is null when we access the application registry, so we don't need to do anything
+        if (phase != null) {
+            for (CDIPortletContext context : CDIPortletContextExtension.getContexts()) {
+                context.transitionTo(windowId, Transition.State.ending(phase));
             }
         }
     }
 
-    private boolean isActionRequest() {
-        return PortletRequest.ACTION_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
+    @Override
+    public void sessionCreated(HttpSessionEvent event) {
     }
 
-    private boolean isEventRequest() {
-        return PortletRequest.EVENT_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
-    }
-
-    private boolean isRenderRequest() {
-        return PortletRequest.RENDER_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
-    }
-
-    private boolean isResourceRequest() {
-        return PortletRequest.RESOURCE_PHASE.equals(PortletLifecyclePhaseInterceptor.getLifecyclePhase());
+    @Override
+    public void sessionDestroyed(HttpSessionEvent event) {
+        PortletRedisplayedContext context = CDIPortletContextExtension.getContext(PortletRedisplayedContext.class);
+        if (context != null) {
+            context.dissociate(event.getSession());
+        }
     }
 }

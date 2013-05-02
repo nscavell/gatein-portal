@@ -45,6 +45,8 @@ import org.exoplatform.web.application.RequestFailure;
 import org.exoplatform.web.controller.QualifiedName;
 import org.exoplatform.webui.application.WebuiRequestContext;
 import org.exoplatform.webui.core.UIApplication;
+import org.gatein.cdi.contexts.CDIPortletContext;
+import org.gatein.cdi.contexts.CDIPortletContextExtension;
 import org.gatein.common.text.EntityEncoder;
 
 /**
@@ -166,6 +168,9 @@ public class PortalRequestHandler extends WebRequestHandler {
         WebuiRequestContext.setCurrentInstance(context);
         PortalRequestImpl.createInstance(context);
 
+        // Associate the current request for custom portlet CDI scopes
+        associateCDIScopes(context.getRequest());
+
         UIApplication uiApp = app.getStateManager().restoreUIRootComponent(context);
 
         List<ApplicationLifecycle> lifecycles = app.getApplicationLifecycle();
@@ -217,6 +222,10 @@ public class PortalRequestHandler extends WebRequestHandler {
             } catch (Exception exception) {
                 log.error("Error while ending request on all ApplicationLifecycle", exception);
             }
+
+            // Dissociate the current request for all portlet CDI contexts
+            dissociateCDIScopes(context.getRequest());
+
             PortalRequestImpl.clearInstance();
             WebuiRequestContext.setCurrentInstance(null);
         }
@@ -241,5 +250,25 @@ public class PortalRequestHandler extends WebRequestHandler {
     @Override
     protected boolean getRequiresLifeCycle() {
         return true;
+    }
+
+    private static void associateCDIScopes(HttpServletRequest request) {
+        for (CDIPortletContext ctx : CDIPortletContextExtension.getContexts()) {
+            try {
+                ctx.associate(request);
+            } catch (Throwable t) {
+                log.error("Could not associate CDI portlet context " + ctx + " for current request.", t);
+            }
+        }
+    }
+
+    private static void dissociateCDIScopes(HttpServletRequest request) {
+        for (CDIPortletContext ctx : CDIPortletContextExtension.getContexts()) {
+            try {
+                ctx.dissociate(request);
+            } catch (Throwable t) {
+                log.error("Could not dissociate CDI portlet context " + ctx + " for current request.", t);
+            }
+        }
     }
 }

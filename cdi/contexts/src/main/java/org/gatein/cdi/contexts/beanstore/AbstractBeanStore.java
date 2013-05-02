@@ -20,10 +20,16 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.cdi.contexts;
+package org.gatein.cdi.contexts.beanstore;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public interface PortletLifecycleContext extends CDIPortletContext {
+public abstract class AbstractBeanStore implements BeanStore {
+
+    @SuppressWarnings("unchecked")
+    protected <T> void destroyBean(BeanStoreInstance<?> instance) {
+        BeanStoreInstance<T> beanInstance = (BeanStoreInstance<T>) instance;
+        beanInstance.getContextual().destroy(beanInstance.getInstance(), beanInstance.getCreationalContext());
+    }
 }

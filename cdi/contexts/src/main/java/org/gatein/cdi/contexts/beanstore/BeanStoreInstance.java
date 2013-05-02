@@ -20,21 +20,19 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.cdi;
+package org.gatein.cdi.contexts.beanstore;
 
-import org.gatein.cdi.contexts.PortletLifecycleContext;
-
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterBeanDiscovery;
-import javax.enterprise.inject.spi.Extension;
+import javax.enterprise.context.spi.Contextual;
+import javax.enterprise.context.spi.CreationalContext;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class CDIPortletExtension implements Extension {
+public interface BeanStoreInstance<T> {
 
-    @SuppressWarnings("unused")
-    public void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery) {
-        afterBeanDiscovery.addContext(new PortletLifecycleContext());
-    }
+    T getInstance();
+
+    CreationalContext<T> getCreationalContext();
+
+    Contextual<T> getContextual();
 }

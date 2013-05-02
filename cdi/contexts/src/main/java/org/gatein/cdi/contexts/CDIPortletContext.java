@@ -22,8 +22,19 @@
 
 package org.gatein.cdi.contexts;
 
+import javax.enterprise.context.spi.Context;
+import javax.servlet.http.HttpServletRequest;
+
+import org.gatein.cdi.contexts.state.Transition;
+
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public interface PortletLifecycleContext extends CDIPortletContext {
+public interface CDIPortletContext extends Context {
+
+    void transitionTo(String windowId, Transition.State state);
+
+    void associate(HttpServletRequest request);
+
+    void dissociate(HttpServletRequest request);
 }

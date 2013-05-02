@@ -20,24 +20,12 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.cdi.contexts;
-
-import javax.enterprise.context.spi.Contextual;
-import java.util.HashMap;
-import java.util.Map;
+package org.gatein.cdi.contexts.beanstore;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class BeanStore {
-    private Map<Contextual<?>, Object> map = new HashMap<Contextual<?>, Object>();
+public interface LockedBean {
 
-    @SuppressWarnings("unchecked")
-    public <T> T getBean(Contextual<T> contexual) {
-        return (T) map.get(contexual);
-    }
-
-    public void addBean(Contextual<?> contextual, Object bean) {
-        map.put(contextual, bean);
-    }
+    void unlock();
 }
