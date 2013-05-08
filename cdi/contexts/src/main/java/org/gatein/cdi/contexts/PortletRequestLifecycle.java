@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2013, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.gatein.cdi.contexts.state;
+package org.gatein.cdi.contexts;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -28,16 +28,11 @@ import java.util.LinkedList;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class Transition implements Serializable {
+public class PortletRequestLifecycle implements Serializable {
     private final LinkedList<State> states;
 
-    public Transition() {
+    public PortletRequestLifecycle() {
         states = new LinkedList<State>();
-    }
-
-    public Transition(State state) {
-        states = new LinkedList<State>();
-        to(state);
     }
 
     public State last() {
@@ -48,7 +43,7 @@ public class Transition implements Serializable {
         return states.peekFirst();
     }
 
-    public State to(State next) {
+    public State addNext(State next) {
         State previous = last();
         states.add(next);
         return previous;

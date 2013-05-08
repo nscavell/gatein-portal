@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2013, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -25,16 +25,10 @@ package org.gatein.cdi.contexts;
 import javax.enterprise.context.spi.Context;
 import javax.servlet.http.HttpServletRequest;
 
-import org.gatein.cdi.contexts.state.Transition;
-
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public interface CDIPortletContext extends Context {
 
-    void transitionTo(String windowId, Transition.State state);
-
-    void associate(HttpServletRequest request);
-
-    void dissociate(HttpServletRequest request);
+    void transition(HttpServletRequest request, String windowId, PortletRequestLifecycle.State state);
 }

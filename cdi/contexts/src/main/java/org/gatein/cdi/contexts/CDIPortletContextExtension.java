@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2013, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -36,7 +36,7 @@ import javax.enterprise.inject.spi.Extension;
  */
 public class CDIPortletContextExtension implements Extension {
 
-    private static Collection<CDIPortletContext> contexts;
+    private Collection<CDIPortletContext> contexts;
 
     @SuppressWarnings("unused")
     public void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery) {
@@ -51,7 +51,7 @@ public class CDIPortletContextExtension implements Extension {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends CDIPortletContext> T getContext(Class<T> type) {
+    public <T extends CDIPortletContext> T getContext(Class<T> type) {
         if (type == null) return null;
 
         for (CDIPortletContext context : contexts) {
@@ -63,7 +63,7 @@ public class CDIPortletContextExtension implements Extension {
         return null;
     }
 
-    public static Collection<CDIPortletContext> getContexts() {
+    public Collection<CDIPortletContext> getContexts() {
         Collection<CDIPortletContext> collection = contexts;
         if (collection == null) {
             return Collections.emptyList();

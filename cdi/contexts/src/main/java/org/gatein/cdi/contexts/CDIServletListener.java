@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2013, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -22,12 +22,12 @@
 
 package org.gatein.cdi.contexts;
 
+import javax.inject.Inject;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.ServletRequestListener;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
-
-import org.gatein.cdi.contexts.state.Transition;
 
 import static org.exoplatform.portal.pc.aspects.PortletLifecyclePhaseInterceptor.*;
 
@@ -36,29 +36,33 @@ import static org.exoplatform.portal.pc.aspects.PortletLifecyclePhaseInterceptor
  */
 public class CDIServletListener implements ServletRequestListener, HttpSessionListener {
 
+    @Inject
+    private CDIPortletContextExtension extension;
 
     @Override
     public void requestInitialized(ServletRequestEvent event) {
-        String windowId = currentWindowId();
-        String phase = currentPhase();
+        final HttpServletRequest request = (HttpServletRequest) event.getServletRequest();
+        final String windowId = currentWindowId();
+        final String phase = currentPhase();
 
         // The phase is null when we access the application registry, so we don't need to do anything
         if (phase != null) {
-            for (CDIPortletContext context : CDIPortletContextExtension.getContexts()) {
-                context.transitionTo(windowId, Transition.State.starting(phase));
+            for (CDIPortletContext context : extension.getContexts()) {
+                context.transition(request, windowId, PortletRequestLifecycle.State.starting(phase));
             }
         }
     }
 
     @Override
     public void requestDestroyed(ServletRequestEvent event) {
-        String windowId = currentWindowId();
-        String phase = currentPhase();
+        final HttpServletRequest request = (HttpServletRequest) event.getServletRequest();
+        final String windowId = currentWindowId();
+        final String phase = currentPhase();
 
         // The phase is null when we access the application registry, so we don't need to do anything
         if (phase != null) {
-            for (CDIPortletContext context : CDIPortletContextExtension.getContexts()) {
-                context.transitionTo(windowId, Transition.State.ending(phase));
+            for (CDIPortletContext context : extension.getContexts()) {
+                context.transition(request, windowId, PortletRequestLifecycle.State.ending(phase));
             }
         }
     }
@@ -69,7 +73,7 @@ public class CDIServletListener implements ServletRequestListener, HttpSessionLi
 
     @Override
     public void sessionDestroyed(HttpSessionEvent event) {
-        PortletRedisplayedContext context = CDIPortletContextExtension.getContext(PortletRedisplayedContext.class);
+        PortletRedisplayedContext context = extension.getContext(PortletRedisplayedContext.class);
         if (context != null) {
             context.dissociate(event.getSession());
         }

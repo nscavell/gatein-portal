@@ -58,7 +58,6 @@
     <module name="org.apache.commons.lang"/>
     <module name="org.apache.commons.pool"/>
     <module name="org.apache.httpcomponents"/>
-    <module name="org.gatein.cdi-contexts"/>
     <module name="org.gatein.naming" export="true"/>
     <module name="org.gatein.pc"/>
     <module name="org.gatein.wci" export="true"/>

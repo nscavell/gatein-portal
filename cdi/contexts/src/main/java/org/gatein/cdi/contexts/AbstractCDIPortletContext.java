@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2012, Red Hat, Inc., and individual contributors
+ * Copyright 2013, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -35,7 +35,6 @@ import org.gatein.cdi.contexts.beanstore.BeanStore;
 import org.gatein.cdi.contexts.beanstore.BeanStoreInstance;
 import org.gatein.cdi.contexts.beanstore.LockedBean;
 import org.gatein.cdi.contexts.beanstore.serial.SerializableBeanStoreInstance;
-import org.gatein.cdi.contexts.state.Transition;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -43,15 +42,15 @@ import org.gatein.cdi.contexts.state.Transition;
 public abstract class AbstractCDIPortletContext implements CDIPortletContext {
 
     private final ThreadLocal<BeanStore> beanStore;
-    private final ThreadLocal<Map<String, Transition>> transitions;
-    private final ThreadLocal<Transition> transition;
+    private final ThreadLocal<Map<String, PortletRequestLifecycle>> lifecycles;
+    private final ThreadLocal<PortletRequestLifecycle> currentLifecycle;
     private final boolean multithreaded;
 
     protected AbstractCDIPortletContext(boolean multithreaded) {
         this.multithreaded = multithreaded;
         this.beanStore = new ThreadLocal<BeanStore>();
-        this.transitions = new ThreadLocal<Map<String, Transition>>();
-        this.transition = new ThreadLocal<Transition>();
+        this.lifecycles = new ThreadLocal<Map<String, PortletRequestLifecycle>>();
+        this.currentLifecycle = new ThreadLocal<PortletRequestLifecycle>();
     }
 
     @Override
@@ -103,62 +102,26 @@ public abstract class AbstractCDIPortletContext implements CDIPortletContext {
 
     @Override
     public boolean isActive() {
-        return transition.get() != null;
+        return currentLifecycle.get() != null;
     }
 
-    protected void setTransition(Transition transition) {
-        if (transition == null) {
-            this.transition.remove();
+    protected void setCurrentLifecycle(PortletRequestLifecycle lifecycle) {
+        if (lifecycle == null) {
+            currentLifecycle.remove();
         } else {
-            this.transition.set(transition);
+            currentLifecycle.set(lifecycle);
         }
     }
 
-    protected Transition getTransition(String windowId) {
-        Map<String, Transition> map = transitions.get();
+    protected PortletRequestLifecycle getLifecycle(String windowId) {
+        Map<String, PortletRequestLifecycle> map = lifecycles.get();
         if (map == null) {
-            map = new HashMap<String, Transition>();
-            transitions.set(map);
+            map = new HashMap<String, PortletRequestLifecycle>();
+            lifecycles.set(map);
         }
 
         return map.get(windowId);
     }
-
-    /*@Override
-    public boolean isActive() {
-        return isActive(windowId());
-    }
-    */
-
-    /*
-    @Override
-    public boolean isActive(String windowId) {
-        //ActivePortlets portlets = activePortlets.get();
-        //return (portlets != null) && portlets.isActive(windowId);
-    }
-
-    @Override
-    public void activate(String windowId) {
-        ActivePortlets portlets = activePortlets.get();
-        if (portlets == null) {
-            portlets = new ActivePortlets();
-            activePortlets.set(portlets);
-        }
-
-        portlets.activate(windowId);
-    }
-
-    @Override
-    public void deactivate(String windowId) {
-        ActivePortlets portlets = activePortlets.get();
-        if (portlets != null) {
-            portlets.deactivate(windowId);
-            BeanStore store = getBeanStore();
-            if (store != null) {
-                store.clear(windowId);
-            }
-        }
-    }*/
 
     protected BeanStore getBeanStore() {
         return beanStore.get();
@@ -179,9 +142,12 @@ public abstract class AbstractCDIPortletContext implements CDIPortletContext {
                 store.destroy(windowId);
             }
         } finally {
-            Map<String, Transition> map = transitions.get();
+            Map<String, PortletRequestLifecycle> map = lifecycles.get();
             if (map != null) {
                 map.remove(windowId);
+                if (map.isEmpty()) {
+                    lifecycles.remove();
+                }
             }
         }
     }
@@ -198,7 +164,7 @@ public abstract class AbstractCDIPortletContext implements CDIPortletContext {
     }
 
     protected void cleanup() {
-        transitions.remove();
+        lifecycles.remove();
         beanStore.remove();
     }
 
