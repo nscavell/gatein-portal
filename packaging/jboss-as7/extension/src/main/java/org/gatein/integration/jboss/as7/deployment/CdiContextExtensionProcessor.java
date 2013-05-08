@@ -19,6 +19,9 @@ import javax.enterprise.inject.spi.Extension;
 import java.lang.reflect.Constructor;
 
 /**
+ * Need to forcibly add our CDI extension into the list created by Weld subsystem as
+ * any dependencies don't have their services files read by container.
+ *
  * @author <a href="http://community.jboss.org/people/kenfinni">Ken Finnigan</a>
  */
 public class CdiContextExtensionProcessor implements DeploymentUnitProcessor {
