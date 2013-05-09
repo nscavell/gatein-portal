@@ -105,11 +105,17 @@ public abstract class AbstractCDIPortletContext implements CDIPortletContext {
         return currentLifecycle.get() != null;
     }
 
-    protected void setCurrentLifecycle(PortletRequestLifecycle lifecycle) {
+    protected void setCurrentLifecycle(String windowId, PortletRequestLifecycle lifecycle) {
         if (lifecycle == null) {
             currentLifecycle.remove();
         } else {
             currentLifecycle.set(lifecycle);
+            Map<String, PortletRequestLifecycle> map = lifecycles.get();
+            if (map == null) {
+                map = new HashMap<String, PortletRequestLifecycle>();
+                lifecycles.set(map);
+            }
+            map.put(windowId, lifecycle);
         }
     }
 

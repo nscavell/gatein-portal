@@ -38,7 +38,6 @@ import static javax.portlet.PortletRequest.*;
  */
 public class PortletRedisplayedContextImpl extends AbstractCDIPortletContext implements PortletRedisplayedContext {
 
-    private static final String ATTR_ID = PortletRedisplayedContextImpl.class.getName();
     private static final String TRANSITION_PREFIX = PortletRequestLifecycle.class.getName();
     private static final String TRANSITION_DELIM = "#";
 
@@ -53,8 +52,7 @@ public class PortletRedisplayedContextImpl extends AbstractCDIPortletContext imp
 
     @Override
     public void transition(final HttpServletRequest request, final String windowId, final PortletRequestLifecycle.State state) {
-        if (request.getAttribute(ATTR_ID) == null) {
-            request.setAttribute(ATTR_ID, ATTR_ID);
+        if (getBeanStore() == null) {
             setBeanStore(new SessionBeanStore(request));
         }
 
@@ -94,12 +92,11 @@ public class PortletRedisplayedContextImpl extends AbstractCDIPortletContext imp
         if (lifecycle != null) {
             lifecycle.addNext(state);
             session.setAttribute(attributeName, lifecycle);
-        } else { // We assume it's the end of the 'lifecycle'
-            session.removeAttribute(attributeName); // Remove the lifecycle from the session
-            request.removeAttribute(ATTR_ID); // Remove the request flag which sets the beanstore to the threadlocal
+        } else { // We assume it's the end of the lifecycle so remove it from the session
+            session.removeAttribute(attributeName);
         }
 
-        setCurrentLifecycle(lifecycle);
+        setCurrentLifecycle(windowId, lifecycle);
     }
 
     @Override

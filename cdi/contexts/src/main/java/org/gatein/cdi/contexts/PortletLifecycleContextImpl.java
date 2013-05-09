@@ -36,17 +36,13 @@ import static javax.portlet.PortletRequest.*;
  */
 public class PortletLifecycleContextImpl extends AbstractCDIPortletContext implements PortletLifecycleContext {
 
-    private static final String ATTR_ID = PortletLifecycleContextImpl.class.getName();
-
     public PortletLifecycleContextImpl() {
         super(false);
     }
 
-    //TODO: I think it would be cleaner to have transition methods like onActionStart, onRenderStart, etc.
     @Override
     public void transition(HttpServletRequest request, String windowId, PortletRequestLifecycle.State state) {
-        if (request.getAttribute(ATTR_ID) == null) {
-            request.setAttribute(ATTR_ID, ATTR_ID);
+        if (getBeanStore() == null) {
             setBeanStore(new LocalBeanStore());
         }
 
@@ -76,11 +72,9 @@ public class PortletLifecycleContextImpl extends AbstractCDIPortletContext imple
 
         if (lifecycle != null) {
             lifecycle.addNext(state);
-        } else {
-            request.removeAttribute(ATTR_ID);
         }
 
-        setCurrentLifecycle(lifecycle);
+        setCurrentLifecycle(windowId, lifecycle);
     }
 
     @Override
