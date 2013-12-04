@@ -21,6 +21,7 @@ package org.exoplatform.portal.pom.config;
 
 import java.io.Serializable;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.exoplatform.commons.chromattic.ChromatticLifeCycle;
 import org.exoplatform.commons.chromattic.ChromatticManager;
@@ -66,6 +67,8 @@ public class POMSessionManager implements Startable {
 
     /** . */
     private final RepositoryService repositoryService;
+
+    public static AtomicBoolean REFRESH_UI = new AtomicBoolean();
 
     public POMSessionManager(RepositoryService repositoryService, ChromatticManager manager, CacheService cacheService) {
         //

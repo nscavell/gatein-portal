@@ -46,6 +46,8 @@ import org.exoplatform.portal.mop.navigation.NavigationService;
 import org.exoplatform.portal.mop.page.PageService;
 import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMSessionManager;
+import org.exoplatform.services.cache.CacheService;
+import org.exoplatform.services.cache.ExoCache;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.management.api.ContentType;
@@ -108,6 +110,9 @@ public class MopImportResource extends SecureOperationHandler implements Operati
                 DescriptionService.class);
         if (descriptionService == null)
             throw new OperationException(operationName, "Description service was null");
+
+        CacheService cacheService = operationContext.getRuntimeContext().getRuntimeComponent(CacheService.class);
+        if (cacheService == null) throw new OperationException(operationName, "Cache service was null");
 
         String mode = operationContext.getAttributes().getValue("importMode");
         if (mode == null || "".equals(mode))
@@ -247,6 +252,8 @@ public class MopImportResource extends SecureOperationHandler implements Operati
                 }
             }
             log.info("Import successful !");
+            clearCaches(cacheService, "POMSessionManager");
+            POMSessionManager.REFRESH_UI.set(true);
         } catch (Throwable t) {
             boolean rollbackSuccess = true;
             log.error("Exception importing data.", t);
@@ -295,6 +302,16 @@ public class MopImportResource extends SecureOperationHandler implements Operati
         } finally {
             importMap.clear();
             importsRan.clear();
+        }
+    }
+
+    private static void clearCaches(CacheService service, String... cacheNames) {
+        if (cacheNames == null) return;
+        boolean debug = log.isDebugEnabled();
+        for (String cacheName : cacheNames) {
+            ExoCache<?, ?> cache = service.getCacheInstance(cacheName);
+            cache.clearCache();
+            if (debug) log.debug("Cache '" + cacheName + "' cleared after import.");
         }
     }
 

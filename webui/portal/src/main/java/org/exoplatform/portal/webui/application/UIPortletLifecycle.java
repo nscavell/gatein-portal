@@ -30,6 +30,7 @@ import org.exoplatform.commons.utils.Text;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.portal.application.PortalRequestContext;
 import org.exoplatform.portal.config.NoSuchDataException;
+import org.exoplatform.portal.pom.config.POMSessionManager;
 import org.exoplatform.portal.portlet.PortletExceptionHandleService;
 import org.exoplatform.portal.webui.portal.UIPortal;
 import org.exoplatform.portal.webui.util.Util;
@@ -189,6 +190,11 @@ public class UIPortletLifecycle<S, C extends Serializable, I> extends Lifecycle<
             if ("Window".equals(uicomponent.getPortletStyle()) && !("SHOW".equals(appStatus) || "HIDE".equals(appStatus))) {
                 markup = Text.create("<span></span>");
             } else {
+                if (POMSessionManager.REFRESH_UI.get()) {
+                    UIPortalApplication uiApp = Util.getUIPortalApplication();
+                    uiApp.refreshCachedUI();
+                    POMSessionManager.REFRESH_UI.set(false);
+                }
                 // Check mode of portal, portlet and permission for viewable
                 if ((Util.getUIPortalApplication().getEditMode() != EditMode.BLOCK || uicomponent.getCurrentPortletMode()
                         .equals(PortletMode.EDIT)) && uicomponent.hasAccessPermission()) {
